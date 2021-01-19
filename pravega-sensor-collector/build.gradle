@@ -1,0 +1,66 @@
+/**
+ * Copyright (c) Dell Inc., or its subsidiaries. All Rights Reserved.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ */
+apply plugin: "java"
+apply plugin: "maven"
+apply plugin: "application"
+
+group = "io.pravega"
+archivesBaseName = "pravega-sensor-collector"
+description = "pravega-sensor-collector"
+mainClassName = "io.pravega.sensor.collector.PravegaSensorCollectorApp"
+sourceCompatibility = 1.8
+targetCompatibility = 1.8
+
+dependencies {
+    compile "org.slf4j:slf4j-api:${slf4jApiVersion}"
+    compile "ch.qos.logback:logback-classic:${qosLogbackVersion}"
+    compile "ch.qos.logback:logback-core:${qosLogbackVersion}"
+
+    compile "io.pravega:pravega-client:${pravegaVersion}",
+            "io.pravega:pravega-common:${pravegaVersion}",
+            "commons-cli:commons-cli:${commonsCLIVersion}"
+
+    if (includePravegaCredentials.toBoolean()) {
+        compile "io.pravega:pravega-keycloak-client:${pravegaCredentialsVersion}"
+    }
+
+    compile "com.fasterxml.jackson.core:jackson-databind:${jacksonVersion}"
+    compile "org.xerial:sqlite-jdbc:${sqliteVersion}"
+    compile "org.apache.commons:commons-math3:${commonsMath3Version}"
+    compile "org.apache.commons:commons-csv:${commonsCSVVersion}"
+    compile "commons-codec:commons-codec:${commonsCodecVersion}"
+    compile "com.github.vladimir-bukhtoyarov:bucket4j-core:${bucket4jVersion}"
+
+    testCompile "junit:junit:${junitVersion}"
+}
+
+tasks.withType(JavaCompile) {
+    options.encoding = "UTF-8"
+}
+
+distributions {
+    main {
+        baseName = archivesBaseName
+    }
+}
+
+distTar {
+    compression = "GZIP"
+}
+
+startScripts {
+    doLast {
+        // Modify startup script to source the configuration file (env.sh).
+        unixScript.text = unixScript.text
+            .replace(
+                'DEFAULT_JVM_OPTS=""',
+                'DEFAULT_JVM_OPTS=""\n\n# Source configuration file\n[ -f "${CONF_FILE}" ] && . "${CONF_FILE}"')
+    }
+}
