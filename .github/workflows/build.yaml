@@ -41,6 +41,6 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          files: ./build/distributions/pravega-sensor-collector-*.tgz
+          files: ./pravega-sensor-collector/build/distributions/pravega-sensor-collector-*.tgz
           draft: true
           name: pravega-sensor-collector ${{ env.RELEASE_VERSION }}
