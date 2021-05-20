@@ -1,0 +1,51 @@
+[ {
+"receivedTimestamp" : "2000-01-23T04:56:07.000+00:00",
+"values" : [ {
+"valueIndex" : 1,
+"componentIndex" : 0,
+"sensorIndex" : 6,
+"sensorValueDefinitionId" : 5,
+"label" : "label",
+"iconUrl" : "iconUrl",
+"units" : "units",
+"value" : 5.637376656633329,
+"status" : "status"
+}, {
+"valueIndex" : 1,
+"componentIndex" : 0,
+"sensorIndex" : 6,
+"sensorValueDefinitionId" : 5,
+"label" : "label",
+"iconUrl" : "iconUrl",
+"units" : "units",
+"value" : 5.637376656633329,
+"status" : "status"
+} ],
+"deviceId" : "deviceId",
+"readingTimestamp" : "2000-01-23T04:56:07.000+00:00"
+}, {
+"receivedTimestamp" : "2000-01-23T04:56:07.000+00:00",
+"values" : [ {
+"valueIndex" : 1,
+"componentIndex" : 0,
+"sensorIndex" : 6,
+"sensorValueDefinitionId" : 5,
+"label" : "label",
+"iconUrl" : "iconUrl",
+"units" : "units",
+"value" : 5.637376656633329,
+"status" : "status"
+}, {
+"valueIndex" : 1,
+"componentIndex" : 0,
+"sensorIndex" : 6,
+"sensorValueDefinitionId" : 5,
+"label" : "label",
+"iconUrl" : "iconUrl",
+"units" : "units",
+"value" : 5.637376656633329,
+"status" : "status"
+} ],
+"deviceId" : "deviceId",
+"readingTimestamp" : "2000-01-23T04:56:07.000+00:00"
+} ]

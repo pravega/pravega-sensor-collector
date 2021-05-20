@@ -45,7 +45,7 @@ public class DataCollectorService<S> extends AbstractExecutionThreadService {
                 S state = driver.initialState();
                 // Poll sensor for events.
                 final PollResponse<S> response = driver.pollEvents(state);
-                // Add samples, state atomically to persistent queue.
+                // TODO: Add samples, state atomically to persistent queue.
                 response.events.stream().forEach(event -> {
                     try {
                     log.trace("Adding event {}", event);
