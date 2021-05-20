@@ -162,6 +162,18 @@ When possible, integers and floating point values will be converted to their cor
 Each JSON object may have additional static fields.
 These can be defined in the parameter LOG_FILE_INGEST_EVENT_TEMPLATE which accepts a JSON object.
 
+## Development
+
+```shell
+cd
+git clone https://github.com/pravega/pravega
+cd pravega
+git checkout r0.9
+./gradlew startStandalone \
+  -Dcontroller.transaction.lease.count.max=2592000000 \
+  -Dcontroller.transaction.execution.timeBound.days=30
+```
+
 ## References
 
 - https://www.pravega.io/
