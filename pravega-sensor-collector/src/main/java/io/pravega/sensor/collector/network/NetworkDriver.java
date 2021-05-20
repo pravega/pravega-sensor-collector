@@ -58,7 +58,7 @@ public class NetworkDriver extends SimpleDeviceDriver<NetworkRawData, NetworkSam
         final long periodNanos = (long) (bucketCapacity * 1e9 / samplesPerSec);
         bucket = Bucket4j.builder()
                 .withNanosecondPrecision()
-                .addLimit(Bandwidth.simple(2, Duration.ofNanos(periodNanos)))
+                .addLimit(Bandwidth.simple(bucketCapacity, Duration.ofNanos(periodNanos)))
                 .build();
         log.info("Token Bucket: {}", bucket);
 
