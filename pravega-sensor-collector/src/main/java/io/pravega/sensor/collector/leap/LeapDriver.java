@@ -17,6 +17,8 @@ import java.net.http.HttpResponse.BodyHandlers;
 import java.nio.charset.StandardCharsets;
 import java.text.MessageFormat;
 import java.time.Duration;
+import java.util.ArrayList;
+import java.util.List;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -25,9 +27,11 @@ import io.github.bucket4j.Bandwidth;
 import io.github.bucket4j.Bucket;
 import io.github.bucket4j.Bucket4j;
 import io.pravega.sensor.collector.DeviceDriverConfig;
-import io.pravega.sensor.collector.simple.SimpleDeviceDriver;
+import io.pravega.sensor.collector.simple.PersistentQueueElement;
+import io.pravega.sensor.collector.stateful.PollResponse;
+import io.pravega.sensor.collector.stateful.StatefulSensorDeviceDriver;
 
-public class LeapDriver extends SimpleDeviceDriver<LeapRawData, LeapSamples> {
+public class LeapDriver extends StatefulSensorDeviceDriver<String> {
     private static final Logger log = LoggerFactory.getLogger(LeapDriver.class);
 
     private static final String POLL_PERIOD_SEC_KEY = "POLL_PERIOD_SEC";
@@ -37,8 +41,7 @@ public class LeapDriver extends SimpleDeviceDriver<LeapRawData, LeapSamples> {
     private final String apiUri;
 
     public LeapDriver(DeviceDriverConfig config) {
-        super(config.withProperty(SAMPLES_PER_EVENT_KEY, "1"));
-
+        super(config);
         final double pollPeriodSec = getPollPeriodSec();
         apiUri = getProperty(API_URI_KEY);
         log.info("Poll Period Sec: {}", pollPeriodSec);
@@ -60,9 +63,15 @@ public class LeapDriver extends SimpleDeviceDriver<LeapRawData, LeapSamples> {
     }
 
     @Override
-    public LeapRawData readRawData() throws Exception {
-        log.info("readRawData: BEGIN");
+    public String initialState() {
+        return "";
+    }
+
+    @Override
+    public PollResponse<String> pollEvents(String state) throws Exception {
+        log.info("pollEvents: BEGIN");
         bucket.asScheduler().consume(1);
+        List<PersistentQueueElement> events = new ArrayList<>();
         HttpClient client = HttpClient.newHttpClient();
         String uri = apiUri;
         HttpRequest request = HttpRequest.newBuilder()
@@ -76,27 +85,14 @@ public class LeapDriver extends SimpleDeviceDriver<LeapRawData, LeapSamples> {
         };
         log.info("body={}", response.body());
         final long timestampNanos = System.currentTimeMillis() * 1000 * 1000;
-        byte[] data = response.body().getBytes(StandardCharsets.UTF_8);
-        final LeapRawData rawData = new LeapRawData(timestampNanos, data);
-        log.info("rawData={}", rawData);
-        log.info("readRawData: END");
-        return rawData;
-    }
-
-    @Override
-    public void decodeRawDataToSamples(LeapSamples samples, LeapRawData rawData) {
-        assert(samples.rawData.isEmpty());
-        samples.rawData.add(rawData);
-    }
-
-    @Override
-    public LeapSamples createSamples() {
-        return new LeapSamples();
-    }
-
-    @Override
-    public byte[] serializeSamples(LeapSamples samples) throws Exception {
-        assert(samples.rawData.size() == 1);
-        return samples.rawData.get(0).data;
+        byte[] bytes = response.body().getBytes(StandardCharsets.UTF_8);
+        String routingKey = "";
+        PersistentQueueElement event = new PersistentQueueElement(bytes, routingKey, timestampNanos);
+        events.add(event);
+        // log.info("events={}", events);
+        final PollResponse<String> pollResponse = new PollResponse<String>(events, state);
+        log.info("pollResponse={}", pollResponse);
+        log.info("pollEvents: END");
+        return pollResponse;
     }
 }

@@ -139,7 +139,7 @@ public class TransactionCoordinator {
     public void performRecovery() {
         final List<UUID> transactionsToCommit = getTransactionsToCommit();
         if (transactionsToCommit.isEmpty()) {
-            log.info("Transaction recovery not needed");
+            log.debug("Transaction recovery not needed");
         } else {
             log.warn("Transaction recovery needed on {} transactions", transactionsToCommit.size());
             transactionsToCommit.forEach((txnId) -> {
