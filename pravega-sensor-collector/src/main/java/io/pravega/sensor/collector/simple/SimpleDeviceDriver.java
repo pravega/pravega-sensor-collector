@@ -34,7 +34,7 @@ public abstract class SimpleDeviceDriver<R, S extends Samples> extends DeviceDri
 
     private static final String PERSISTENT_QUEUE_FILE_KEY = "PERSISTENT_QUEUE_FILE";
     private static final String PERSISTENT_QUEUE_CAPACITY_EVENTS_KEY = "PERSISTENT_QUEUE_CAPACITY_EVENTS";
-    private static final String SAMPLES_PER_EVENT_KEY = "SAMPLES_PER_EVENT";
+    protected static final String SAMPLES_PER_EVENT_KEY = "SAMPLES_PER_EVENT";
 
     private static final String SCOPE_KEY = "SCOPE";
     private static final String STREAM_KEY = "STREAM";
