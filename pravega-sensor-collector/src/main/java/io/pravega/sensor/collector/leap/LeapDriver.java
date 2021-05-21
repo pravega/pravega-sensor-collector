@@ -13,6 +13,7 @@ import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
+import java.net.http.HttpClient.Version;
 import java.net.http.HttpRequest.BodyPublishers;
 import java.net.http.HttpResponse.BodyHandlers;
 import java.nio.charset.StandardCharsets;
@@ -95,21 +96,21 @@ public class LeapDriver extends StatefulSensorDeviceDriver<String> {
         if (response.statusCode() != 200) {
             throw new RuntimeException(MessageFormat.format("HTTP server returned status code {0}", response.statusCode()));
         };
-        log.info("pollEvents: body={}", response.body());
+        log.trace("pollEvents: body={}", response.body());
         final long timestampNanos = System.currentTimeMillis() * 1000 * 1000;
         final byte[] bytes = response.body().getBytes(StandardCharsets.UTF_8);
         final String routingKey = getRoutingKey();
         final PersistentQueueElement event = new PersistentQueueElement(bytes, routingKey, timestampNanos);
         events.add(event);
         final PollResponse<String> pollResponse = new PollResponse<String>(events, state);
-        log.info("pollEvents: pollResponse={}", pollResponse);
+        log.trace("pollEvents: pollResponse={}", pollResponse);
         log.info("pollEvents: END");
         return pollResponse;
     }
 
     protected String getAuthToken() throws Exception {
         log.info("getAuthToken: BEGIN");
-        final HttpClient client = HttpClient.newHttpClient();
+        final HttpClient client = HttpClient.newBuilder().version(Version.HTTP_1_1).build();
         final String uri = apiUri + "/api/Auth/authenticate";
         final AuthCredentialsDto authCredentialsDto = new AuthCredentialsDto(userName, password);
         final String requestBody = mapper.writeValueAsString(authCredentialsDto);
@@ -117,17 +118,18 @@ public class LeapDriver extends StatefulSensorDeviceDriver<String> {
         final HttpRequest request = HttpRequest.newBuilder()
             .uri(URI.create(uri))
             .timeout(Duration.ofMinutes(1))
+            .header("Accept", "*/*")
             .header("Content-Type", "application/json")
-            // .POST(BodyPublishers.ofString(requestBody))
+            .POST(BodyPublishers.ofString(requestBody))
             .build();
         log.info("getAuthToken: request={}", request);
         final HttpResponse<String> response = client.send(request, BodyHandlers.ofString());
         log.info("getAuthToken: response={}", response);
+        log.info("getAuthToken: body={}", response.body());
         if (response.statusCode() != 200) {
             throw new RuntimeException(MessageFormat.format("HTTP server returned status code {0} for request {1}",
                 response.statusCode(), request));
         };
-        log.info("getAuthToken: body={}", response.body());
         final AuthTokenDto authTokenDto = mapper.readValue(response.body(), AuthTokenDto.class);
         log.info("getAuthToken: authTokenDto={}", authTokenDto);
         log.info("getAuthToken: END");
