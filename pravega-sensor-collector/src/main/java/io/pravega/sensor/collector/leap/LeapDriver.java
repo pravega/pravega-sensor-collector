@@ -24,6 +24,9 @@ import java.util.List;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.ArrayNode;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -96,12 +99,17 @@ public class LeapDriver extends StatefulSensorDeviceDriver<String> {
         if (response.statusCode() != 200) {
             throw new RuntimeException(MessageFormat.format("HTTP server returned status code {0}", response.statusCode()));
         };
-        log.trace("pollEvents: body={}", response.body());
+        log.trace("pollEvents: body={}", response.body());        
+        JsonNode jsonNode = mapper.readTree(response.body());        
+        final ArrayNode arrayNode = (ArrayNode) jsonNode;
         final long timestampNanos = System.currentTimeMillis() * 1000 * 1000;
-        final byte[] bytes = response.body().getBytes(StandardCharsets.UTF_8);
-        final String routingKey = getRoutingKey();
-        final PersistentQueueElement event = new PersistentQueueElement(bytes, routingKey, timestampNanos);
-        events.add(event);
+        for (JsonNode node : arrayNode) 
+        {            
+            final byte[] bytes = node.toString().getBytes(StandardCharsets.UTF_8);
+            final String routingKey = getRoutingKey();
+            final PersistentQueueElement event = new PersistentQueueElement(bytes, routingKey, timestampNanos);
+            events.add(event);
+        }
         final PollResponse<String> pollResponse = new PollResponse<String>(events, state);
         log.trace("pollEvents: pollResponse={}", pollResponse);
         log.info("pollEvents: END");
@@ -120,7 +128,7 @@ public class LeapDriver extends StatefulSensorDeviceDriver<String> {
             .timeout(Duration.ofMinutes(1))
             .header("Accept", "*/*")
             .header("Content-Type", "application/json")
-            .POST(BodyPublishers.ofString(requestBody))
+            // .POST(BodyPublishers.ofString(requestBody))
             .build();
         log.info("getAuthToken: request={}", request);
         final HttpResponse<String> response = client.send(request, BodyHandlers.ofString());
