@@ -103,7 +103,8 @@ public class LeapDriver extends StatefulSensorDeviceDriver<String> {
         JsonNode jsonNode = mapper.readTree(response.body());        
         final ArrayNode arrayNode = (ArrayNode) jsonNode;
         final long timestampNanos = System.currentTimeMillis() * 1000 * 1000;
-        for (JsonNode node : arrayNode) {            
+        for (JsonNode node : arrayNode) 
+        {            
             final byte[] bytes = node.toString().getBytes(StandardCharsets.UTF_8);
             final String routingKey = getRoutingKey();
             final PersistentQueueElement event = new PersistentQueueElement(bytes, routingKey, timestampNanos);
@@ -127,7 +128,7 @@ public class LeapDriver extends StatefulSensorDeviceDriver<String> {
             .timeout(Duration.ofMinutes(1))
             .header("Accept", "*/*")
             .header("Content-Type", "application/json")
-            .POST(BodyPublishers.ofString(requestBody))
+            // .POST(BodyPublishers.ofString(requestBody))
             .build();
         log.info("getAuthToken: request={}", request);
         final HttpResponse<String> response = client.send(request, BodyHandlers.ofString());
