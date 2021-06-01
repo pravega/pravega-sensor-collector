@@ -102,8 +102,8 @@ public class LeapDriver extends StatefulSensorDeviceDriver<String> {
         log.trace("pollEvents: body={}", response.body());        
         JsonNode jsonNode = mapper.readTree(response.body());        
         final ArrayNode arrayNode = (ArrayNode) jsonNode;
-        for (JsonNode node : arrayNode) {
-            final long timestampNanos = System.currentTimeMillis() * 1000 * 1000;
+        final long timestampNanos = System.currentTimeMillis() * 1000 * 1000;
+        for (JsonNode node : arrayNode) {            
             final byte[] bytes = node.toString().getBytes(StandardCharsets.UTF_8);
             final String routingKey = getRoutingKey();
             final PersistentQueueElement event = new PersistentQueueElement(bytes, routingKey, timestampNanos);
