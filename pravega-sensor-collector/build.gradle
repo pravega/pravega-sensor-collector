@@ -39,6 +39,12 @@ dependencies {
     compile "com.github.vladimir-bukhtoyarov:bucket4j-core:${bucket4jVersion}"
 
     testCompile "junit:junit:${junitVersion}"
+
+    compile "org.glassfish.jersey.containers:jersey-container-grizzly2-http:2.25.1"
+    compile "jakarta.xml.bind:jakarta.xml.bind-api:2.3.2"
+    compile "org.glassfish.jaxb:jaxb-runtime:2.3.2"
+    compile group: 'javax.servlet', name: 'javax.servlet-api', version: '3.0.1'
+
 }
 
 tasks.withType(JavaCompile) {
