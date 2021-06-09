@@ -28,10 +28,7 @@ public class LeapAPIMock {
 
         final HttpServer server = startServer();
         log.info("Server running at http://0.0.0.0:8085");
-        // String val = authenticateMethod();
 
-        // LeapHandler httpHandler = new LeapHandler();
-        // server.getServerConfiguration().addHttpHandler(httpHandler);
 
     }
 
