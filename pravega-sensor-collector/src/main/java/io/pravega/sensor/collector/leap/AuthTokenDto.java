@@ -20,6 +20,9 @@ public class AuthTokenDto {
     public List<String> roles;
     public Integer expires_in;
 
+    public AuthTokenDto() {
+    }
+
     public AuthTokenDto(String userId, String displayName, String token, List<String> roles,Integer expires_in) {
         this.userId = userId;
         this.displayName = displayName;

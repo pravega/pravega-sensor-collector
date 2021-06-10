@@ -21,13 +21,13 @@ public class LeapAPIMock {
     private static HttpServer startServer() {
         final ResourceConfig rc = new ResourceConfig().packages("io.pravega.sensor.collector.leap");
         
-        return GrizzlyHttpServerFactory.createHttpServer(URI.create("http://0.0.0.0:8085"),rc);
+        return GrizzlyHttpServerFactory.createHttpServer(URI.create("http://0.0.0.0:8083"),rc);
     }
 
     public static void main(String[] args) throws Exception {
 
         final HttpServer server = startServer();
-        log.info("Server running at http://0.0.0.0:8085");
+        log.info("Server running at http://0.0.0.0:8083 Claudio1");
 
 
     }
