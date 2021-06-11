@@ -127,7 +127,7 @@ public class LeapDriver extends StatefulSensorDeviceDriver<String> {
             .timeout(Duration.ofMinutes(1))
             .header("Accept", "*/*")
             .header("Content-Type", "application/json")
-            .POST(BodyPublishers.ofString(requestBody))
+            // .POST(BodyPublishers.ofString(requestBody))
             .build();
         log.info("getAuthToken: request={}", request);
         final HttpResponse<String> response = client.send(request, BodyHandlers.ofString());
