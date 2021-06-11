@@ -27,7 +27,7 @@ public class LeapAPIMock {
     public static void main(String[] args) throws Exception {
 
         final HttpServer server = startServer();
-        log.info("Server running at http://0.0.0.0:8083 Claudio1");
+        log.info("Server running at http://0.0.0.0:8083");
 
 
     }
