@@ -22,8 +22,11 @@ import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
+import java.text.SimpleDateFormat;
+import java.util.Date;
+import java.util.TimeZone;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 
@@ -40,6 +43,10 @@ import io.pravega.sensor.collector.stateful.StatefulSensorDeviceDriver;
 
 public class LeapDriver extends StatefulSensorDeviceDriver<String> {
     private static final Logger log = LoggerFactory.getLogger(LeapDriver.class);
+    private static final SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSXXX");
+    static {
+        dateFormat.setTimeZone(TimeZone.getTimeZone("UTC"));
+    }
 
     private static final String POLL_PERIOD_SEC_KEY = "POLL_PERIOD_SEC";
     private static final String API_URI_KEY = "API_URI";
@@ -102,6 +109,8 @@ public class LeapDriver extends StatefulSensorDeviceDriver<String> {
         log.trace("pollEvents: body={}", response.body());        
         JsonNode jsonNode = mapper.readTree(response.body());        
         final ArrayNode arrayNode = (ArrayNode) jsonNode;
+        Date maxTime = mapper.convertValue(arrayNode.get(0).get("receivedTimestamp"), Date.class);
+
         final long timestampNanos = System.currentTimeMillis() * 1000 * 1000;
         for (JsonNode node : arrayNode) 
         {            
@@ -109,7 +118,11 @@ public class LeapDriver extends StatefulSensorDeviceDriver<String> {
             final String routingKey = getRoutingKey();
             final PersistentQueueElement event = new PersistentQueueElement(bytes, routingKey, timestampNanos);
             events.add(event);
+            Date curReading = mapper.convertValue(node.get("receivedTimestamp"),Date.class);
+            if(maxTime.getTime() < curReading.getTime())
+                maxTime = curReading;
         }
+        state = dateFormat.format(maxTime);
         final PollResponse<String> pollResponse = new PollResponse<String>(events, state);
         log.trace("pollEvents: pollResponse={}", pollResponse);
         log.info("pollEvents: END");
