@@ -39,7 +39,7 @@ public class PersistentQueue implements AutoCloseable {
      * The connection should not be used concurrently.
      * Currently, this is enforced by synchronizing access to methods that use it.
      */
-    private final Connection connection;
+    public final Connection connection;
     private final TransactionCoordinator transactionCoordinator;
     private final Semaphore semaphore;
 
@@ -106,6 +106,27 @@ public class PersistentQueue implements AutoCloseable {
                 insertStatement.setLong(3, element.timestamp);
                 insertStatement.execute();
                 autoRollback.commit();
+            }
+        }
+    }
+
+    public void addWithoutCommit(PersistentQueueElement element) throws SQLException, InterruptedException {
+        if (element.id != 0) {
+            throw new IllegalArgumentException();
+        }
+        if (!semaphore.tryAcquire(1)) {
+            log.warn("Persistent queue is full. No more elements can be added until elements are removed.");
+            semaphore.acquire(1);
+            log.info("Persistent queue now has capacity.");
+        }
+        synchronized (this) {
+            try (final PreparedStatement insertStatement = connection.prepareStatement(
+                    "insert into Queue (bytes, routingKey, timestamp) values (?, ?, ?)"))
+            {
+                insertStatement.setBytes(1, element.bytes);
+                insertStatement.setString(2, element.routingKey);
+                insertStatement.setLong(3, element.timestamp);
+                insertStatement.execute();
             }
         }
     }

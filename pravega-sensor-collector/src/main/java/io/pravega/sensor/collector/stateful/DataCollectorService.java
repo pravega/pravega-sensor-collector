@@ -15,6 +15,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import io.pravega.sensor.collector.simple.PersistentQueue;
+import io.pravega.sensor.collector.util.AutoRollback;
 
 /**
  */
@@ -41,21 +42,31 @@ public class DataCollectorService<S> extends AbstractExecutionThreadService {
         log.info("Running");
         for (;;) {
             try {
-                // TODO: Get state from persistent database
-                S state = driver.initialState();
-                // Poll sensor for events.
-                final PollResponse<S> response = driver.pollEvents(state);
-                // TODO: Add samples, state atomically to persistent queue.
-                response.events.stream().forEach(event -> {
-                    try {
-                    log.trace("Adding event {}", event);
-                    persistentQueue.add(event);
-                    } catch (Exception e) {
-                        throw new RuntimeException(e);
-                    }
-                });
-                // TODO: Write state to database
-                // TODO: Commit SQL transaction
+                //Get state from persistent database
+                // S state = driver.initialState();
+                ReadingState readingState = new ReadingState(persistentQueue.connection);
+                S state = (S)readingState.getState();
+
+                try(final AutoRollback autoRollback = new AutoRollback(persistentQueue.connection))
+                {
+                    // Poll sensor for events.
+                    final PollResponse<S> response = driver.pollEvents(state);
+                    //Add samples, state atomically to persistent queue.
+                    response.events.stream().forEach(event -> {
+                        try {
+                            log.trace("Adding event {}", event);
+                            persistentQueue.addWithoutCommit(event);                        
+                        } catch (Exception e) {
+                            throw new RuntimeException(e);
+                        }
+                    });                    
+                    //Write state to database                    
+                    log.info("Last state = {}", state);
+                    readingState.updateState((String)response.state);
+                    log.info("New State = {}",readingState.getState());
+                    //Commit SQL transaction
+                    autoRollback.commit();
+                }
             } catch (Exception e) {
                 log.error("Error", e);
                 Thread.sleep(10000);
