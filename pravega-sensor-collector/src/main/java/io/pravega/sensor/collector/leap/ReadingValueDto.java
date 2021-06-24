@@ -1,5 +1,9 @@
 package io.pravega.sensor.collector.leap;
 
+/**
+ * Sensor reading values for every device reading.
+ * 
+ */
 public class ReadingValueDto {
     final public Integer valueIndex;
     final public Integer componentIndex;
@@ -26,10 +30,8 @@ public class ReadingValueDto {
 
     @Override
     public String toString() {
-        return "{componentIndex=" + componentIndex + ", iconUrl=" + iconUrl + ", label=" + label
-                + ", sensorIndex=" + sensorIndex + ", sensorValueDefinitionId=" + sensorValueDefinitionId + ", status="
-                + status + ", units=" + units + ", value=" + value + ", valueIndex=" + valueIndex + "}";
+        return "{componentIndex=" + componentIndex + ", iconUrl=" + iconUrl + ", label=" + label + ", sensorIndex="
+                + sensorIndex + ", sensorValueDefinitionId=" + sensorValueDefinitionId + ", status=" + status
+                + ", units=" + units + ", value=" + value + ", valueIndex=" + valueIndex + "}";
     }
-    
-    
 }

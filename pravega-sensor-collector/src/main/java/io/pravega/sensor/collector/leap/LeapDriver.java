@@ -75,10 +75,8 @@ public class LeapDriver extends StatefulSensorDeviceDriver<String> {
 
         final long bucketCapacity = 2;
         final long periodMillis = (long) (bucketCapacity * 1000 * pollPeriodSec);
-        bucket = Bucket4j.builder()
-                .withMillisecondPrecision()
-                .addLimit(Bandwidth.simple(bucketCapacity, Duration.ofMillis(periodMillis)))
-                .build();
+        bucket = Bucket4j.builder().withMillisecondPrecision()
+                .addLimit(Bandwidth.simple(bucketCapacity, Duration.ofMillis(periodMillis))).build();
         log.info("Token Bucket: {}", bucket);
 
         bucket.tryConsume(bucketCapacity - 1);
@@ -95,33 +93,41 @@ public class LeapDriver extends StatefulSensorDeviceDriver<String> {
         bucket.asScheduler().consume(1);
         final List<PersistentQueueElement> events = new ArrayList<>();
         final HttpClient client = HttpClient.newHttpClient();
-        final String uri = apiUri + "/ClientApi/V1/DeviceReadings";
-        final HttpRequest request = HttpRequest.newBuilder()
-            .uri(URI.create(uri))
-            .header("Authorization", "Bearer " + getAuthToken())
-            .build();
+        final String uri;
+        if (state == "")
+            uri = apiUri + "/ClientApi/V1/DeviceReadings";
+        else {
+            state = dateFormat.format(Date.from(dateFormat.parse(state).toInstant().plus(Duration.ofMillis(1))));
+            uri = apiUri + "/ClientApi/V1/DeviceReadings?startDate=" + state;
+        }
+        final HttpRequest request = HttpRequest.newBuilder().uri(URI.create(uri))
+                .header("Authorization", "Bearer " + getAuthToken()).build();
         log.info("pollEvents: request={}", request);
         final HttpResponse<String> response = client.send(request, BodyHandlers.ofString());
         log.info("pollEvents: response={}", response);
         if (response.statusCode() != 200) {
-            throw new RuntimeException(MessageFormat.format("HTTP server returned status code {0}", response.statusCode()));
-        };
-        log.trace("pollEvents: body={}", response.body());        
-        JsonNode jsonNode = mapper.readTree(response.body());        
-        final ArrayNode arrayNode = (ArrayNode) jsonNode;
-        Date maxTime = mapper.convertValue(arrayNode.get(0).get("receivedTimestamp"), Date.class);
-
-        final long timestampNanos = System.currentTimeMillis() * 1000 * 1000;
-        for (JsonNode node : arrayNode) {            
-            final byte[] bytes = node.toString().getBytes(StandardCharsets.UTF_8);
-            final String routingKey = getRoutingKey();
-            final PersistentQueueElement event = new PersistentQueueElement(bytes, routingKey, timestampNanos);
-            events.add(event);
-            Date curReading = mapper.convertValue(node.get("receivedTimestamp"),Date.class);
-            if(maxTime.getTime() < curReading.getTime())
-                maxTime = curReading;
+            throw new RuntimeException(
+                    MessageFormat.format("HTTP server returned status code {0}", response.statusCode()));
         }
-        state = dateFormat.format(maxTime);
+        ;
+        log.trace("pollEvents: body={}", response.body());
+        JsonNode jsonNode = mapper.readTree(response.body());
+        final ArrayNode arrayNode = (ArrayNode) jsonNode;
+        // if no response, empty event list and same state will be returned
+        if (arrayNode != null) {
+            Date maxTime = mapper.convertValue(arrayNode.get(0).get("receivedTimestamp"), Date.class);
+            final long timestampNanos = System.currentTimeMillis() * 1000 * 1000;
+            for (JsonNode node : arrayNode) {
+                final byte[] bytes = node.toString().getBytes(StandardCharsets.UTF_8);
+                final String routingKey = getRoutingKey();
+                final PersistentQueueElement event = new PersistentQueueElement(bytes, routingKey, timestampNanos);
+                events.add(event);
+                Date curReading = mapper.convertValue(node.get("receivedTimestamp"), Date.class);
+                if (maxTime.getTime() < curReading.getTime())
+                    maxTime = curReading;
+            }
+            state = dateFormat.format(maxTime);
+        }
         final PollResponse<String> pollResponse = new PollResponse<String>(events, state);
         log.trace("pollEvents: pollResponse={}", pollResponse);
         log.info("pollEvents: END");
@@ -135,21 +141,18 @@ public class LeapDriver extends StatefulSensorDeviceDriver<String> {
         final AuthCredentialsDto authCredentialsDto = new AuthCredentialsDto(userName, password);
         final String requestBody = mapper.writeValueAsString(authCredentialsDto);
         log.info("getAuthToken: requestBody={}", requestBody);
-        final HttpRequest request = HttpRequest.newBuilder()
-            .uri(URI.create(uri))
-            .timeout(Duration.ofMinutes(1))
-            .header("Accept", "*/*")
-            .header("Content-Type", "application/json")
-            // .POST(BodyPublishers.ofString(requestBody))
-            .build();
+        final HttpRequest request = HttpRequest.newBuilder().uri(URI.create(uri)).timeout(Duration.ofMinutes(1))
+                .header("Accept", "*/*").header("Content-Type", "application/json")
+                .POST(BodyPublishers.ofString(requestBody)).build();
         log.info("getAuthToken: request={}", request);
         final HttpResponse<String> response = client.send(request, BodyHandlers.ofString());
         log.info("getAuthToken: response={}", response);
         log.info("getAuthToken: body={}", response.body());
         if (response.statusCode() != 200) {
             throw new RuntimeException(MessageFormat.format("HTTP server returned status code {0} for request {1}",
-                response.statusCode(), request));
-        };
+                    response.statusCode(), request));
+        }
+        ;
         final AuthTokenDto authTokenDto = mapper.readValue(response.body(), AuthTokenDto.class);
         log.info("getAuthToken: authTokenDto={}", authTokenDto);
         log.info("getAuthToken: END");

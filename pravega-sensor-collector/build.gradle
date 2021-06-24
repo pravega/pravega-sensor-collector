@@ -40,10 +40,10 @@ dependencies {
 
     testCompile "junit:junit:${junitVersion}"
 
-    compile "org.glassfish.jersey.containers:jersey-container-grizzly2-http:2.25.1"
-    compile "jakarta.xml.bind:jakarta.xml.bind-api:2.3.2"
-    compile "org.glassfish.jaxb:jaxb-runtime:2.3.2"
-    compile group: 'javax.servlet', name: 'javax.servlet-api', version: '3.0.1'
+    testCompile "org.glassfish.jersey.containers:jersey-container-grizzly2-http:${grizzlyVersion}"
+    testCompile "jakarta.xml.bind:jakarta.xml.bind-api:${jakartaBindVersion}"
+    testCompile "org.glassfish.jaxb:jaxb-runtime:${jaxbVersion}"
+    testCompile "javax.servlet:javax.servlet-api:${javaxServletApiVersion}"
 
 }
 
@@ -69,4 +69,11 @@ startScripts {
                 'DEFAULT_JVM_OPTS=""',
                 'DEFAULT_JVM_OPTS=""\n\n# Source configuration file\n[ -f "${CONF_FILE}" ] && . "${CONF_FILE}"')
     }
+}
+
+task runLeapAPIMockServer(type: JavaExec) {
+    group = "Execution"
+    description = "Run the mock Leap server"
+    classpath = sourceSets.test.runtimeClasspath
+    main = "io.pravega.sensor.collector.leap.LeapAPIMock"
 }
