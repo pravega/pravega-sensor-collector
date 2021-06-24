@@ -36,10 +36,10 @@ public class PersistentQueue implements AutoCloseable {
     private static final Logger log = LoggerFactory.getLogger(PersistentQueue.class);
 
     /**
-     * The connection should not be used concurrently.
-     * Currently, this is enforced by synchronizing access to methods that use it.
+     * The connection should not be used concurrently. Currently, this is enforced
+     * by synchronizing access to methods that use it.
      */
-    public final Connection connection;
+    private final Connection connection;
     private final TransactionCoordinator transactionCoordinator;
     private final Semaphore semaphore;
 
@@ -68,14 +68,11 @@ public class PersistentQueue implements AutoCloseable {
         try {
             final Connection connection = DriverManager.getConnection("jdbc:sqlite:" + fileName);
             try (final Statement statement = connection.createStatement()) {
-                // Use SQLite exclusive locking mode to ensure that another process or device driver instance is not using this database.
-                //statement.execute("PRAGMA locking_mode = EXCLUSIVE");
-                statement.execute(
-                        "create table if not exists Queue (" +
-                                "id integer primary key autoincrement, " +
-                                "bytes blob not null, " +
-                                "routingKey string not null, " +
-                                "timestamp integer not null)");
+                // Use SQLite exclusive locking mode to ensure that another process or device
+                // driver instance is not using this database.
+                // statement.execute("PRAGMA locking_mode = EXCLUSIVE");
+                statement.execute("create table if not exists Queue (" + "id integer primary key autoincrement, "
+                        + "bytes blob not null, " + "routingKey string not null, " + "timestamp integer not null)");
             }
             connection.setAutoCommit(false);
             connection.setTransactionIsolation(TRANSACTION_SERIALIZABLE);
@@ -83,6 +80,10 @@ public class PersistentQueue implements AutoCloseable {
         } catch (SQLException e) {
             throw new RuntimeException(e);
         }
+    }
+
+    public Connection getConnection() {
+        return connection;
     }
 
     /**
@@ -98,9 +99,9 @@ public class PersistentQueue implements AutoCloseable {
             log.info("Persistent queue now has capacity.");
         }
         synchronized (this) {
-            try (final PreparedStatement insertStatement = connection.prepareStatement(
-                    "insert into Queue (bytes, routingKey, timestamp) values (?, ?, ?)");
-                 final AutoRollback autoRollback = new AutoRollback(connection)) {
+            try (final PreparedStatement insertStatement = connection
+                    .prepareStatement("insert into Queue (bytes, routingKey, timestamp) values (?, ?, ?)");
+                    final AutoRollback autoRollback = new AutoRollback(connection)) {
                 insertStatement.setBytes(1, element.bytes);
                 insertStatement.setString(2, element.routingKey);
                 insertStatement.setLong(3, element.timestamp);
@@ -110,6 +111,10 @@ public class PersistentQueue implements AutoCloseable {
         }
     }
 
+    /**
+     * Adds an element to the queue without committing. Blocks until there is enough
+     * capacity.
+     */
     public void addWithoutCommit(PersistentQueueElement element) throws SQLException, InterruptedException {
         if (element.id != 0) {
             throw new IllegalArgumentException();
@@ -120,9 +125,8 @@ public class PersistentQueue implements AutoCloseable {
             log.info("Persistent queue now has capacity.");
         }
         synchronized (this) {
-            try (final PreparedStatement insertStatement = connection.prepareStatement(
-                    "insert into Queue (bytes, routingKey, timestamp) values (?, ?, ?)"))
-            {
+            try (final PreparedStatement insertStatement = connection
+                    .prepareStatement("insert into Queue (bytes, routingKey, timestamp) values (?, ?, ?)")) {
                 insertStatement.setBytes(1, element.bytes);
                 insertStatement.setString(2, element.routingKey);
                 insertStatement.setLong(3, element.timestamp);
@@ -136,14 +140,12 @@ public class PersistentQueue implements AutoCloseable {
      */
     public synchronized List<PersistentQueueElement> peek(long limit) throws SQLException {
         try (final Statement statement = connection.createStatement();
-             final ResultSet rs = statement.executeQuery("select id, bytes, routingKey, timestamp from Queue order by id limit " + limit)) {
+                final ResultSet rs = statement.executeQuery(
+                        "select id, bytes, routingKey, timestamp from Queue order by id limit " + limit)) {
             final List<PersistentQueueElement> result = new ArrayList<>();
             while (rs.next()) {
-                final PersistentQueueElement element = new PersistentQueueElement(
-                        rs.getLong("id"),
-                        rs.getBytes("bytes"),
-                        rs.getString("routingKey"),
-                        rs.getLong("timestamp"));
+                final PersistentQueueElement element = new PersistentQueueElement(rs.getLong("id"),
+                        rs.getBytes("bytes"), rs.getString("routingKey"), rs.getLong("timestamp"));
                 result.add(element);
             }
             return result;
@@ -151,16 +153,17 @@ public class PersistentQueue implements AutoCloseable {
     }
 
     /**
-     * Remove elements from the queue.
-     * Before this method is called, it is expected that the elements have been written to Pravega
-     * in the Pravega transaction txnId, flushed, but not committed.
+     * Remove elements from the queue. Before this method is called, it is expected
+     * that the elements have been written to Pravega in the Pravega transaction
+     * txnId, flushed, but not committed.
      */
     public synchronized void remove(List<PersistentQueueElement> elements, Optional<UUID> txnId) throws SQLException {
         if (!elements.isEmpty()) {
             try (final Statement statement = connection.createStatement();
-                 final AutoRollback autoRollback = new AutoRollback(connection)) {
+                    final AutoRollback autoRollback = new AutoRollback(connection)) {
                 // Create comma-separated list of ids.
-                final String idsStr = String.join(",", elements.stream().map(e -> Long.toString(e.id)).collect(Collectors.toList()));
+                final String idsStr = String.join(",",
+                        elements.stream().map(e -> Long.toString(e.id)).collect(Collectors.toList()));
                 final String deleteSql = "delete from Queue where id in (" + idsStr + ")";
                 statement.execute(deleteSql);
                 transactionCoordinator.addTransactionToCommit(txnId);
@@ -180,7 +183,7 @@ public class PersistentQueue implements AutoCloseable {
 
     private synchronized long getDatabaseRecordCount() throws SQLException {
         try (final Statement statement = connection.createStatement();
-             final ResultSet rs = statement.executeQuery("select count(id) from Queue")) {
+                final ResultSet rs = statement.executeQuery("select count(id) from Queue")) {
             if (rs.next()) {
                 return rs.getLong(1);
             } else {

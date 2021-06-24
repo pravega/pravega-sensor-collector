@@ -173,6 +173,20 @@ git checkout r0.9
   -Dcontroller.transaction.lease.count.max=2592000000 \
   -Dcontroller.transaction.execution.timeBound.days=30
 ```
+## Mock Server
+
+To run the leap mock server
+```shell
+cd pravega-sensor-collector
+./gradlew runLeapAPIMockServer
+```
+
+## Troubleshooting
+
+To show the SQLite database contents:
+```shell
+docker run --rm -it -v /tmp/leap1.db:/tmp/leap1.db keinos/sqlite3 sqlite3 /tmp/leap1.db .dump
+```
 
 ## References
 

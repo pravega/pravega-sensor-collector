@@ -26,7 +26,8 @@ public class DataCollectorService<S> extends AbstractExecutionThreadService {
     private final PersistentQueue persistentQueue;
     private final StatefulSensorDeviceDriver<S> driver;
 
-    public DataCollectorService(String instanceName, PersistentQueue persistentQueue, StatefulSensorDeviceDriver<S> driver) {
+    public DataCollectorService(String instanceName, PersistentQueue persistentQueue,
+            StatefulSensorDeviceDriver<S> driver) {
         this.instanceName = instanceName;
         this.persistentQueue = persistentQueue;
         this.driver = driver;
@@ -42,29 +43,26 @@ public class DataCollectorService<S> extends AbstractExecutionThreadService {
         log.info("Running");
         for (;;) {
             try {
-                //Get state from persistent database
-                // S state = driver.initialState();
-                ReadingState readingState = new ReadingState(persistentQueue.connection);
-                S state = (S)readingState.getState();
-
-                try(final AutoRollback autoRollback = new AutoRollback(persistentQueue.connection))
-                {
+                // Get state from persistent database
+                ReadingState readingState = new ReadingState(persistentQueue.getConnection());
+                S state = (S) readingState.getState();
+                try (final AutoRollback autoRollback = new AutoRollback(persistentQueue.getConnection())) {
                     // Poll sensor for events.
                     final PollResponse<S> response = driver.pollEvents(state);
-                    //Add samples, state atomically to persistent queue.
+                    // Add samples, state atomically to persistent queue.
                     response.events.stream().forEach(event -> {
                         try {
                             log.trace("Adding event {}", event);
-                            persistentQueue.addWithoutCommit(event);                        
+                            persistentQueue.addWithoutCommit(event);
                         } catch (Exception e) {
                             throw new RuntimeException(e);
                         }
-                    });                    
-                    //Write state to database                    
+                    });
+                    // Write state to database
                     log.info("Last state = {}", state);
-                    readingState.updateState((String)response.state);
-                    log.info("New State = {}",readingState.getState());
-                    //Commit SQL transaction
+                    readingState.updateState((String) response.state);
+                    log.info("New State = {}", response.state);
+                    // Commit SQL transaction
                     autoRollback.commit();
                 }
             } catch (Exception e) {
