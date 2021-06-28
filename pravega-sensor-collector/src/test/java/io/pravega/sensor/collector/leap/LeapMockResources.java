@@ -52,12 +52,13 @@ public class LeapMockResources {
         Long offsetDay = Date.from(current.toInstant().minus(Duration.ofDays(1))).getTime(); // reduces 1 day
         Date start = new Date(offsetDay - offsetDay % (24 * 60 * 60 * 1000)); // midnight of previous day
         log.info("Current date= {}", dateFormat.format(current));
-        log.info("Previous day 00:00 UTC= {}", dateFormat.format(start));
-        log.info("Getting all readings starting from {}", dateFormat.format(start));
+        log.info("Getting all readings starting from {}", dateFormat.format(start)); //getting ~1day readings
         int countAll = 0;
-        while (start.getTime() < current.getTime()) // till today, compares in milliseconds
+        for(;;) // till today, compares in milliseconds
         {
             start = Date.from(start.toInstant().plus(Duration.ofMinutes(1)));
+            if(start.getTime() > current.getTime())
+                break;
             ReadingValueDto readingValue1 = new ReadingValueDto(1, 0, 6, 5, "label", "iconUrl", "units",
                     5.637376656633329, "status");
             DeviceReadingsDto deviceReading = new DeviceReadingsDto(start, Arrays.asList(readingValue1, readingValue1),
@@ -81,22 +82,24 @@ public class LeapMockResources {
             List<DeviceReadingsDto> allReadings = getAllReadings();
             List<DeviceReadingsDto> filteredReadings = new ArrayList<>();
             String jsonReadings;
-            if (startDate == null)
+            if (startDate.isEmpty())
+            {
+                log.info("Final {} readings", allReadings.size());
                 jsonReadings = mapper.writeValueAsString(allReadings);
+            }
             else {
                 Date timeStamp = dateFormat.parse(startDate);
-
-                log.info("Filtering readings");
-                int finalCount = 0;
+                log.info("Filtering readings starting from {}",startDate);
                 for (DeviceReadingsDto deviceReading : allReadings) {
                     if (deviceReading.getReadingTimestamp().getTime() >= timeStamp.getTime()) {
                         filteredReadings.add(deviceReading);
-                        finalCount++;
+                        log.info("Device readings date{}", deviceReading.getReadingTimestamp());
                     }
                 }
-                log.info("Final {} readings", finalCount);
+                log.info("Final {} readings", filteredReadings.size());
                 jsonReadings = mapper.writeValueAsString(filteredReadings);
             }
+            
             return jsonReadings;
         } catch (Exception e) {
             log.info("Error", e);
