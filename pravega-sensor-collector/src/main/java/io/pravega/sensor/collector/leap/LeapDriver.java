@@ -10,6 +10,7 @@
 package io.pravega.sensor.collector.leap;
 
 import java.net.URI;
+import java.net.URLEncoder;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
@@ -94,11 +95,13 @@ public class LeapDriver extends StatefulSensorDeviceDriver<String> {
         final List<PersistentQueueElement> events = new ArrayList<>();
         final HttpClient client = HttpClient.newHttpClient();
         final String uri;
-        if (state == "")
+        if (state.isEmpty())
             uri = apiUri + "/ClientApi/V1/DeviceReadings";
         else {
+            //adding 1ms to get new readings from just after the last read state 
             state = dateFormat.format(Date.from(dateFormat.parse(state).toInstant().plus(Duration.ofMillis(1))));
-            uri = apiUri + "/ClientApi/V1/DeviceReadings?startDate=" + state;
+            log.info("New readings starting from state{}",state);
+            uri = apiUri + "/ClientApi/V1/DeviceReadings?startDate=" + URLEncoder.encode(state, StandardCharsets.UTF_8.toString());
         }
         final HttpRequest request = HttpRequest.newBuilder().uri(URI.create(uri))
                 .header("Authorization", "Bearer " + getAuthToken()).build();
@@ -109,12 +112,11 @@ public class LeapDriver extends StatefulSensorDeviceDriver<String> {
             throw new RuntimeException(
                     MessageFormat.format("HTTP server returned status code {0}", response.statusCode()));
         }
-        ;
         log.trace("pollEvents: body={}", response.body());
         JsonNode jsonNode = mapper.readTree(response.body());
         final ArrayNode arrayNode = (ArrayNode) jsonNode;
         // if no response, empty event list and same state will be returned
-        if (arrayNode != null) {
+        if (arrayNode != null && arrayNode.size()!=0) {
             Date maxTime = mapper.convertValue(arrayNode.get(0).get("receivedTimestamp"), Date.class);
             final long timestampNanos = System.currentTimeMillis() * 1000 * 1000;
             for (JsonNode node : arrayNode) {
@@ -128,6 +130,7 @@ public class LeapDriver extends StatefulSensorDeviceDriver<String> {
             }
             state = dateFormat.format(maxTime);
         }
+        log.info("New state will be= {}",state);
         final PollResponse<String> pollResponse = new PollResponse<String>(events, state);
         log.trace("pollEvents: pollResponse={}", pollResponse);
         log.info("pollEvents: END");
@@ -152,7 +155,6 @@ public class LeapDriver extends StatefulSensorDeviceDriver<String> {
             throw new RuntimeException(MessageFormat.format("HTTP server returned status code {0} for request {1}",
                     response.statusCode(), request));
         }
-        ;
         final AuthTokenDto authTokenDto = mapper.readValue(response.body(), AuthTokenDto.class);
         log.info("getAuthToken: authTokenDto={}", authTokenDto);
         log.info("getAuthToken: END");

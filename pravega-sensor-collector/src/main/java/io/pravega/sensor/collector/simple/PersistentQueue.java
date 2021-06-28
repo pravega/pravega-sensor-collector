@@ -71,8 +71,11 @@ public class PersistentQueue implements AutoCloseable {
                 // Use SQLite exclusive locking mode to ensure that another process or device
                 // driver instance is not using this database.
                 // statement.execute("PRAGMA locking_mode = EXCLUSIVE");
-                statement.execute("create table if not exists Queue (" + "id integer primary key autoincrement, "
-                        + "bytes blob not null, " + "routingKey string not null, " + "timestamp integer not null)");
+                statement.execute("create table if not exists Queue (" + 
+                    "id integer primary key autoincrement, " + 
+                    "bytes blob not null, " + 
+                    "routingKey string not null, " + 
+                    "timestamp integer not null)");
             }
             connection.setAutoCommit(false);
             connection.setTransactionIsolation(TRANSACTION_SERIALIZABLE);
