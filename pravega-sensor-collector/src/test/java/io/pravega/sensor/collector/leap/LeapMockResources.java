@@ -82,7 +82,7 @@ public class LeapMockResources {
             List<DeviceReadingsDto> allReadings = getAllReadings();
             List<DeviceReadingsDto> filteredReadings = new ArrayList<>();
             String jsonReadings;
-            if (startDate.isEmpty())
+            if (startDate==null || startDate.isEmpty())
             {
                 log.info("Final {} readings", allReadings.size());
                 jsonReadings = mapper.writeValueAsString(allReadings);
@@ -93,7 +93,6 @@ public class LeapMockResources {
                 for (DeviceReadingsDto deviceReading : allReadings) {
                     if (deviceReading.getReadingTimestamp().getTime() >= timeStamp.getTime()) {
                         filteredReadings.add(deviceReading);
-                        log.info("Device readings date{}", deviceReading.getReadingTimestamp());
                     }
                 }
                 log.info("Final {} readings", filteredReadings.size());
