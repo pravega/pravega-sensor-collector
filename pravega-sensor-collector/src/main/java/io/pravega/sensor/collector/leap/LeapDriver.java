@@ -88,9 +88,13 @@ public class LeapDriver extends StatefulSensorDeviceDriver<String> {
         return "";
     }
 
+    /**
+     * @param state A string containing a timestamp which is the maximum timestamp of any reading
+     *              ever returned by the Leap server.
+     */
     @Override
     public PollResponse<String> pollEvents(String state) throws Exception {
-        log.info("pollEvents: BEGIN");
+        log.debug("pollEvents: BEGIN");
         bucket.asScheduler().consume(1);
         final List<PersistentQueueElement> events = new ArrayList<>();
         final HttpClient client = HttpClient.newHttpClient();
@@ -98,10 +102,9 @@ public class LeapDriver extends StatefulSensorDeviceDriver<String> {
         if (state.isEmpty())
             uri = apiUri + "/ClientApi/V1/DeviceReadings";
         else {
-            //adding 1ms to get new readings from just after the last read state 
-            state = dateFormat.format(Date.from(dateFormat.parse(state).toInstant().plus(Duration.ofMillis(1))));
-            log.info("New readings starting from state{}",state);
-            uri = apiUri + "/ClientApi/V1/DeviceReadings?startDate=" + URLEncoder.encode(state, StandardCharsets.UTF_8.toString());
+            // Add 1 ms to get new readings from just after the last read state.
+            final String startDate = dateFormat.format(Date.from(dateFormat.parse(state).toInstant().plus(Duration.ofMillis(1))));
+            uri = apiUri + "/ClientApi/V1/DeviceReadings?startDate=" + URLEncoder.encode(startDate, StandardCharsets.UTF_8.toString());
         }
         final HttpRequest request = HttpRequest.newBuilder().uri(URI.create(uri))
                 .header("Authorization", "Bearer " + getAuthToken()).build();
