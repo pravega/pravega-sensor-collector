@@ -30,11 +30,10 @@ subprojects {
             url "https://oss.sonatype.org/content/repositories/snapshots"
         }
         maven {
-            url "https://central.maven.org/maven2"
+            url "https://repo1.maven.org/maven2/"
         }
         maven {
             url "https://repo.eclipse.org/content/repositories/paho-snapshots/"
         }
     }
 }
-

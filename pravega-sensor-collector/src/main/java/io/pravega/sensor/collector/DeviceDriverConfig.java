@@ -48,4 +48,9 @@ public class DeviceDriverConfig {
     public DeviceDriverManager getDeviceDriverManager() {
         return deviceDriverManager;
     }
+
+    public DeviceDriverConfig withProperty(String key, String value) {
+        properties.put(key, value);
+        return this;
+    }
 }
