@@ -182,7 +182,6 @@ git checkout r0.9
 
 To run the leap mock server
 ```shell
-cd pravega-sensor-collector
 ./gradlew pravega-sensor-collector::runLeapAPIMockServer
 ```
 
