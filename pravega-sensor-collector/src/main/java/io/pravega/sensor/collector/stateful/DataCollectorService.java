@@ -59,9 +59,9 @@ public class DataCollectorService<S> extends AbstractExecutionThreadService {
                         }
                     });
                     // Write state to database
-                    log.info("Last state = {}", state);
+                    log.debug("Previous state ={}", state);
                     readingState.updateState((String) response.state);
-                    log.info("New State = {}", response.state);
+                    log.debug("New State = {}", response.state);
                     // Commit SQL transaction
                     autoRollback.commit();
                 }

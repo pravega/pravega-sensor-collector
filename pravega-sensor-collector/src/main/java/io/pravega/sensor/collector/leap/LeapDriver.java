@@ -110,7 +110,7 @@ public class LeapDriver extends StatefulSensorDeviceDriver<String> {
                 .header("Authorization", "Bearer " + getAuthToken()).build();
         log.info("pollEvents: request={}", request);
         final HttpResponse<String> response = client.send(request, BodyHandlers.ofString());
-        log.info("pollEvents: response={}", response);
+        log.debug("pollEvents: response={}", response);
         if (response.statusCode() != 200) {
             throw new RuntimeException(
                     MessageFormat.format("HTTP server returned status code {0}", response.statusCode()));
@@ -119,7 +119,7 @@ public class LeapDriver extends StatefulSensorDeviceDriver<String> {
         JsonNode jsonNode = mapper.readTree(response.body());
         final ArrayNode arrayNode = (ArrayNode) jsonNode;
         // if no response, empty event list and same state will be returned
-        if (arrayNode != null && arrayNode.size()!=0) {
+        if (arrayNode != null && arrayNode.size() != 0) {
             Date maxTime = mapper.convertValue(arrayNode.get(0).get("receivedTimestamp"), Date.class);
             final long timestampNanos = System.currentTimeMillis() * 1000 * 1000;
             for (JsonNode node : arrayNode) {
@@ -133,34 +133,34 @@ public class LeapDriver extends StatefulSensorDeviceDriver<String> {
             }
             state = dateFormat.format(maxTime);
         }
-        log.info("New state will be= {}",state);
+        log.debug("pollEvents: New state will be {}", state);
         final PollResponse<String> pollResponse = new PollResponse<String>(events, state);
-        log.trace("pollEvents: pollResponse={}", pollResponse);
-        log.info("pollEvents: END");
+        log.debug("pollEvents: pollResponse={}", pollResponse);
+        log.debug("pollEvents: END");
         return pollResponse;
     }
 
     protected String getAuthToken() throws Exception {
-        log.info("getAuthToken: BEGIN");
+        log.debug("getAuthToken: BEGIN");
         final HttpClient client = HttpClient.newBuilder().version(Version.HTTP_1_1).build();
         final String uri = apiUri + "/api/Auth/authenticate";
         final AuthCredentialsDto authCredentialsDto = new AuthCredentialsDto(userName, password);
         final String requestBody = mapper.writeValueAsString(authCredentialsDto);
-        log.info("getAuthToken: requestBody={}", requestBody);
+        log.debug("getAuthToken: requestBody={}", requestBody);
         final HttpRequest request = HttpRequest.newBuilder().uri(URI.create(uri)).timeout(Duration.ofMinutes(1))
                 .header("Accept", "*/*").header("Content-Type", "application/json")
                 .POST(BodyPublishers.ofString(requestBody)).build();
-        log.info("getAuthToken: request={}", request);
+        log.debug("getAuthToken: request={}", request);
         final HttpResponse<String> response = client.send(request, BodyHandlers.ofString());
-        log.info("getAuthToken: response={}", response);
-        log.info("getAuthToken: body={}", response.body());
+        log.debug("getAuthToken: response={}", response);
+        log.debug("getAuthToken: body={}", response.body());
         if (response.statusCode() != 200) {
             throw new RuntimeException(MessageFormat.format("HTTP server returned status code {0} for request {1}",
                     response.statusCode(), request));
         }
         final AuthTokenDto authTokenDto = mapper.readValue(response.body(), AuthTokenDto.class);
-        log.info("getAuthToken: authTokenDto={}", authTokenDto);
-        log.info("getAuthToken: END");
+        log.debug("getAuthToken: authTokenDto={}", authTokenDto);
+        log.debug("getAuthToken: END");
         return authTokenDto.token;
     }
 }
