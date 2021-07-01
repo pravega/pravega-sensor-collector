@@ -39,6 +39,12 @@ dependencies {
     compile "com.github.vladimir-bukhtoyarov:bucket4j-core:${bucket4jVersion}"
 
     testCompile "junit:junit:${junitVersion}"
+
+    testCompile "org.glassfish.jersey.containers:jersey-container-grizzly2-http:${grizzlyVersion}"
+    testCompile "jakarta.xml.bind:jakarta.xml.bind-api:${jakartaBindVersion}"
+    testCompile "org.glassfish.jaxb:jaxb-runtime:${jaxbVersion}"
+    testCompile "javax.servlet:javax.servlet-api:${javaxServletApiVersion}"
+
 }
 
 tasks.withType(JavaCompile) {
@@ -63,4 +69,11 @@ startScripts {
                 'DEFAULT_JVM_OPTS=""',
                 'DEFAULT_JVM_OPTS=""\n\n# Source configuration file\n[ -f "${CONF_FILE}" ] && . "${CONF_FILE}"')
     }
+}
+
+task runLeapAPIMockServer(type: JavaExec) {
+    group = "Execution"
+    description = "Run the mock Leap server"
+    classpath = sourceSets.test.runtimeClasspath
+    main = "io.pravega.sensor.collector.leap.LeapAPIMock"
 }

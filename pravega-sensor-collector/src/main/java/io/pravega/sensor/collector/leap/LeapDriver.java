@@ -10,6 +10,7 @@
 package io.pravega.sensor.collector.leap;
 
 import java.net.URI;
+import java.net.URLEncoder;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
@@ -22,7 +23,13 @@ import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
 
+import java.text.SimpleDateFormat;
+import java.util.Date;
+import java.util.TimeZone;
+
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.ArrayNode;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -37,6 +44,10 @@ import io.pravega.sensor.collector.stateful.StatefulSensorDeviceDriver;
 
 public class LeapDriver extends StatefulSensorDeviceDriver<String> {
     private static final Logger log = LoggerFactory.getLogger(LeapDriver.class);
+    private static final SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSXXX");
+    static {
+        dateFormat.setTimeZone(TimeZone.getTimeZone("UTC"));
+    }
 
     private static final String POLL_PERIOD_SEC_KEY = "POLL_PERIOD_SEC";
     private static final String API_URI_KEY = "API_URI";
@@ -65,10 +76,8 @@ public class LeapDriver extends StatefulSensorDeviceDriver<String> {
 
         final long bucketCapacity = 2;
         final long periodMillis = (long) (bucketCapacity * 1000 * pollPeriodSec);
-        bucket = Bucket4j.builder()
-                .withMillisecondPrecision()
-                .addLimit(Bandwidth.simple(bucketCapacity, Duration.ofMillis(periodMillis)))
-                .build();
+        bucket = Bucket4j.builder().withMillisecondPrecision()
+                .addLimit(Bandwidth.simple(bucketCapacity, Duration.ofMillis(periodMillis))).build();
         log.info("Token Bucket: {}", bucket);
 
         bucket.tryConsume(bucketCapacity - 1);
@@ -79,60 +88,79 @@ public class LeapDriver extends StatefulSensorDeviceDriver<String> {
         return "";
     }
 
+    /**
+     * @param state A string containing a timestamp which is the maximum timestamp of any reading
+     *              ever returned by the Leap server.
+     */
     @Override
     public PollResponse<String> pollEvents(String state) throws Exception {
-        log.info("pollEvents: BEGIN");
+        log.debug("pollEvents: BEGIN");
         bucket.asScheduler().consume(1);
         final List<PersistentQueueElement> events = new ArrayList<>();
         final HttpClient client = HttpClient.newHttpClient();
-        final String uri = apiUri + "/ClientApi/V1/DeviceReadings";
-        final HttpRequest request = HttpRequest.newBuilder()
-            .uri(URI.create(uri))
-            .header("Authorization", "Bearer " + getAuthToken())
-            .build();
+        final String uri;
+        if (state.isEmpty())
+            uri = apiUri + "/ClientApi/V1/DeviceReadings";
+        else {
+            // Add 1 ms to get new readings from just after the last read state.
+            final String startDate = dateFormat.format(Date.from(dateFormat.parse(state).toInstant().plus(Duration.ofMillis(1))));
+            uri = apiUri + "/ClientApi/V1/DeviceReadings?startDate=" + URLEncoder.encode(startDate, StandardCharsets.UTF_8.toString());
+        }
+        final HttpRequest request = HttpRequest.newBuilder().uri(URI.create(uri))
+                .header("Authorization", "Bearer " + getAuthToken()).build();
         log.info("pollEvents: request={}", request);
         final HttpResponse<String> response = client.send(request, BodyHandlers.ofString());
-        log.info("pollEvents: response={}", response);
+        log.debug("pollEvents: response={}", response);
         if (response.statusCode() != 200) {
-            throw new RuntimeException(MessageFormat.format("HTTP server returned status code {0}", response.statusCode()));
-        };
+            throw new RuntimeException(
+                    MessageFormat.format("HTTP server returned status code {0}", response.statusCode()));
+        }
         log.trace("pollEvents: body={}", response.body());
-        final long timestampNanos = System.currentTimeMillis() * 1000 * 1000;
-        final byte[] bytes = response.body().getBytes(StandardCharsets.UTF_8);
-        final String routingKey = getRoutingKey();
-        final PersistentQueueElement event = new PersistentQueueElement(bytes, routingKey, timestampNanos);
-        events.add(event);
+        JsonNode jsonNode = mapper.readTree(response.body());
+        final ArrayNode arrayNode = (ArrayNode) jsonNode;
+        // if no response, empty event list and same state will be returned
+        if (arrayNode != null && arrayNode.size() != 0) {
+            Date maxTime = mapper.convertValue(arrayNode.get(0).get("receivedTimestamp"), Date.class);
+            final long timestampNanos = System.currentTimeMillis() * 1000 * 1000;
+            for (JsonNode node : arrayNode) {
+                final byte[] bytes = node.toString().getBytes(StandardCharsets.UTF_8);
+                final String routingKey = getRoutingKey();
+                final PersistentQueueElement event = new PersistentQueueElement(bytes, routingKey, timestampNanos);
+                events.add(event);
+                Date curReading = mapper.convertValue(node.get("receivedTimestamp"), Date.class);
+                if (maxTime.getTime() < curReading.getTime())
+                    maxTime = curReading;
+            }
+            state = dateFormat.format(maxTime);
+        }
+        log.debug("pollEvents: New state will be {}", state);
         final PollResponse<String> pollResponse = new PollResponse<String>(events, state);
-        log.trace("pollEvents: pollResponse={}", pollResponse);
-        log.info("pollEvents: END");
+        log.debug("pollEvents: pollResponse={}", pollResponse);
+        log.debug("pollEvents: END");
         return pollResponse;
     }
 
     protected String getAuthToken() throws Exception {
-        log.info("getAuthToken: BEGIN");
+        log.debug("getAuthToken: BEGIN");
         final HttpClient client = HttpClient.newBuilder().version(Version.HTTP_1_1).build();
         final String uri = apiUri + "/api/Auth/authenticate";
         final AuthCredentialsDto authCredentialsDto = new AuthCredentialsDto(userName, password);
         final String requestBody = mapper.writeValueAsString(authCredentialsDto);
-        log.info("getAuthToken: requestBody={}", requestBody);
-        final HttpRequest request = HttpRequest.newBuilder()
-            .uri(URI.create(uri))
-            .timeout(Duration.ofMinutes(1))
-            .header("Accept", "*/*")
-            .header("Content-Type", "application/json")
-            .POST(BodyPublishers.ofString(requestBody))
-            .build();
-        log.info("getAuthToken: request={}", request);
+        log.debug("getAuthToken: requestBody={}", requestBody);
+        final HttpRequest request = HttpRequest.newBuilder().uri(URI.create(uri)).timeout(Duration.ofMinutes(1))
+                .header("Accept", "*/*").header("Content-Type", "application/json")
+                .POST(BodyPublishers.ofString(requestBody)).build();
+        log.debug("getAuthToken: request={}", request);
         final HttpResponse<String> response = client.send(request, BodyHandlers.ofString());
-        log.info("getAuthToken: response={}", response);
-        log.info("getAuthToken: body={}", response.body());
+        log.debug("getAuthToken: response={}", response);
+        log.debug("getAuthToken: body={}", response.body());
         if (response.statusCode() != 200) {
             throw new RuntimeException(MessageFormat.format("HTTP server returned status code {0} for request {1}",
-                response.statusCode(), request));
-        };
+                    response.statusCode(), request));
+        }
         final AuthTokenDto authTokenDto = mapper.readValue(response.body(), AuthTokenDto.class);
-        log.info("getAuthToken: authTokenDto={}", authTokenDto);
-        log.info("getAuthToken: END");
+        log.debug("getAuthToken: authTokenDto={}", authTokenDto);
+        log.debug("getAuthToken: END");
         return authTokenDto.token;
     }
 }

@@ -162,7 +162,11 @@ When possible, integers and floating point values will be converted to their cor
 Each JSON object may have additional static fields.
 These can be defined in the parameter LOG_FILE_INGEST_EVENT_TEMPLATE which accepts a JSON object.
 
-## Development
+## Development Tips
+
+These steps are useful for development.
+
+### Start Pravega Server
 
 ```shell
 cd
@@ -172,6 +176,26 @@ git checkout r0.9
 ./gradlew startStandalone \
   -Dcontroller.transaction.lease.count.max=2592000000 \
   -Dcontroller.transaction.execution.timeBound.days=30
+```
+
+### Start Leap API Mock Server
+
+To run the leap mock server
+```shell
+./gradlew pravega-sensor-collector::runLeapAPIMockServer
+```
+
+### Start Pravega Sensor Collector
+
+```shell
+PRAVEGA_SENSOR_COLLECTOR_PROPERTIES_FILE=src/test/resources/LeapTest.properties \
+./gradlew pravega-sensor-collector::run
+```
+
+### View the SQLite Database
+
+```shell
+docker run --rm -it -v /tmp/leap1.db:/tmp/leap1.db keinos/sqlite3 sqlite3 /tmp/leap1.db .dump
 ```
 
 ## References
