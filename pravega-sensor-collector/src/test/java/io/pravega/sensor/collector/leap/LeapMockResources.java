@@ -13,7 +13,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 import java.text.SimpleDateFormat;
 import java.time.Duration;
-import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
@@ -42,8 +41,8 @@ public class LeapMockResources {
         return jsonAuthToken;
     }
 
-    /** 
-     * Generate readings from time 0:00 UTC of the previous day until the currenttime 
+    /**
+     * Generate readings from time 0:00 UTC of the previous day until the currenttime
      * */
     public List<DeviceReadingsDto> getAllReadings() throws Exception {
         List<DeviceReadingsDto> allReadings = new ArrayList<>();
@@ -51,11 +50,10 @@ public class LeapMockResources {
 
         Long offsetDay = Date.from(current.toInstant().minus(Duration.ofDays(1))).getTime(); // reduces 1 day
         Date start = new Date(offsetDay - offsetDay % (24 * 60 * 60 * 1000)); // midnight of previous day
-        log.info("Current date= {}", dateFormat.format(current));
+        log.info("Current date is {}", dateFormat.format(current));
         log.info("Getting all readings starting from {}", dateFormat.format(start)); //getting ~1day readings
         int countAll = 0;
-        for(;;) // till today, compares in milliseconds
-        {
+        for (;;) {
             start = Date.from(start.toInstant().plus(Duration.ofMinutes(1)));
             if(start.getTime() > current.getTime())
                 break;
@@ -70,7 +68,7 @@ public class LeapMockResources {
         return allReadings;
     }
 
-    /** 
+    /**
      * Gets readings from getAllReadings and filters out any readings prior to startDate.
      * */
     @GET
@@ -82,8 +80,7 @@ public class LeapMockResources {
             List<DeviceReadingsDto> allReadings = getAllReadings();
             List<DeviceReadingsDto> filteredReadings = new ArrayList<>();
             String jsonReadings;
-            if (startDate==null || startDate.isEmpty())
-            {
+            if (startDate==null || startDate.isEmpty()) {
                 log.info("Final {} readings", allReadings.size());
                 jsonReadings = mapper.writeValueAsString(allReadings);
             }
@@ -98,7 +95,6 @@ public class LeapMockResources {
                 log.info("Final {} readings", filteredReadings.size());
                 jsonReadings = mapper.writeValueAsString(filteredReadings);
             }
-            
             return jsonReadings;
         } catch (Exception e) {
             log.info("Error", e);

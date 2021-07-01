@@ -17,11 +17,10 @@ public class ReadingState {
     public final Connection connection;
     public ReadingState(Connection connection) {
         this.connection = connection;
-        log.info("connection: {}", this.connection);
         try {
             try (final Statement statement = connection.createStatement()) {
-                statement.execute("create table if not exists LastReadingState (" + 
-                            "id integer primary key check(id=0)," + 
+                statement.execute("create table if not exists LastReadingState (" +
+                            "id integer primary key check(id=0)," +
                             "lastTimestamp string)");
                 statement.execute("insert or ignore into LastReadingState(id, lastTimestamp) values (0, '')");
             }
