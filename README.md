@@ -40,6 +40,7 @@ Pravega Sensor Collector collects data from sensors and ingests the data into
     - [Start Leap API Mock Server](#start-leap-api-mock-server)
     - [Start Pravega Sensor Collector](#start-pravega-sensor-collector)
     - [View the SQLite Database](#view-the-sqlite-database)
+  - [Release Procedure](#release-procedure)
   - [References](#references)
   - [About](#about)
 
@@ -397,6 +398,20 @@ PRAVEGA_SENSOR_COLLECTOR_PROPERTIES_FILE=src/test/resources/LeapTest.properties 
 admin@gw1:~$
 docker run --rm -it -v /tmp/leap1.db:/tmp/leap1.db keinos/sqlite3 sqlite3 /tmp/leap1.db .dump
 ```
+
+## Release Procedure
+
+Committers of the project should use the following procedure to release a new version.
+
+1.  Increment `APP_VERSION` in `scripts/env.sh`.
+
+2.  Commit the changes to the master branch using the normal Github pull request procedure.
+
+3.  `git tag v0.2.12`
+
+4.  `git push --tag`
+
+5.  Open https://github.com/pravega/pravega-sensor-collector/releases and publish the draft release.
 
 ## References
 
