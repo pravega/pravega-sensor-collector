@@ -17,7 +17,9 @@ Pravega Sensor Collector collects data from sensors and ingests the data into
   - [About Pravega](#about-pravega)
   - [Supported Devices and Interfaces](#supported-devices-and-interfaces)
   - [About this Guide](#about-this-guide)
-  - [Build the Installation Archive](#build-the-installation-archive)
+  - [Obtain the Installation Archive](#obtain-the-installation-archive)
+    - [Download the Installation Archive](#download-the-installation-archive)
+    - [Build the Installation Archive](#build-the-installation-archive)
   - [Installation](#installation)
     - [Configuration Overview](#configuration-overview)
     - [Install the Service](#install-the-service)
@@ -96,7 +98,17 @@ In the instructions that follow, the host where you should run each command.
 - edge1: This is the first host that is running the Pravega cluster.
   This may be a node running Streaming Data Platform (SDP).
 
-## Build the Installation Archive
+## Obtain the Installation Archive
+
+Use either of the following methods to obtain the installation archive.
+
+### Download the Installation Archive
+
+1.  Visit https://github.com/pravega/pravega-sensor-collector/releases.
+
+2.  Download the latest version of pravega-sensor-collector-*.tgz.
+
+### Build the Installation Archive
 
 This must be executed on a build host that has Internet access.
 This will download all dependencies and create a single archive that can be copied to an offline system.
