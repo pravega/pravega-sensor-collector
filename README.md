@@ -12,6 +12,37 @@ You may obtain a copy of the License at
 Pravega Sensor Collector collects data from sensors and ingests the data into
 [Pravega](https://www.pravega.io/) streams.
 
+- [Pravega Sensor Collector](#pravega-sensor-collector)
+  - [Overview](#overview)
+  - [About Pravega](#about-pravega)
+  - [Supported Devices and Interfaces](#supported-devices-and-interfaces)
+  - [About this Guide](#about-this-guide)
+  - [Build the Installation Archive](#build-the-installation-archive)
+  - [Installation](#installation)
+    - [Configuration Overview](#configuration-overview)
+    - [Install the Service](#install-the-service)
+    - [Configure Keycloak Credentials](#configure-keycloak-credentials)
+    - [Using a Private TLS Certificate Authority](#using-a-private-tls-certificate-authority)
+    - [Update Hosts File](#update-hosts-file)
+    - [Maintain the Service](#maintain-the-service)
+  - [Data File Ingestion](#data-file-ingestion)
+    - [Overview](#overview-1)
+    - [Supported File Formats](#supported-file-formats)
+      - [CSV](#csv)
+    - [Write Sample Events](#write-sample-events)
+  - [Phase IV Leap Wireless Gateway Integration](#phase-iv-leap-wireless-gateway-integration)
+  - [Troubleshooting](#troubleshooting)
+    - [Logging](#logging)
+  - [Development Tips](#development-tips)
+    - [Configuration for Debugging](#configuration-for-debugging)
+    - [Adding Additional Devices](#adding-additional-devices)
+    - [Start Pravega Server](#start-pravega-server)
+    - [Start Leap API Mock Server](#start-leap-api-mock-server)
+    - [Start Pravega Sensor Collector](#start-pravega-sensor-collector)
+    - [View the SQLite Database](#view-the-sqlite-database)
+  - [References](#references)
+  - [About](#about)
+
 ## Overview
 
 Pravega Sensor Collector can continuously collect high-resolution samples without interruption,
@@ -52,17 +83,28 @@ Pravega Sensor Collector supports the following devices:
 
 - ST Micro lng2dm 3-axis Femto accelerometer, directly connected via I2C
 - Linux network interface card (NIC) statistics (byte counters, packet counters, error counters, etc.)
+- Phase IV Leap Wireless Gateway
 - Generic CSV file import
 
-## Build the installation archive
+## About this Guide
+
+In the instructions that follow, the host where you should run each command.
+
+- build-host: This is the host that you will use to build the installer archive.
+- gw1: This is the host that will run Pravega Sensor Collector.
+- edge1: This is the first host that is running the Pravega cluster.
+  This may be a node running Streaming Data Platform (SDP).
+
+## Build the Installation Archive
 
 This must be executed on a build host that has Internet access.
 This will download all dependencies and create a single archive that can be copied to an offline system.
 
 1.  On the build host, build the installation archive.
 
-    ```shell script
+    ```shell
     user@build-host:~$
+    sudo apt-get install openjdk-11-jdk
     git clone https://github.com/pravega/pravega-sensor-collector
     cd pravega-sensor-collector
     scripts/build-installer.sh
@@ -71,52 +113,138 @@ This will download all dependencies and create a single archive that can be copi
     This will create the installation archive
     `pravega-sensor-collector/build/distributions/pravega-sensor-collector-${APP_VERSION}.tgz`.
 
-## Install Pravega Sensor Collector
+## Installation
 
-1.  The only prerequisite on the target system is Java 11.x.
+### Configuration Overview
+
+Pravega Sensor Collector is conveniently configured using only environment variables.
+This avoids the need to manage site-specific configuration files and allows a simple shell script
+to be used to customize the configuration.
+All environment variables and properties begin with the prefix `PRAVEGA_SENSOR_COLLECTOR`.
+
+For a list of commonly-used configuration values, see the
+[sample configuration files](pravega-sensor-collector/src/main/dist/conf).
+
+### Install the Service
+
+1.  The only prerequisite on the target system is Java 11.
     On Ubuntu, this can be installed with:
-    ```shell script
+    ```shell
+    admin@gw1:~$
     sudo apt-get install openjdk-11-jre
     ```
 
 2.  Copy the installation archive to the target system in `/tmp`.
 
 3.  Extract the archive.
-    ```shell script
+    ```shell
+    admin@gw1:~$
     sudo mkdir -p /opt/pravega-sensor-collector
     sudo tar -C /opt/pravega-sensor-collector --strip-components 1 \
        -xzvf /tmp/pravega-sensor-collector-*.tgz
     ```
 
 4.  Create the configuration file, starting from a sample configuration file.
-    ```shell script
-    cp /opt/pravega-sensor-collector/conf/env-sample-network-standalone.sh /opt/pravega-sensor-collector/conf/env-local.sh
+    Start with the sample configuration file that is most similar to your environment.
+    See the [sample configuration files](pravega-sensor-collector/src/main/dist/conf).
+
+    ```shell
+    admin@gw1:~$
+    sudo cp /opt/pravega-sensor-collector/conf/env-sample-network.sh /opt/pravega-sensor-collector/conf/env-local.sh
     ```
 
-5.  Install and start as a Systemd service.
-    ```shell script
+5.  Edit the configuration file `/opt/pravega-sensor-collector/conf/env-local.sh`.
+    ```shell
+    admin@gw1:~$
+    sudo nano /opt/pravega-sensor-collector/conf/env-local.sh
+    ```
+
+6. At a minimum, you will need to change the following fields:
+
+   1.  PRAVEGA_SENSOR_COLLECTOR_NET1_PRAVEGA_CONTROLLER_URI: This should have the value 
+       `tls://pravega-controller.${sdp_domain_name}:443`, replacing `${sdp_domain_name}`
+       with the corresponding value in env.yaml.
+
+   2.  PRAVEGA_SENSOR_COLLECTOR_NET1_CREATE_SCOPE: If Pravega is on SDP, set this to `false`.
+
+7.  Install and start as a Systemd service.
+    ```shell
+    admin@gw1:~$
     sudo /opt/pravega-sensor-collector/bin/install-service.sh
+
+### Configure Keycloak Credentials
+
+Keycloak is used to authenticate to Pravega on Streaming Data Platform (SDP).
+
+1. Run the command below on the first SDP host to obtain the Keycloak credentials, which is a JSON object.
+   Set the NAMESPACE variable to the name of your SDP project.
+    ```shell
+    edge@edge1:~$
+    NAMESPACE=edge
+    kubectl get secret ${NAMESPACE}-pravega -n ${NAMESPACE} -o jsonpath="{.data.keycloak\.json}" | base64 -d ; echo
     ```
 
-6.  To view the status of the service:
-    ```shell script
+2. On the target, copy the Keycloak credentials to the file /opt/pravega-sensor-collector/conf/keycloak.json.
+    ```shell
+    admin@gw1:~$
+    sudo nano /opt/pravega-sensor-collector/conf/keycloak.json
+    ```
+
+### Using a Private TLS Certificate Authority
+
+If the TLS Certificate Authority (CA) used by Pravega is not trusted by a well-known public CA, such as Let's Encrypt, you must import the CA certificate.
+
+1. Copy the CA certificate to the target system.
+    ```shell
+    edge@edge1:~/desdp$
+    scp ~/desdp/certs/* admin@gw:
+    ```
+
+2. On the target system, add the CA certificate to the operating system.
+    ```shell
+    admin@gw1:~$
+    sudo /opt/pravega-sensor-collector/bin/import-ca-certificate.sh ~/*.crt
+    ```
+
+### Update Hosts File
+
+If DNS is not configured throughout your network, you may need to edit the /etc/hosts file manually as described in this section.
+
+1. On the first SDP host, run the following commands to obtain the correct IP addresses for the required FQDNs.
+    ```shell
+    edge@edge1:~/desdp$
+    SDP_DOMAIN=sdp.sdp-demo.org
+    echo $(dig +short keycloak.${SDP_DOMAIN})                                 keycloak.${SDP_DOMAIN} ; \
+    echo $(dig +short pravega-controller.${SDP_DOMAIN})                       pravega-controller.${SDP_DOMAIN} ; \
+    echo $(dig +short nautilus-pravega-segment-store-0.pravega.${SDP_DOMAIN}) nautilus-pravega-segment-store-0.pravega.${SDP_DOMAIN}
+    ```
+
+2. Ensure that the previous command returned an IP address for each host name. For example:
+    ```
+    10.42.0.10 keycloak.sdp.cluster1.sdp-demo.org
+    10.42.0.10 pravega-controller.sdp.cluster1.sdp-demo.org
+    10.42.0.12 nautilus-pravega-segment-store-0.pravega.sdp.cluster1.sdp-demo.org
+    ```
+
+3. On the target device, add the output from the previous command to the end of the file /etc/hosts.
+    ```shell
+    admin@gw1:~$
+    sudo nano /etc/hosts
+    ```
+
+### Maintain the Service
+
+1. Restart the service.
+    ```shell
+    admin@gw1:~$
+    sudo systemctl restart pravega-sensor-collector.service
+    ```
+
+2. View the status of the service.
+    ```shell
+    admin@gw1:~$
     sudo systemctl status pravega-sensor-collector.service
-    sudo journalctl -u pravega-sensor-collector.service
-    ```
-
-## How to Configure
-
-Pravega Sensor Collector is conveniently configured using only environment variables.
-This avoids the need to manage site-specific configuration files and allows a simple shell script
-to be used to customize the configuration.
-All environment variables and properties begin with the prefix PRAVEGA_SENSOR_COLLECTOR.
-
-For convenience when debugging in an IDE, configuration values can also be specified in a properties file.
-To use a properties file, you must set the environment variable PRAVEGA_SENSOR_COLLECTOR_PROPERTIES_FILE
-to the path of the properties file.
-
-For a list of commonly-used configuration values, see the
-[sample environment files](pravega-sensor-collector/src/main/dist/conf).
+    sudo journalctl -u pravega-sensor-collector.service -n 1000 --follow
 
 ## Data File Ingestion
 
@@ -124,7 +252,7 @@ For a list of commonly-used configuration values, see the
 
 Pravega Sensor Collector can be configured to read data from files and write the data to Pravega.
 
-Periodically, new files that match the file name pattern in LOG_FILE_INGEST_FILE_SPEC will be identified and ingested.
+Periodically, new files that match the file name pattern in `LOG_FILE_INGEST_FILE_SPEC` will be identified and ingested.
 The names of files can be in any format.
 When multiple files match the file name pattern, the files will be ingested in alphabetical order.
 For this reason, it is important that the file names are generated in alphabetical order.
@@ -137,7 +265,7 @@ This can be accomplished by writing to a file with a ".tmp" extension and then r
 to have a ".csv" extension after the file has been written in its entirety.
 
 After being durably saved to the Pravega stream, the files will be deleted.
-This can be disabled by setting LOG_FILE_INGEST_DELETE_COMPLETED_FILES to false.
+This can be disabled by setting `LOG_FILE_INGEST_DELETE_COMPLETED_FILES` to false.
 
 Each instance of Pravega Sensor Collector will have a unique writer ID.
 The writer ID will be a UUID that is generated the first time the instance starts.
@@ -160,15 +288,84 @@ Data from multiple rows will be combined to efficiently produce events in JSON f
 When possible, integers and floating point values will be converted to their corresponding JSON data types.
 
 Each JSON object may have additional static fields.
-These can be defined in the parameter LOG_FILE_INGEST_EVENT_TEMPLATE which accepts a JSON object.
+These can be defined in the parameter `LOG_FILE_INGEST_EVENT_TEMPLATE` which accepts a JSON object.
+
+### Write Sample Events
+
+If using the CSV file driver, you can simulate the functionality of it by using the procedure in this section.
+
+1. On the target device, create the file named /opt/dw/staging/Accelerometer.0000000001.tmp.
+    ```shell
+    admin@gw1:~$
+    cd /opt/dw/staging
+    sudo nano Accelerometer.0000000001.tmp
+    ```
+
+2. Copy and paste the following contents, then save and exit:
+
+    ```
+    "T","X","Y","Z"
+    "2020-08-19 19:35:44.029","0.458949","9.637929","0.611932"
+    "2020-08-19 19:35:44.031","0.458949","9.484945","0.611932"
+    "2020-08-19 19:35:44.033","0.458949","9.637929","0.611932"
+    "2020-08-19 19:35:44.035","0.611932","9.484945","0.611932"
+    ```
+
+3. Rename the file to have a .csv extension. (This must be an atomic operation.)
+
+    ```shell
+    admin@gw1:~$
+    sudo mv Accelerometer.0000000001.tmp Accelerometer.0000000001.csv
+    ```
+
+4. If you have deployed Flink Tools, within 2 minutes, on the SDP host, you should see the sample events written
+   to the directory `/desdp/lts/edge-data-project-pvc-*/streaming-data-platform/$(hostname)/sensors-parquet/`.
+
+## Phase IV Leap Wireless Gateway Integration
+
+See [env-sample-leap.sh](pravega-sensor-collector/src/main/dist/conf/env-sample-leap.sh) for a sample configuration
+file that reads from a Leap Wireless Gateway.
+
+The following are example records that are written to the Pravega stream.
+
+```json
+{"deviceId":"000072FFFEF0000","readingTimestamp":"2021-11-24T18:42:23Z","receivedTimestamp":"2021-11-24T18:42:33.649728Z","values":[{"componentIndex":0,"sensorIndex":0,"valueIndex":0,"sensorValueDefinitionId":7,"value":23.88,"status":"Success","label":"Temperature  ","iconUrl":"/images/Thermometer_16x16.png","units":""},{"componentIndex":0,"sensorIndex":0,"valueIndex":1,"sensorValueDefinitionId":8,"value":23.87,"status":"Success","label":"Temperature Weighted Average ","iconUrl":"/images/Thermometer_16x16.png","units":""},{"componentIndex":0,"sensorIndex":1,"valueIndex":0,"sensorValueDefinitionId":9,"value":1,"status":"Success","label":"Door Status (Open / Closed)","iconUrl":"/images/Switch_16x16.png","units":""},{"componentIndex":0,"sensorIndex":1,"valueIndex":1,"sensorValueDefinitionId":10,"value":0,"status":"Success","label":"Door Open Time (sec)","iconUrl":"/images/Clock_16x16.png","units":""}]}
+```
+
+```json
+{"deviceId":"000072FFFEF0000","readingTimestamp":"2021-11-24T18:40:23Z","receivedTimestamp":"2021-11-24T18:42:33.649728Z","values":[{"componentIndex":0,"sensorIndex":0,"valueIndex":0,"sensorValueDefinitionId":7,"value":23.88,"status":"Success","label":"Temperature  ","iconUrl":"/images/Thermometer_16x16.png","units":""},{"componentIndex":0,"sensorIndex":0,"valueIndex":1,"sensorValueDefinitionId":8,"value":23.87,"status":"Success","label":"Temperature Weighted Average ","iconUrl":"/images/Thermometer_16x16.png","units":""},{"componentIndex":0,"sensorIndex":1,"valueIndex":0,"sensorValueDefinitionId":9,"value":1,"status":"Success","label":"Door Status (Open / Closed)","iconUrl":"/images/Switch_16x16.png","units":""},{"componentIndex":0,"sensorIndex":1,"valueIndex":1,"sensorValueDefinitionId":10,"value":0,"status":"Success","label":"Door Open Time (sec)","iconUrl":"/images/Clock_16x16.png","units":""}]}
+```
+
+## Troubleshooting
+
+### Logging
+
+You can adjust the logging level by editing the environment variable `JAVA_OPTS` and adding `-Droot.log.level=DEBUG`.
+The default level is INFO.
+
+For example:
+```shell
+export JAVA_OPTS="-Xmx512m -Droot.log.level=DEBUG"
+```
 
 ## Development Tips
 
-These steps are useful for development.
+This information may be useful for developers.
+
+### Configuration for Debugging
+
+For convenience when debugging in an IDE, configuration values can also be specified in a properties file.
+To use a properties file, you must set the environment variable `PRAVEGA_SENSOR_COLLECTOR_PROPERTIES_FILE`
+to the path of the properties file.
+
+### Adding Additional Devices
+
+To add support for additional types of devices, you should create a subclass of [SimpleDeviceDriver.java](https://github.com/pravega/pravega-sensor-collector/blob/master/pravega-sensor-collector/src/main/java/io/pravega/sensor/collector/simple/SimpleDeviceDriver.java) and implement the methods `readRawData`, `createSamples`, `decodeRawDataToSamples`, and `serializeSamples`. Refer to the implementation of [NetworkDriver.java](https://github.com/pravega/pravega-sensor-collector/blob/master/pravega-sensor-collector/src/main/java/io/pravega/sensor/collector/network/NetworkDriver.java) as a guide.
 
 ### Start Pravega Server
 
 ```shell
+admin@gw1:~$
 cd
 git clone https://github.com/pravega/pravega
 cd pravega
@@ -182,12 +379,14 @@ git checkout r0.9
 
 To run the leap mock server
 ```shell
+admin@gw1:~$
 ./gradlew pravega-sensor-collector::runLeapAPIMockServer
 ```
 
 ### Start Pravega Sensor Collector
 
 ```shell
+admin@gw1:~$
 PRAVEGA_SENSOR_COLLECTOR_PROPERTIES_FILE=src/test/resources/LeapTest.properties \
 ./gradlew pravega-sensor-collector::run
 ```
@@ -195,6 +394,7 @@ PRAVEGA_SENSOR_COLLECTOR_PROPERTIES_FILE=src/test/resources/LeapTest.properties 
 ### View the SQLite Database
 
 ```shell
+admin@gw1:~$
 docker run --rm -it -v /tmp/leap1.db:/tmp/leap1.db keinos/sqlite3 sqlite3 /tmp/leap1.db .dump
 ```
 
