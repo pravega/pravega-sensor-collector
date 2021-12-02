@@ -1,12 +1,24 @@
+/**
+ * Copyright (c) Dell Inc., or its subsidiaries. All Rights Reserved.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ */
+
 package io.pravega.sensor.collector.opcua;
 
 import org.apache.commons.codec.binary.Hex;
 
 public class OpcUaRawData {
     public final byte[] bytes;
+    public final long timestamp;
 
-    public OpcUaRawData(byte[] bytes) {
+    public OpcUaRawData(byte[] bytes, long timestamp) {
         this.bytes = bytes;
+        this.timestamp = timestamp;
     }
 
     @Override

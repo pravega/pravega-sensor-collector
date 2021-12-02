@@ -1,3 +1,13 @@
+/**
+ * Copyright (c) Dell Inc., or its subsidiaries. All Rights Reserved.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ */
+
 package io.pravega.sensor.collector.simple.memoryless;
 
 import io.pravega.client.EventStreamClientFactory;
@@ -16,20 +26,26 @@ public abstract class SimpleMemorylessDriver <R> extends DeviceDriver {
     private static final String STREAM_KEY = "STREAM";
     private static final String EXACTLY_ONCE_KEY = "EXACTLY_ONCE";
     private static final String TRANSACTION_TIMEOUT_MINUTES_KEY = "TRANSACTION_TIMEOUT_MINUTES";
-
+    private static final String ROUTING_KEY_KEY = "ROUTING_KEY";
+    private static final String SENSOR_POLL_PERIODICITY_MS = "POLL_PERIODICITY_MS";
 
     private final DataCollectorService<R> dataCollectorService;
     private final EventStreamClientFactory clientFactory;
     private final EventWriter<byte[]> writer;
     private final String writerId;
+    private final String routingKey;
+    private final long readPeriodicityMs;
+
     public SimpleMemorylessDriver(DeviceDriverConfig config) {
         super(config);
         final String scopeName = getScopeName();
         final String streamName = getStreamName();
-        writerId = java.util.UUID.randomUUID().toString() ; //TODO: Bind to client ID after milo integration
+        writerId = java.util.UUID.randomUUID().toString(); //TODO: Bind to client ID after milo integration
         clientFactory = getEventStreamClientFactory(scopeName);
         final double transactionTimeoutMinutes = getTransactionTimeoutMinutes();
         final boolean exactlyOnce = getExactlyOnce();
+        routingKey = getRoutingKey("");
+        readPeriodicityMs = getReadPeriodicityMs();
         writer = EventWriter.create(
                 clientFactory,
                 writerId,
@@ -41,7 +57,7 @@ public abstract class SimpleMemorylessDriver <R> extends DeviceDriver {
                         .transactionTimeoutTime((long) (transactionTimeoutMinutes * 60.0 * 1000.0))
                         .build(),
                 exactlyOnce);
-        dataCollectorService = new DataCollectorService<>(config.getInstanceName(),this , writer);
+        dataCollectorService = new DataCollectorService<>(config.getInstanceName(),this , writer, readPeriodicityMs);
     }
 
     @Override
@@ -91,4 +107,29 @@ public abstract class SimpleMemorylessDriver <R> extends DeviceDriver {
      * Reads raw data (byte arrays) from a sensor.
      */
     abstract public R readRawData() throws Exception;
+
+    /**
+     * Create a payload event to be written from raw data.
+     *
+     * @param rawData
+     */
+    abstract public byte[] getEvent(R rawData);
+
+    /**
+     *
+     * @param rawData
+     * @return
+     */
+    abstract public long getTimestamp(R rawData);
+
+    private String getRoutingKey(String defaultVal) { return getProperty(ROUTING_KEY_KEY, defaultVal);}
+
+    private long getReadPeriodicityMs() { return Long.parseLong(getProperty(SENSOR_POLL_PERIODICITY_MS, Integer.toString(10)));}
+    /**
+     *
+     * @return
+     */
+    public String getRoutingKey() {
+        return routingKey;
+    }
 }
