@@ -12,19 +12,23 @@ package io.pravega.sensor.collector.simple.memoryless;
 
 import com.google.common.util.concurrent.AbstractExecutionThreadService;
 import io.pravega.sensor.collector.util.EventWriter;
+import io.pravega.sensor.collector.util.ObjectSerializer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.nio.ByteBuffer;
+import java.util.Arrays;
 
 public class DataCollectorService <R> extends AbstractExecutionThreadService {
 
     private final String instanceName;
     private final SimpleMemorylessDriver<R> driver;
-    private final EventWriter<byte[]> writer;
+    private final EventWriter<Object> writer;
     private final long readPeriodicityMs;
 
     private static final Logger log = LoggerFactory.getLogger(DataCollectorService.class);
 
-    public DataCollectorService(String instanceName, SimpleMemorylessDriver<R> driver, EventWriter<byte[]> writer, long readPeriodicityMs) {
+    public DataCollectorService(String instanceName, SimpleMemorylessDriver<R> driver, EventWriter<Object> writer, long readPeriodicityMs) {
         this.instanceName = instanceName;
         this.driver = driver;
         this.writer = writer;
@@ -37,29 +41,27 @@ public class DataCollectorService <R> extends AbstractExecutionThreadService {
     }
 
     @Override
-    protected void run() {
+    protected void run() throws InterruptedException {
         for(;;)
         {
             try {
                 final long t0 = System.nanoTime();
                 // Place blocking read request to get sensor data.
-                //TODO : Add recurring sensor data reads in appropriate areas or get RawData in bulk and write iteratively
                 final R rawData = driver.readRawData();
                 long timestamp = 0;
-                byte[] event = driver.getEvent(rawData);
+                Object event = driver.getEvent(rawData);
                 timestamp = Long.max(timestamp, driver.getTimestamp(rawData));
                 //Write the data onto Pravega stream
                 writer.writeEvent(driver.getRoutingKey(),event);
-                final double ms = (System.nanoTime() - t0) * 1e-6;
                 writer.flush();
                 writer.commit(timestamp);
-                log.info(String.format("Done writing %d bytes in %.3f ms to Pravega", event.length, ms));
-                Thread.sleep(readPeriodicityMs);
+                final double ms = (System.nanoTime() - t0) * 1e-6;
+                log.info(String.format("Done writing event in %.3f ms to Pravega", ms));
             } catch (Exception e) {
                 log.error("Error", e);
+
             }
-
-
+            Thread.sleep(readPeriodicityMs);
         }
 
     }

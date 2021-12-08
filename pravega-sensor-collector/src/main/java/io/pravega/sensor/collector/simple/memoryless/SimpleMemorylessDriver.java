@@ -11,11 +11,14 @@
 package io.pravega.sensor.collector.simple.memoryless;
 
 import io.pravega.client.EventStreamClientFactory;
+import io.pravega.client.admin.StreamManager;
 import io.pravega.client.stream.EventWriterConfig;
+import io.pravega.client.stream.StreamConfiguration;
 import io.pravega.client.stream.impl.ByteArraySerializer;
 import io.pravega.sensor.collector.DeviceDriver;
 import io.pravega.sensor.collector.DeviceDriverConfig;
 import io.pravega.sensor.collector.util.EventWriter;
+import io.pravega.sensor.collector.util.ObjectSerializer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -31,7 +34,7 @@ public abstract class SimpleMemorylessDriver <R> extends DeviceDriver {
 
     private final DataCollectorService<R> dataCollectorService;
     private final EventStreamClientFactory clientFactory;
-    private final EventWriter<byte[]> writer;
+    private final EventWriter<Object> writer;
     private final String writerId;
     private final String routingKey;
     private final long readPeriodicityMs;
@@ -46,11 +49,12 @@ public abstract class SimpleMemorylessDriver <R> extends DeviceDriver {
         final boolean exactlyOnce = getExactlyOnce();
         routingKey = getRoutingKey("");
         readPeriodicityMs = getReadPeriodicityMs();
+        createStream(scopeName, streamName);
         writer = EventWriter.create(
                 clientFactory,
                 writerId,
                 streamName,
-                new ByteArraySerializer(),
+                new ObjectSerializer(),
                 EventWriterConfig.builder()
                         .enableConnectionPooling(true)
                         .retryAttempts(Integer.MAX_VALUE)
@@ -113,7 +117,7 @@ public abstract class SimpleMemorylessDriver <R> extends DeviceDriver {
      *
      * @param rawData
      */
-    abstract public byte[] getEvent(R rawData);
+    abstract public Object getEvent(R rawData);
 
     /**
      *
@@ -132,4 +136,5 @@ public abstract class SimpleMemorylessDriver <R> extends DeviceDriver {
     public String getRoutingKey() {
         return routingKey;
     }
+
 }

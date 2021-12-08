@@ -26,6 +26,7 @@ import org.eclipse.milo.opcua.stack.core.types.structured.EndpointDescription;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.IOException;
 import java.security.KeyPair;
 import java.security.cert.X509Certificate;
 import java.util.concurrent.ExecutionException;
@@ -34,14 +35,19 @@ import java.util.function.Predicate;
 public class OpcUaClientDriver extends SimpleMemorylessDriver<OpcUaRawData> {
 
     private static final Logger log = LoggerFactory.getLogger(OpcUaClientDriver.class);
+    private static String ENDPOINT = "ENDPOINT";
+    private static String NS_INDEX = "NAMESPACE_INDEX";
+    private static String NODE_ID  = "NODE_IDENTIFIER";
     private static OpcUaClient opcUaClient;
 
     public OpcUaClientDriver(DeviceDriverConfig config) {
         super(config);
         try {
+            log.info("Trying establishment with OPC server");
             //TODO :connection monitoring and restore
             opcUaClient = buildClient();
             opcUaClient.connect().get();
+            log.info("Connection established with OPC server");
         } catch (UaException | InterruptedException | ExecutionException e) {
             log.error("Error in connection to UA Server", e);
         }
@@ -49,16 +55,16 @@ public class OpcUaClientDriver extends SimpleMemorylessDriver<OpcUaRawData> {
 
 
     @Override
-    public OpcUaRawData readRawData() throws UaException {
-        //TODO : multi reads ?
+    public OpcUaRawData readRawData() throws UaException, IOException {
         UaVariableNode node = opcUaClient.getAddressSpace().getVariableNode(getNodeID());
         DataValue data = node.readValue();
-        return new OpcUaRawData((byte[]) data.getValue().getValue(),System.nanoTime());
+        log.info("Raw-Data of sensor "+ data.getValue().getValue());
+        return new OpcUaRawData(data.getValue().getValue(),data.getSourceTime().getUtcTime());
     }
 
     //TODO : nodeID
     private NodeId getNodeID() {
-        return null;
+        return new NodeId(Integer.parseInt(getProperty(NS_INDEX, "2")),getProperty(NODE_ID));
     }
 
     /**
@@ -67,8 +73,8 @@ public class OpcUaClientDriver extends SimpleMemorylessDriver<OpcUaRawData> {
      * @param rawData
      */
     @Override
-    public byte[] getEvent(OpcUaRawData rawData) {
-        return rawData.bytes;
+    public Object getEvent(OpcUaRawData rawData) {
+        return rawData.data;
     }
 
     /**
@@ -85,22 +91,16 @@ public class OpcUaClientDriver extends SimpleMemorylessDriver<OpcUaRawData> {
                 getEndpointUrl(),
                 endpoints ->
                         endpoints.stream()
-                                .filter(endpointFilter())
                                 .findFirst(),
                 configBuilder ->
                         configBuilder
                                 .setApplicationName(LocalizedText.english("Pravega Sensor Collector opc-ua client"))
                                 .setApplicationUri("urn:pravega:sensor:collector:client")
-                                .setKeyPair(getClientKeyPair())
-                                .setCertificate(getClientCertificate())
-                                .setCertificateChain(getClientCertificateChain())
-                                .setCertificateValidator(getCertificateValidator())
-                                .setIdentityProvider(getIdentityProvider())
                                 .setRequestTimeout(UInteger.valueOf(5000))
-                                .build());
+                                .build()); //Insecure Client connection creation.
     }
 
-    //TODO : Fetch appropriate security policy
+    //TODO : Fetch appropriate security policy : Current -NONE
     private Predicate<EndpointDescription> endpointFilter() {
         return e-> SecurityPolicy.None.getUri().equals(e.getSecurityPolicyUri());
     }
@@ -132,7 +132,7 @@ public class OpcUaClientDriver extends SimpleMemorylessDriver<OpcUaRawData> {
 
     //TODO : EP Config fetch
     private String getEndpointUrl() {
-        return "opc.tcp://localhost:12686/milo";
+        return getProperty(ENDPOINT,"opc.tcp://127.0.0.1:49320");
     }
 
 }

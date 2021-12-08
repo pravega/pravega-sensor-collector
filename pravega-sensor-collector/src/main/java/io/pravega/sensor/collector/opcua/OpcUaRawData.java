@@ -10,21 +10,13 @@
 
 package io.pravega.sensor.collector.opcua;
 
-import org.apache.commons.codec.binary.Hex;
-
 public class OpcUaRawData {
-    public final byte[] bytes;
+    public final Object data;
     public final long timestamp;
 
-    public OpcUaRawData(byte[] bytes, long timestamp) {
-        this.bytes = bytes;
+    public OpcUaRawData(Object data, long timestamp) {
+        this.data = data;
         this.timestamp = timestamp;
     }
 
-    @Override
-    public String toString() {
-        return "OpcUaRawData{" +
-                ", bytes=" + Hex.encodeHexString(bytes) +
-                '}';
-    }
 }
