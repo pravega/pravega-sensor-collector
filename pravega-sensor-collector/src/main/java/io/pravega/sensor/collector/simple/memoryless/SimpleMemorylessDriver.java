@@ -11,16 +11,15 @@
 package io.pravega.sensor.collector.simple.memoryless;
 
 import io.pravega.client.EventStreamClientFactory;
-import io.pravega.client.admin.StreamManager;
 import io.pravega.client.stream.EventWriterConfig;
-import io.pravega.client.stream.StreamConfiguration;
-import io.pravega.client.stream.impl.ByteArraySerializer;
 import io.pravega.sensor.collector.DeviceDriver;
 import io.pravega.sensor.collector.DeviceDriverConfig;
 import io.pravega.sensor.collector.util.EventWriter;
 import io.pravega.sensor.collector.util.ObjectSerializer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.util.List;
 
 public abstract class SimpleMemorylessDriver <R> extends DeviceDriver {
 
@@ -110,7 +109,7 @@ public abstract class SimpleMemorylessDriver <R> extends DeviceDriver {
     /**
      * Reads raw data (byte arrays) from a sensor.
      */
-    abstract public R readRawData() throws Exception;
+    abstract public List<R> readRawData() throws Exception;
 
     /**
      * Create a payload event to be written from raw data.

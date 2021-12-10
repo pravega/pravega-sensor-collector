@@ -12,12 +12,10 @@ package io.pravega.sensor.collector.simple.memoryless;
 
 import com.google.common.util.concurrent.AbstractExecutionThreadService;
 import io.pravega.sensor.collector.util.EventWriter;
-import io.pravega.sensor.collector.util.ObjectSerializer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.nio.ByteBuffer;
-import java.util.Arrays;
+import java.util.List;
 
 public class DataCollectorService <R> extends AbstractExecutionThreadService {
 
@@ -47,16 +45,21 @@ public class DataCollectorService <R> extends AbstractExecutionThreadService {
             try {
                 final long t0 = System.nanoTime();
                 // Place blocking read request to get sensor data.
-                final R rawData = driver.readRawData();
+                final List<R> rawData = driver.readRawData();
+                int eventCounter = 0;
                 long timestamp = 0;
-                Object event = driver.getEvent(rawData);
-                timestamp = Long.max(timestamp, driver.getTimestamp(rawData));
-                //Write the data onto Pravega stream
-                writer.writeEvent(driver.getRoutingKey(),event);
+                for(R dataItr : rawData)
+                {
+                    Object event = driver.getEvent(dataItr);
+                    timestamp = Long.max(timestamp, driver.getTimestamp(dataItr));
+                    //Write the data onto Pravega stream
+                    writer.writeEvent(driver.getRoutingKey(),event);
+                    eventCounter++;
+                }
                 writer.flush();
                 writer.commit(timestamp);
                 final double ms = (System.nanoTime() - t0) * 1e-6;
-                log.info(String.format("Done writing event in %.3f ms to Pravega", ms));
+                log.info(String.format("Done writing %d event in %.3f ms to Pravega", eventCounter, ms));
             } catch (Exception e) {
                 log.error("Error", e);
 
