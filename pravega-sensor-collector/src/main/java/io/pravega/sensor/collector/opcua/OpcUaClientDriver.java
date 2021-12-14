@@ -14,8 +14,8 @@ import io.pravega.sensor.collector.DeviceDriverConfig;
 import io.pravega.sensor.collector.simple.memoryless.SimpleMemorylessDriver;
 import org.eclipse.milo.opcua.sdk.client.OpcUaClient;
 import org.eclipse.milo.opcua.sdk.client.api.identity.IdentityProvider;
-import org.eclipse.milo.opcua.sdk.client.nodes.UaVariableNode;
 import org.eclipse.milo.opcua.stack.client.security.ClientCertificateValidator;
+import org.eclipse.milo.opcua.stack.core.AttributeId;
 import org.eclipse.milo.opcua.stack.core.Identifiers;
 import org.eclipse.milo.opcua.stack.core.NamespaceTable;
 import org.eclipse.milo.opcua.stack.core.UaException;
@@ -27,10 +27,8 @@ import org.eclipse.milo.opcua.stack.core.types.builtin.unsigned.UInteger;
 import org.eclipse.milo.opcua.stack.core.types.enumerated.BrowseDirection;
 import org.eclipse.milo.opcua.stack.core.types.enumerated.BrowseResultMask;
 import org.eclipse.milo.opcua.stack.core.types.enumerated.NodeClass;
-import org.eclipse.milo.opcua.stack.core.types.structured.BrowseDescription;
-import org.eclipse.milo.opcua.stack.core.types.structured.BrowseResult;
-import org.eclipse.milo.opcua.stack.core.types.structured.EndpointDescription;
-import org.eclipse.milo.opcua.stack.core.types.structured.ReferenceDescription;
+import org.eclipse.milo.opcua.stack.core.types.enumerated.TimestampsToReturn;
+import org.eclipse.milo.opcua.stack.core.types.structured.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -41,6 +39,7 @@ import java.util.List;
 import java.util.concurrent.ExecutionException;
 import java.util.function.Predicate;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 import static org.eclipse.milo.opcua.stack.core.types.builtin.unsigned.Unsigned.uint;
 import static org.eclipse.milo.opcua.stack.core.util.ConversionUtil.toList;
@@ -55,6 +54,7 @@ public class OpcUaClientDriver extends SimpleMemorylessDriver<OpcUaRawData> {
     private static OpcUaClient opcUaClient;
     private static Pattern sys;
     private static List<NodeId> sensorList ;
+    private static List<ReadValueId> readValueIds;
     private static NamespaceTable ns;
 
     public OpcUaClientDriver(DeviceDriverConfig config) {
@@ -73,7 +73,8 @@ public class OpcUaClientDriver extends SimpleMemorylessDriver<OpcUaRawData> {
             {
                 sensorList.add(getNodeID());
             }
-            browseNode("",opcUaClient,getNodeID());
+            filterNode(opcUaClient,getNodeID());
+            readValueIds = sensorList.stream().map(nodeId -> new ReadValueId(nodeId, AttributeId.Value.uid(), null, null)).collect(Collectors.toUnmodifiableList());
         } catch (UaException | InterruptedException | ExecutionException e) {
             log.error("Error in connection to UA Server", e);
         }
@@ -81,27 +82,27 @@ public class OpcUaClientDriver extends SimpleMemorylessDriver<OpcUaRawData> {
 
 
     @Override
-    public List<OpcUaRawData> readRawData() throws UaException {
-
-
+    public List<OpcUaRawData> readRawData() throws ExecutionException, InterruptedException {
         List<OpcUaRawData> dataList = new LinkedList<>();
-        for (NodeId nodeIt : sensorList)
+        ReadResponse readResp = opcUaClient.read(0, TimestampsToReturn.Source,readValueIds).get();
+        DataValue[] aggregatedData = readResp.getResults();
+        int i=0;
+        for (DataValue data : aggregatedData)
         {
-            UaVariableNode node = opcUaClient.getAddressSpace().getVariableNode(nodeIt);
-            DataValue data = node.readValue();
-            log.info("Sensor {} with Raw Data {} ",nodeIt.getIdentifier(),data.getValue().getValue());
-            dataList.add(new OpcUaRawData(data.getValue().getValue(),data.getSourceTime().getUtcTime()));
+            // As bulk read operation is in-place read , the list ordering of the input nodes will match the data fetched from responses.
+            log.info("Sensor name-{} : Raw Data-{} ",sensorList.get(i).getIdentifier(),data.getValue().getValue());
+            dataList.add(new OpcUaRawData(data.getValue().getValue(),data.getSourceTime().getUtcTime(), sensorList.get(i++).getIdentifier().toString()));
         }
         return dataList;
     }
 
-    private void browseNode(String indent, OpcUaClient client, NodeId browseRoot) {
+    private void filterNode(OpcUaClient client, NodeId rootNode) {
         BrowseDescription browse = new BrowseDescription(
-                browseRoot,
+                rootNode,
                 BrowseDirection.Forward,
                 Identifiers.References,
                 true,
-                uint(NodeClass.Object.getValue() | NodeClass.Variable.getValue()),
+                uint(NodeClass.Object.getValue() | NodeClass.Variable.getValue()), // Get both Objects and Variable types while browsing
                 uint(BrowseResultMask.All.getValue())
         );
 
@@ -113,21 +114,21 @@ public class OpcUaClientDriver extends SimpleMemorylessDriver<OpcUaRawData> {
             for (ReferenceDescription rd : references) {
                 if (rd.getBrowseName().getName().equalsIgnoreCase("_Hints"))
                 {
+                    //Skip node iteration if the node name is _Hints as it contains hints about variables creation functions supported by server.
                     continue;
                 }
                 else if (sys.matcher(rd.getBrowseName().getName()).find() && rd.getNodeClass().getValue() == NodeClass.Variable.getValue())
                 {
-                    //Sensor Node
+                    //Sensor which matches RegEx and node type being a Variable.
                     log.info("Qualified Sensor:"+rd.getNodeId().toNodeId(ns).get().getIdentifier());
                     sensorList.add(rd.getNodeId().toNodeId(ns).get());
                 }
-                //log.info("{} Node={} ::: Regex match : {} :: DataType {}", indent, rd.getBrowseName().getName(), !sys.matcher(rd.getBrowseName().getName()).find(),rd.getNodeClass());
-                // recursively browse to children
+
                 rd.getNodeId().toNodeId(client.getNamespaceTable())
-                        .ifPresent(nodeId -> browseNode(indent + "  ", client, nodeId));
+                        .ifPresent(nodeId -> filterNode( client, nodeId));
             }
         } catch (InterruptedException | ExecutionException e) {
-            log.error("Browsing nodeId={} failed: {}", browseRoot, e.getMessage(), e);
+            log.error("Browsing nodeId={} failed: {}", rootNode, e.getMessage(), e);
         }
     }
 
