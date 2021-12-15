@@ -42,7 +42,7 @@ public abstract class SimpleMemorylessDriver <R> extends DeviceDriver {
         super(config);
         final String scopeName = getScopeName();
         final String streamName = getStreamName();
-        writerId = java.util.UUID.randomUUID().toString(); //TODO: Bind to client ID after milo integration
+        writerId = java.util.UUID.randomUUID().toString(); //TODO: Bind to meaningful ID if necessary
         clientFactory = getEventStreamClientFactory(scopeName);
         final double transactionTimeoutMinutes = getTransactionTimeoutMinutes();
         final boolean exactlyOnce = getExactlyOnce();
@@ -119,19 +119,16 @@ public abstract class SimpleMemorylessDriver <R> extends DeviceDriver {
     abstract public Object getEvent(R rawData);
 
     /**
-     *
-     * @param rawData
-     * @return
+     * Get timestamp value sourced from server for the particular Raw data object
+     * @param rawData : Object to fetch timestamp from
+     * @return timestamp in Unix Epoch format
      */
     abstract public long getTimestamp(R rawData);
 
     private String getRoutingKey(String defaultVal) { return getProperty(ROUTING_KEY_KEY, defaultVal);}
 
     private long getReadPeriodicityMs() { return Long.parseLong(getProperty(SENSOR_POLL_PERIODICITY_MS, Integer.toString(10)));}
-    /**
-     *
-     * @return
-     */
+
     public String getRoutingKey() {
         return routingKey;
     }

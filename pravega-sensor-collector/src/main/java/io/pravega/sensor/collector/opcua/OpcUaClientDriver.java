@@ -52,7 +52,7 @@ public class OpcUaClientDriver extends SimpleMemorylessDriver<OpcUaRawData> {
     private static String NODE_ID  = "NODE_IDENTIFIER";
     private static String NODE_FILTER  = "NODE_FILTER_REGEX";
     private static OpcUaClient opcUaClient;
-    private static Pattern sys;
+    private static Pattern nodeFilter;
     private static List<NodeId> sensorList ;
     private static List<ReadValueId> readValueIds;
     private static NamespaceTable ns;
@@ -60,14 +60,14 @@ public class OpcUaClientDriver extends SimpleMemorylessDriver<OpcUaRawData> {
     public OpcUaClientDriver(DeviceDriverConfig config) {
         super(config);
         try {
-            log.info("Trying establishment with OPC server");
+            log.info("Trying to establish connection with OPC server");
             //TODO :connection monitoring and restore
             opcUaClient = buildClient();
             opcUaClient.connect().get();
             log.info("Connection established with OPC server");
             ns = opcUaClient.getNamespaceTable();
             log.info("Creating sensor List");
-            sys = Pattern.compile(getNodeFilter());
+            nodeFilter = Pattern.compile(getNodeFilter());
             sensorList = new LinkedList<>();
             if (opcUaClient.getAddressSpace().getNode(getNodeID()).getNodeClass().getValue() == NodeClass.Variable.getValue())
             {
@@ -90,7 +90,7 @@ public class OpcUaClientDriver extends SimpleMemorylessDriver<OpcUaRawData> {
         for (DataValue data : aggregatedData)
         {
             // As bulk read operation is in-place read , the list ordering of the input nodes will match the data fetched from responses.
-            log.info("Sensor name-{} : Raw Data-{} ",sensorList.get(i).getIdentifier(),data.getValue().getValue());
+            log.trace("Sensor name-{} : Raw Data-{} ",sensorList.get(i).getIdentifier(),data.getValue().getValue());
             dataList.add(new OpcUaRawData(data.getValue().getValue(),data.getSourceTime().getUtcTime(), sensorList.get(i++).getIdentifier().toString()));
         }
         return dataList;
@@ -108,7 +108,6 @@ public class OpcUaClientDriver extends SimpleMemorylessDriver<OpcUaRawData> {
 
         try {
             BrowseResult browseResult = client.browse(browse).get();
-
             List<ReferenceDescription> references = toList(browseResult.getReferences());
 
             for (ReferenceDescription rd : references) {
@@ -117,7 +116,7 @@ public class OpcUaClientDriver extends SimpleMemorylessDriver<OpcUaRawData> {
                     //Skip node iteration if the node name is _Hints as it contains hints about variables creation functions supported by server.
                     continue;
                 }
-                else if (sys.matcher(rd.getBrowseName().getName()).find() && rd.getNodeClass().getValue() == NodeClass.Variable.getValue())
+                else if (nodeFilter.matcher(rd.getBrowseName().getName()).find() && rd.getNodeClass().getValue() == NodeClass.Variable.getValue())
                 {
                     //Sensor which matches RegEx and node type being a Variable.
                     log.info("Qualified Sensor:"+rd.getNodeId().toNodeId(ns).get().getIdentifier());
@@ -132,7 +131,6 @@ public class OpcUaClientDriver extends SimpleMemorylessDriver<OpcUaRawData> {
         }
     }
 
-    //TODO : nodeID
     private NodeId getNodeID() {
         return new NodeId(Integer.parseInt(getProperty(NS_INDEX, "2")),getProperty(NODE_ID));
     }
@@ -142,20 +140,11 @@ public class OpcUaClientDriver extends SimpleMemorylessDriver<OpcUaRawData> {
     }
 
 
-    /**
-     * Create a payload event to be written from raw data.
-     *
-     * @param rawData
-     */
     @Override
     public Object getEvent(OpcUaRawData rawData) {
         return rawData.data;
     }
 
-    /**
-     * @param rawData
-     * @return
-     */
     @Override
     public long getTimestamp(OpcUaRawData rawData) {
         return rawData.timestamp;
@@ -208,7 +197,6 @@ public class OpcUaClientDriver extends SimpleMemorylessDriver<OpcUaRawData> {
         return null;
     }
 
-    //TODO : EP Config fetch
     private String getEndpointUrl() {
         return getProperty(ENDPOINT,"opc.tcp://127.0.0.1:49320");
     }
