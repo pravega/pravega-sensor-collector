@@ -38,6 +38,7 @@ dependencies {
     compile "commons-codec:commons-codec:${commonsCodecVersion}"
     compile "com.github.vladimir-bukhtoyarov:bucket4j-core:${bucket4jVersion}"
     compile "org.eclipse.milo:sdk-client:${miloVersion}"
+    compile "com.google.code.gson:gson:${gsonVersion}"
 
     testCompile "junit:junit:${junitVersion}"
 

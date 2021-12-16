@@ -11,14 +11,16 @@
 package io.pravega.sensor.collector.opcua;
 
 public class OpcUaRawData {
-    public final Object data;
-    public final long timestamp;
     public final String nodeIdentifier;
+    public final long timestamp;
+    public final String dataType;
+    public final Object data;
 
-    public OpcUaRawData(Object data, long timestamp, String nodeIdentifier) {
+    public OpcUaRawData(Object data, long timestamp, String nodeIdentifier, String dataType) {
         this.data = data;
         this.timestamp = timestamp;
         this.nodeIdentifier = nodeIdentifier;
+        this.dataType = dataType;
     }
 
 }

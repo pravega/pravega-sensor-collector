@@ -10,6 +10,7 @@
 
 package io.pravega.sensor.collector.opcua;
 
+import com.google.gson.Gson;
 import io.pravega.sensor.collector.DeviceDriverConfig;
 import io.pravega.sensor.collector.simple.memoryless.SimpleMemorylessDriver;
 import org.eclipse.milo.opcua.sdk.client.OpcUaClient;
@@ -23,12 +24,14 @@ import org.eclipse.milo.opcua.stack.core.security.SecurityPolicy;
 import org.eclipse.milo.opcua.stack.core.types.builtin.DataValue;
 import org.eclipse.milo.opcua.stack.core.types.builtin.LocalizedText;
 import org.eclipse.milo.opcua.stack.core.types.builtin.NodeId;
+import org.eclipse.milo.opcua.stack.core.types.builtin.Variant;
 import org.eclipse.milo.opcua.stack.core.types.builtin.unsigned.UInteger;
 import org.eclipse.milo.opcua.stack.core.types.enumerated.BrowseDirection;
 import org.eclipse.milo.opcua.stack.core.types.enumerated.BrowseResultMask;
 import org.eclipse.milo.opcua.stack.core.types.enumerated.NodeClass;
 import org.eclipse.milo.opcua.stack.core.types.enumerated.TimestampsToReturn;
 import org.eclipse.milo.opcua.stack.core.types.structured.*;
+import org.eclipse.milo.opcua.stack.core.util.TypeUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -47,6 +50,8 @@ import static org.eclipse.milo.opcua.stack.core.util.ConversionUtil.toList;
 public class OpcUaClientDriver extends SimpleMemorylessDriver<OpcUaRawData> {
 
     private static final Logger log = LoggerFactory.getLogger(OpcUaClientDriver.class);
+    private static final Gson jsonParser = new Gson();
+
     private static String ENDPOINT = "ENDPOINT";
     private static String NS_INDEX = "NAMESPACE_INDEX";
     private static String NODE_ID  = "NODE_IDENTIFIER";
@@ -90,8 +95,10 @@ public class OpcUaClientDriver extends SimpleMemorylessDriver<OpcUaRawData> {
         for (DataValue data : aggregatedData)
         {
             // As bulk read operation is in-place read , the list ordering of the input nodes will match the data fetched from responses.
-            log.trace("Sensor name-{} : Raw Data-{} ",sensorList.get(i).getIdentifier(),data.getValue().getValue());
-            dataList.add(new OpcUaRawData(data.getValue().getValue(),data.getSourceTime().getUtcTime(), sensorList.get(i++).getIdentifier().toString()));
+            Variant rawVariant = data.getValue();
+            String dataTypeClass = TypeUtil.getBackingClass(rawVariant.getDataType().get().toNodeId(ns).get()).getName();
+            log.trace("Sensor name {} : Raw Data {}",sensorList.get(i).getIdentifier(),rawVariant.getValue());
+            dataList.add(new OpcUaRawData(rawVariant.getValue(),data.getSourceTime().getUtcTime(), sensorList.get(i++).getIdentifier().toString(),dataTypeClass));
         }
         return dataList;
     }
@@ -142,7 +149,7 @@ public class OpcUaClientDriver extends SimpleMemorylessDriver<OpcUaRawData> {
 
     @Override
     public Object getEvent(OpcUaRawData rawData) {
-        return rawData.data;
+        return jsonParser.toJson(rawData);
     }
 
     @Override
