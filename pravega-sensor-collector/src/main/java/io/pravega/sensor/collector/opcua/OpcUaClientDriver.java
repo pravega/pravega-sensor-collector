@@ -1,11 +1,11 @@
 /**
  * Copyright (c) Dell Inc., or its subsidiaries. All Rights Reserved.
- *
+ * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ * <p>
+ * http://www.apache.org/licenses/LICENSE-2.0
  */
 
 package io.pravega.sensor.collector.opcua;
@@ -35,6 +35,7 @@ import org.eclipse.milo.opcua.stack.core.util.TypeUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.nio.charset.StandardCharsets;
 import java.security.KeyPair;
 import java.security.cert.X509Certificate;
 import java.util.LinkedList;
@@ -54,51 +55,45 @@ public class OpcUaClientDriver extends SimpleMemorylessDriver<OpcUaRawData> {
 
     private static String ENDPOINT = "ENDPOINT";
     private static String NS_INDEX = "NAMESPACE_INDEX";
-    private static String NODE_ID  = "NODE_IDENTIFIER";
-    private static String NODE_FILTER  = "NODE_FILTER_REGEX";
+    private static String NODE_ID = "NODE_IDENTIFIER";
+    private static String NODE_FILTER = "NODE_FILTER_REGEX";
     private static OpcUaClient opcUaClient;
     private static Pattern nodeFilter;
-    private static List<NodeId> sensorList ;
+    private static List<NodeId> sensorList;
     private static List<ReadValueId> readValueIds;
     private static NamespaceTable ns;
 
-    public OpcUaClientDriver(DeviceDriverConfig config) {
+    public OpcUaClientDriver(DeviceDriverConfig config) throws UaException, ExecutionException, InterruptedException {
         super(config);
-        try {
-            log.info("Trying to establish connection with OPC server");
-            //TODO :connection monitoring and restore
-            opcUaClient = buildClient();
-            opcUaClient.connect().get();
-            log.info("Connection established with OPC server");
-            ns = opcUaClient.getNamespaceTable();
-            log.info("Creating sensor List");
-            nodeFilter = Pattern.compile(getNodeFilter());
-            sensorList = new LinkedList<>();
-            if (opcUaClient.getAddressSpace().getNode(getNodeID()).getNodeClass().getValue() == NodeClass.Variable.getValue())
-            {
-                sensorList.add(getNodeID());
-            }
-            filterNode(opcUaClient,getNodeID());
-            readValueIds = sensorList.stream().map(nodeId -> new ReadValueId(nodeId, AttributeId.Value.uid(), null, null)).collect(Collectors.toUnmodifiableList());
-        } catch (UaException | InterruptedException | ExecutionException e) {
-            log.error("Error in connection to UA Server", e);
+        log.info("Trying to establish connection with OPC server");
+        //TODO :connection monitoring and restore
+        opcUaClient = buildClient();
+        opcUaClient.connect().get();
+        log.info("Connection established with OPC server");
+        ns = opcUaClient.getNamespaceTable();
+        log.info("Creating sensor List");
+        nodeFilter = Pattern.compile(getNodeFilter());
+        sensorList = new LinkedList<>();
+        if (opcUaClient.getAddressSpace().getNode(getNodeID()).getNodeClass().getValue() == NodeClass.Variable.getValue()) {
+            sensorList.add(getNodeID());
         }
+        filterNode(opcUaClient, getNodeID());
+        readValueIds = sensorList.stream().map(nodeId -> new ReadValueId(nodeId, AttributeId.Value.uid(), null, null)).collect(Collectors.toUnmodifiableList());
     }
 
 
     @Override
     public List<OpcUaRawData> readRawData() throws ExecutionException, InterruptedException {
         List<OpcUaRawData> dataList = new LinkedList<>();
-        ReadResponse readResp = opcUaClient.read(0, TimestampsToReturn.Source,readValueIds).get();
+        ReadResponse readResp = opcUaClient.read(0, TimestampsToReturn.Source, readValueIds).get();
         DataValue[] aggregatedData = readResp.getResults();
-        int i=0;
-        for (DataValue data : aggregatedData)
-        {
+        int i = 0;
+        for (DataValue data : aggregatedData) {
             // As bulk read operation is in-place read , the list ordering of the input nodes will match the data fetched from responses.
             Variant rawVariant = data.getValue();
             String dataTypeClass = TypeUtil.getBackingClass(rawVariant.getDataType().get().toNodeId(ns).get()).getName();
-            log.trace("Sensor name {} : Raw Data {}",sensorList.get(i).getIdentifier(),rawVariant.getValue());
-            dataList.add(new OpcUaRawData(rawVariant.getValue(),data.getSourceTime().getUtcTime(), sensorList.get(i++).getIdentifier().toString(),dataTypeClass));
+            log.trace("Sensor name {} : Raw Data {}", sensorList.get(i).getIdentifier(), rawVariant.getValue());
+            dataList.add(new OpcUaRawData(rawVariant.getValue(), data.getSourceTime().getUtcTime(), sensorList.get(i++).getIdentifier().toString(), dataTypeClass));
         }
         return dataList;
     }
@@ -118,20 +113,17 @@ public class OpcUaClientDriver extends SimpleMemorylessDriver<OpcUaRawData> {
             List<ReferenceDescription> references = toList(browseResult.getReferences());
 
             for (ReferenceDescription rd : references) {
-                if (rd.getBrowseName().getName().equalsIgnoreCase("_Hints"))
-                {
+                if (rd.getBrowseName().getName().equalsIgnoreCase("_Hints")) {
                     //Skip node iteration if the node name is _Hints as it contains hints about variables creation functions supported by server.
                     continue;
-                }
-                else if (nodeFilter.matcher(rd.getBrowseName().getName()).find() && rd.getNodeClass().getValue() == NodeClass.Variable.getValue())
-                {
+                } else if (nodeFilter.matcher(rd.getBrowseName().getName()).find() && rd.getNodeClass().getValue() == NodeClass.Variable.getValue()) {
                     //Sensor which matches RegEx and node type being a Variable.
-                    log.info("Qualified Sensor:"+rd.getNodeId().toNodeId(ns).get().getIdentifier());
+                    log.info("Qualified Sensor: {}", rd.getNodeId().toNodeId(ns).get().getIdentifier());
                     sensorList.add(rd.getNodeId().toNodeId(ns).get());
                 }
 
                 rd.getNodeId().toNodeId(client.getNamespaceTable())
-                        .ifPresent(nodeId -> filterNode( client, nodeId));
+                        .ifPresent(nodeId -> filterNode(client, nodeId));
             }
         } catch (InterruptedException | ExecutionException e) {
             log.error("Browsing nodeId={} failed: {}", rootNode, e.getMessage(), e);
@@ -139,17 +131,17 @@ public class OpcUaClientDriver extends SimpleMemorylessDriver<OpcUaRawData> {
     }
 
     private NodeId getNodeID() {
-        return new NodeId(Integer.parseInt(getProperty(NS_INDEX, "2")),getProperty(NODE_ID));
+        return new NodeId(Integer.parseInt(getProperty(NS_INDEX, "2")), getProperty(NODE_ID));
     }
 
-    private String getNodeFilter(){
-        return getProperty(NODE_FILTER , "^(?!_).*");
+    private String getNodeFilter() {
+        return getProperty(NODE_FILTER, "^(?!_).*");
     }
 
 
     @Override
-    public Object getEvent(OpcUaRawData rawData) {
-        return jsonParser.toJson(rawData);
+    public byte[] getEvent(OpcUaRawData rawData) {
+        return jsonParser.toJson(rawData).getBytes(StandardCharsets.UTF_8);
     }
 
     @Override
@@ -173,10 +165,9 @@ public class OpcUaClientDriver extends SimpleMemorylessDriver<OpcUaRawData> {
     }
 
 
-
     //TODO : Fetch appropriate security policy : Current -NONE
     private Predicate<EndpointDescription> endpointFilter() {
-        return e-> SecurityPolicy.None.getUri().equals(e.getSecurityPolicyUri());
+        return e -> SecurityPolicy.None.getUri().equals(e.getSecurityPolicyUri());
     }
 
     //TODO : Keystore
@@ -205,7 +196,7 @@ public class OpcUaClientDriver extends SimpleMemorylessDriver<OpcUaRawData> {
     }
 
     private String getEndpointUrl() {
-        return getProperty(ENDPOINT,"opc.tcp://127.0.0.1:49320");
+        return getProperty(ENDPOINT, "opc.tcp://127.0.0.1:49320");
     }
 
 }

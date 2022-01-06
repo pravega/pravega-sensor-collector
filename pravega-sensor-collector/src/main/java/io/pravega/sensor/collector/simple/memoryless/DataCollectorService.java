@@ -1,11 +1,11 @@
 /**
  * Copyright (c) Dell Inc., or its subsidiaries. All Rights Reserved.
- *
+ * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ * <p>
+ * http://www.apache.org/licenses/LICENSE-2.0
  */
 
 package io.pravega.sensor.collector.simple.memoryless;
@@ -17,16 +17,16 @@ import org.slf4j.LoggerFactory;
 
 import java.util.List;
 
-public class DataCollectorService <R> extends AbstractExecutionThreadService {
+public class DataCollectorService<R> extends AbstractExecutionThreadService {
 
     private final String instanceName;
     private final SimpleMemorylessDriver<R> driver;
-    private final EventWriter<Object> writer;
+    private final EventWriter<byte[]> writer;
     private final long readPeriodicityMs;
 
     private static final Logger log = LoggerFactory.getLogger(DataCollectorService.class);
 
-    public DataCollectorService(String instanceName, SimpleMemorylessDriver<R> driver, EventWriter<Object> writer, long readPeriodicityMs) {
+    public DataCollectorService(String instanceName, SimpleMemorylessDriver<R> driver, EventWriter<byte[]> writer, long readPeriodicityMs) {
         this.instanceName = instanceName;
         this.driver = driver;
         this.writer = writer;
@@ -35,25 +35,23 @@ public class DataCollectorService <R> extends AbstractExecutionThreadService {
 
     @Override
     protected String serviceName() {
-        return super.serviceName() + "-"+instanceName;
+        return super.serviceName() + "-" + instanceName;
     }
 
     @Override
     protected void run() throws InterruptedException {
-        for(;;)
-        {
+        for (; ; ) {
             try {
                 final long t0 = System.nanoTime();
                 // Place blocking read request to get sensor data.
                 final List<R> rawData = driver.readRawData();
                 int eventCounter = 0;
                 long timestamp = 0;
-                for(R dataItr : rawData)
-                {
-                    Object event = driver.getEvent(dataItr);
+                for (R dataItr : rawData) {
+                    byte[] event = driver.getEvent(dataItr);
                     timestamp = Long.max(timestamp, driver.getTimestamp(dataItr));
                     //Write the data onto Pravega stream
-                    writer.writeEvent(driver.getRoutingKey(),event);
+                    writer.writeEvent(driver.getRoutingKey(), event);
                     eventCounter++;
                 }
                 writer.flush();

@@ -1,27 +1,27 @@
 /**
  * Copyright (c) Dell Inc., or its subsidiaries. All Rights Reserved.
- *
+ * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ * <p>
+ * http://www.apache.org/licenses/LICENSE-2.0
  */
 
 package io.pravega.sensor.collector.simple.memoryless;
 
 import io.pravega.client.EventStreamClientFactory;
 import io.pravega.client.stream.EventWriterConfig;
+import io.pravega.client.stream.impl.ByteArraySerializer;
 import io.pravega.sensor.collector.DeviceDriver;
 import io.pravega.sensor.collector.DeviceDriverConfig;
 import io.pravega.sensor.collector.util.EventWriter;
-import io.pravega.sensor.collector.util.ObjectSerializer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.List;
 
-public abstract class SimpleMemorylessDriver <R> extends DeviceDriver {
+public abstract class SimpleMemorylessDriver<R> extends DeviceDriver {
 
     private static final Logger log = LoggerFactory.getLogger(SimpleMemorylessDriver.class);
     private static final String SCOPE_KEY = "SCOPE";
@@ -33,7 +33,7 @@ public abstract class SimpleMemorylessDriver <R> extends DeviceDriver {
 
     private final DataCollectorService<R> dataCollectorService;
     private final EventStreamClientFactory clientFactory;
-    private final EventWriter<Object> writer;
+    private final EventWriter<byte[]> writer;
     private final String writerId;
     private final String routingKey;
     private final long readPeriodicityMs;
@@ -53,14 +53,14 @@ public abstract class SimpleMemorylessDriver <R> extends DeviceDriver {
                 clientFactory,
                 writerId,
                 streamName,
-                new ObjectSerializer(),
+                new ByteArraySerializer(),
                 EventWriterConfig.builder()
                         .enableConnectionPooling(true)
                         .retryAttempts(Integer.MAX_VALUE)
                         .transactionTimeoutTime((long) (transactionTimeoutMinutes * 60.0 * 1000.0))
                         .build(),
                 exactlyOnce);
-        dataCollectorService = new DataCollectorService<>(config.getInstanceName(),this , writer, readPeriodicityMs);
+        dataCollectorService = new DataCollectorService<>(config.getInstanceName(), this, writer, readPeriodicityMs);
     }
 
     @Override
@@ -116,18 +116,23 @@ public abstract class SimpleMemorylessDriver <R> extends DeviceDriver {
      *
      * @param rawData
      */
-    abstract public Object getEvent(R rawData);
+    abstract public byte[] getEvent(R rawData);
 
     /**
      * Get timestamp value sourced from server for the particular Raw data object
+     *
      * @param rawData : Object to fetch timestamp from
      * @return timestamp in Unix Epoch format
      */
     abstract public long getTimestamp(R rawData);
 
-    private String getRoutingKey(String defaultVal) { return getProperty(ROUTING_KEY_KEY, defaultVal);}
+    private String getRoutingKey(String defaultVal) {
+        return getProperty(ROUTING_KEY_KEY, defaultVal);
+    }
 
-    private long getReadPeriodicityMs() { return Long.parseLong(getProperty(SENSOR_POLL_PERIODICITY_MS, Integer.toString(10)));}
+    private long getReadPeriodicityMs() {
+        return Long.parseLong(getProperty(SENSOR_POLL_PERIODICITY_MS, Integer.toString(10)));
+    }
 
     public String getRoutingKey() {
         return routingKey;
