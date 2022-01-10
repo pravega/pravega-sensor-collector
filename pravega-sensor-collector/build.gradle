@@ -15,8 +15,8 @@ group = "io.pravega"
 archivesBaseName = "pravega-sensor-collector"
 description = "pravega-sensor-collector"
 mainClassName = "io.pravega.sensor.collector.PravegaSensorCollectorApp"
-sourceCompatibility = 1.8
-targetCompatibility = 1.8
+sourceCompatibility = 11
+targetCompatibility = 11
 
 dependencies {
     compile "org.slf4j:slf4j-api:${slf4jApiVersion}"
@@ -37,6 +37,8 @@ dependencies {
     compile "org.apache.commons:commons-csv:${commonsCSVVersion}"
     compile "commons-codec:commons-codec:${commonsCodecVersion}"
     compile "com.github.vladimir-bukhtoyarov:bucket4j-core:${bucket4jVersion}"
+    compile "org.eclipse.milo:sdk-client:${miloVersion}"
+    compile "com.google.code.gson:gson:${gsonVersion}"
 
     testCompile "junit:junit:${junitVersion}"
 
