@@ -21,7 +21,7 @@ public class LeapAPIMock {
      * @return Grizzly HTTP server.
      */
     private static HttpServer startServer() {
-        final ResourceConfig rc = new ResourceConfig().packages("io.pravega.sensor.collector.leap");
+        final ResourceConfig rc = new ResourceConfig(LeapMockResources.class);
         return GrizzlyHttpServerFactory.createHttpServer(URI.create(SERVER_URI + ":" + PORT_NUM), rc);
     }
 
