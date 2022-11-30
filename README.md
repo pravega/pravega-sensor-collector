@@ -88,6 +88,7 @@ Pravega Sensor Collector supports the following devices:
 - Linux network interface card (NIC) statistics (byte counters, packet counters, error counters, etc.)
 - Phase IV Leap Wireless Gateway
 - Generic CSV file import
+- OPC UA Client
 
 ## About this Guide
 
@@ -194,7 +195,7 @@ Keycloak is used to authenticate to Pravega on Streaming Data Platform (SDP).
     ```shell
     edge@edge1:~$
     NAMESPACE=edge
-    kubectl get secret ${NAMESPACE}-pravega -n ${NAMESPACE} -o jsonpath="{.data.keycloak\.json}" | base64 -d ; echo
+    kubectl get secret ${NAMESPACE}-ext-pravega -n ${NAMESPACE} -o jsonpath="{.data.keycloak\.json}" | base64 -d ; echo
     ```
 
 2. On the target, copy the Keycloak credentials to the file /opt/pravega-sensor-collector/conf/keycloak.json.
@@ -212,7 +213,12 @@ If the TLS Certificate Authority (CA) used by Pravega is not trusted by a well-k
     edge@edge1:~/desdp$
     scp ~/desdp/certs/* admin@gw:
     ```
-
+    OR
+    ```
+    kubectl get secret pravega-controller-tls -n nautilus-pravega -o jsonpath="{.data.tls\.crt}" | base64 --decode > ~/pravega.crt
+    kubectl get secret keycloak-tls -n nautilus-system -o jsonpath="{.data.tls\.crt}" | base64 --decode > ~/keycloak.crt
+    kubectl get secret pravega-tls -n nautilus-pravega -o jsonpath="{.data.tls\.crt}" | base64 --decode > ~/pravegaAll.crt
+    ```
 2. On the target system, add the CA certificate to the operating system.
     ```shell
     admin@gw1:~$
@@ -305,6 +311,9 @@ These can be defined in the parameter `LOG_FILE_INGEST_EVENT_TEMPLATE` which acc
 
 ### Write Sample Events
 
+Edit the configuration file /opt/pravega-sensor-collector/conf/env-local.sh
+(See [env-sample-telit.sh](pravega-sensor-collector/src/main/dist/conf/env-sample-telit.sh) for a sample configuration)
+
 If using the CSV file driver, you can simulate the functionality of it by using the procedure in this section.
 
 1. On the target device, create the file named /opt/dw/staging/Accelerometer.0000000001.tmp.
@@ -336,8 +345,8 @@ If using the CSV file driver, you can simulate the functionality of it by using 
 
 ## Phase IV Leap Wireless Gateway Integration
 
-See [env-sample-leap.sh](pravega-sensor-collector/src/main/dist/conf/env-sample-leap.sh) for a sample configuration
-file that reads from a Leap Wireless Gateway.
+Edit the configuration file /opt/pravega-sensor-collector/conf/env-local.sh
+(See [env-sample-leap.sh](pravega-sensor-collector/src/main/dist/conf/env-sample-leap.sh) for a sample configuration)
 
 The following are example records that are written to the Pravega stream.
 
@@ -348,6 +357,24 @@ The following are example records that are written to the Pravega stream.
 ```json
 {"deviceId":"000072FFFEF0000","readingTimestamp":"2021-11-24T18:40:23Z","receivedTimestamp":"2021-11-24T18:42:33.649728Z","values":[{"componentIndex":0,"sensorIndex":0,"valueIndex":0,"sensorValueDefinitionId":7,"value":23.88,"status":"Success","label":"Temperature  ","iconUrl":"/images/Thermometer_16x16.png","units":""},{"componentIndex":0,"sensorIndex":0,"valueIndex":1,"sensorValueDefinitionId":8,"value":23.87,"status":"Success","label":"Temperature Weighted Average ","iconUrl":"/images/Thermometer_16x16.png","units":""},{"componentIndex":0,"sensorIndex":1,"valueIndex":0,"sensorValueDefinitionId":9,"value":1,"status":"Success","label":"Door Status (Open / Closed)","iconUrl":"/images/Switch_16x16.png","units":""},{"componentIndex":0,"sensorIndex":1,"valueIndex":1,"sensorValueDefinitionId":10,"value":0,"status":"Success","label":"Door Open Time (sec)","iconUrl":"/images/Clock_16x16.png","units":""}]}
 ```
+
+## Linux network interface card (NIC) statistics
+
+Edit the configuration file /opt/pravega-sensor-collector/conf/env-local.sh
+(See [env-sample-network.sh](pravega-sensor-collector/src/main/dist/conf/env-sample-network.sh) for a sample configuration)
+
+To get `PRAVEGA_SENSOR_COLLECTOR_NET1_NETWORK_INTERFACE` value
+```shell
+admin@gw1:~$
+ls /sys/class/net/
+```
+
+## OPC UA Client
+
+Edit the configuration file /opt/pravega-sensor-collector/conf/env-local.sh
+(See [env-sample-opcua.sh](pravega-sensor-collector/src/main/dist/conf/env-sample-opcua.sh) for a sample configuration)
+
+To Simulate use OPC UA Servers like Kepware or opensource servers [opc-ua-demo-server](https://github.com/digitalpetri/opc-ua-demo-server)
 
 ## Troubleshooting
 
@@ -382,7 +409,7 @@ admin@gw1:~$
 cd
 git clone https://github.com/pravega/pravega
 cd pravega
-git checkout r0.9
+git checkout r0.12
 ./gradlew startStandalone \
   -Dcontroller.transaction.lease.count.max=2592000000 \
   -Dcontroller.transaction.execution.timeBound.days=30
@@ -419,7 +446,7 @@ Committers of the project should use the following procedure to release a new ve
 
 2.  Commit the changes to the master branch using the normal Github pull request procedure.
 
-3.  `git tag v0.2.12`
+3.  `git tag v0.2.14`
 
 4.  `git push --tag`
 
