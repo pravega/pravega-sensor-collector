@@ -97,15 +97,6 @@ public class EventGenerator {
         MessageType modifiedSchema = new MessageType(schema.getName(), fields);
         
         Schema avroSchema = new AvroSchemaConverter(conf).convert(modifiedSchema);
-
-        // //Creating new schema from avroSchema with modified field names (field names must begin with alphabets or '_')
-        // SchemaBuilder.FieldAssembler<Schema> assembler = SchemaBuilder.record("avroRecordName").fields();
-        // for (Schema.Field field : avroSchema.getFields()){
-        //     String fieldName= field.name().replaceAll("[^A-Za-z0-9_]", "_").replaceAll("^[^a-zA-Z_]", "_");
-        //     Schema newFieldSchema= Schema.create(field.schema().getType());
-        //     assembler.name(fieldName).type(newFieldSchema).noDefault();
-        // }
-        // Schema newAvroSchema = assembler.endRecord();
         
         final AvroParquetReader.Builder<GenericRecord> builder = AvroParquetReader.<GenericRecord>builder(tempFilePath);
         AvroReadSupport.setAvroReadSchema(conf, avroSchema);        
