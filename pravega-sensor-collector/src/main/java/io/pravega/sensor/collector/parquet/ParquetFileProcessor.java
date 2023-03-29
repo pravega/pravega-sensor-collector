@@ -9,6 +9,13 @@
  */
 package io.pravega.sensor.collector.parquet;
 
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.nio.file.DirectoryStream;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.sql.Connection;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -21,23 +28,15 @@ import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 
 import com.google.common.io.CountingInputStream;
+
 import org.apache.commons.lang3.tuple.Pair;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.nio.file.DirectoryStream;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 
 import io.pravega.client.EventStreamClientFactory;
 import io.pravega.client.stream.EventWriterConfig;
 import io.pravega.client.stream.TxnFailedException;
 import io.pravega.client.stream.impl.ByteArraySerializer;
-import io.pravega.sensor.collector.file.FileNameWithOffset;
 import io.pravega.sensor.collector.util.EventWriter;
 import io.pravega.sensor.collector.util.PersistentId;
 import io.pravega.sensor.collector.util.TransactionCoordinator;
@@ -132,8 +131,8 @@ public class ParquetFileProcessor {
      */
     static protected List<FileNameWithOffset> getDirectoryListing(String fileSpec) throws IOException {
         final Path pathSpec = Paths.get(fileSpec);
-        try (DirectoryStream<Path> dirStream = Files.newDirectoryStream(pathSpec.getParent(), pathSpec.getFileName().toString())) {
-            return StreamSupport.stream(dirStream.spliterator(), false)
+        try(DirectoryStream<Path> dirStream=Files.newDirectoryStream(pathSpec)){
+            return StreamSupport.stream(dirStream.spliterator(),false)
                     .map(f -> new FileNameWithOffset(f.toAbsolutePath().toString(), f.toFile().length()))
                     .collect(Collectors.toList());
         }
