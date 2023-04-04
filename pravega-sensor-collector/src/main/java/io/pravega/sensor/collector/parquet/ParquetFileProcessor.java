@@ -214,8 +214,5 @@ public class ParquetFileProcessor {
         if (Math.random() < 0.3) {
             throw new RuntimeException("injectCommitFailure: Commit failure test exception");
         }
-    }
-
-
-    
+    }    
 }

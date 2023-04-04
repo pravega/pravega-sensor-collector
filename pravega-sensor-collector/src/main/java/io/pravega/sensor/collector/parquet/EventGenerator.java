@@ -24,7 +24,6 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.io.CountingInputStream;
 
 import org.apache.avro.Schema;
-import org.apache.avro.SchemaBuilder;
 import org.apache.avro.generic.GenericData;
 import org.apache.avro.generic.GenericRecord;
 import org.apache.commons.io.IOUtils;
@@ -33,18 +32,15 @@ import org.apache.commons.lang3.tuple.Pair;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
 import org.apache.parquet.avro.AvroParquetReader;
-import org.apache.parquet.avro.AvroSchemaConverter;
 import org.apache.parquet.avro.AvroReadSupport;
-import org.apache.parquet.hadoop.api.InitContext;
-import org.apache.parquet.hadoop.api.ReadSupport;
-import org.apache.parquet.schema.Type;
-
+import org.apache.parquet.avro.AvroSchemaConverter;
 import org.apache.parquet.format.converter.ParquetMetadataConverter;
 import org.apache.parquet.hadoop.ParquetFileReader;
 import org.apache.parquet.hadoop.ParquetReader;
 import org.apache.parquet.hadoop.util.HadoopInputFile;
 import org.apache.parquet.schema.MessageType;
 import org.apache.parquet.schema.PrimitiveType;
+import org.apache.parquet.schema.Type;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -98,7 +94,6 @@ public class EventGenerator {
         //Modifying field names in extracted schema (removing special characters) 
         List<Type> fields = schema.getFields().stream()
                                 .map(field -> new PrimitiveType(field.getRepetition(),  
-                                                // field.getType(), 
                                                 PrimitiveType.PrimitiveTypeName.valueOf(((PrimitiveType) field).getPrimitiveTypeName().toString()),
                                                 field.getName()
                                 .replaceAll("[^A-Za-z0-9_]+", "_")))
@@ -126,7 +121,6 @@ public class EventGenerator {
                 jsonEvent = eventTemplate.deepCopy();
             }
             for (Schema.Field field : record.getSchema().getFields()){
-                // log.info("Parquet File record : {}", record.toString());
                 String key =  field.name();
                 String value;
                 if(record.get(key)!= null)
