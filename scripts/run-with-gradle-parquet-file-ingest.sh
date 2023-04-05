@@ -15,12 +15,12 @@ export ROUTING_KEY=${HOSTNAME}
 export ENABLE_PRAVEGA=true
 export pravega_client_auth_method=Bearer
 export pravega_client_auth_loadDynamic=true
-export KEYCLOAK_SERVICE_ACCOUNT_FILE=~/Documents/sensor_collector/opt/pravega-sensor-collector/conf/keycloak.json
+export KEYCLOAK_SERVICE_ACCOUNT_FILE=/opt/pravega-sensor-collector/conf/keycloak.json
 export JAVA_OPTS="-Xmx512m"
 
 export PRAVEGA_SENSOR_COLLECTOR_PARQ2_CLASS=io.pravega.sensor.collector.parquet.ParquetFileIngestService
-export PRAVEGA_SENSOR_COLLECTOR_PARQ2_FILE_SPEC=${HOME}/Documents/pravega_sensor_collector/ParquetNew
-export PRAVEGA_SENSOR_COLLECTOR_PARQ2_DATABASE_FILE=${HOME}/Documents/pravega_sensor_collector/datafile.db
+export PRAVEGA_SENSOR_COLLECTOR_PARQ2_FILE_SPEC=/opt/pravega-sensor-collector/ParquetNew
+export PRAVEGA_SENSOR_COLLECTOR_PARQ2_DATABASE_FILE=/opt/pravega-sensor-collector/datafile.db
 export PRAVEGA_SENSOR_COLLECTOR_PARQ2_SAMPLES_PER_EVENT=200
 export PRAVEGA_SENSOR_COLLECTOR_PARQ2_PRAVEGA_CONTROLLER_URI=tls://pravega-controller.sdp.cluster1.sdp-demo.org:443
 export PRAVEGA_SENSOR_COLLECTOR_PARQ2_SCOPE=project1
