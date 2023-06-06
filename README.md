@@ -27,6 +27,7 @@ Pravega Sensor Collector collects data from sensors and ingests the data into
     - [Using a Private TLS Certificate Authority](#using-a-private-tls-certificate-authority)
     - [Update Hosts File](#update-hosts-file)
     - [Maintain the Service](#maintain-the-service)
+    - [Running as a Windows Service](#running-as-a-windows-service)
   - [Data File Ingestion](#data-file-ingestion)
     - [Overview](#overview-1)
     - [Supported File Formats](#supported-file-formats)
