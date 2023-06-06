@@ -266,6 +266,25 @@ If DNS is not configured throughout your network, you may need to edit the /etc/
     sudo systemctl status pravega-sensor-collector.service
     sudo journalctl -u pravega-sensor-collector.service -n 1000 --follow
 
+### Running as a Windows Service
+
+1.  Download winsw.exe from https://github.com/winsw/winsw/releases and rename it as PravegaSensorCollectorApp.exe.
+
+2.  Modify [PravegaSensorCollectorApp.xml](windows-service/PravegaSensorCollectorApp.xml). Check PRAVEGA_SENSOR_COLLECTOR_PARQ1_PRAVEGA_CONTROLLER_URI.
+    For parquet files, make sure PRAVEGA_SENSOR_COLLECTOR_PARQ1_FILE_SPEC is set correctly.
+
+3.  Install and run the service using following commands:
+    ```
+    PravegaSensorCollectorApp.exe install 
+    PravegaSensorCollectorApp.exe start 
+    PravegaSensorCollectorApp.exe restart 
+    PravegaSensorCollectorApp.exe status
+    PravegaSensorCollectorApp.exe stop 
+    PravegaSensorCollectorApp.exe uninstall 
+    ```
+    The logs for the sensor collector wil be available under windows-service/logs/PravegaSensorCollectorApp.wrapper.log 
+    If there are any errors during service execution, the error log will be in windows-service/logs/PravegaSensorCollectorApp.out.log 
+
 ## Data File Ingestion
 
 ### Overview
