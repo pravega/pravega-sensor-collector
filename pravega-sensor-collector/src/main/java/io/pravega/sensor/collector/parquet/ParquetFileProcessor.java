@@ -131,11 +131,20 @@ public class ParquetFileProcessor {
      */
     static protected List<FileNameWithOffset> getDirectoryListing(String fileSpec) throws IOException {
         final Path pathSpec = Paths.get(fileSpec);
+        List<FileNameWithOffset> directoryListing = new ArrayList<>();
         try(DirectoryStream<Path> dirStream=Files.newDirectoryStream(pathSpec)){
-            return StreamSupport.stream(dirStream.spliterator(),false)
-                    .map(f -> new FileNameWithOffset(f.toAbsolutePath().toString(), f.toFile().length()))
-                    .collect(Collectors.toList());
+            for(Path path: dirStream){
+                if(Files.isDirectory(path))         //traverse subdirectories
+                    directoryListing.addAll(getDirectoryListing(path.toString()));
+                else {
+                    FileNameWithOffset fileEntry = new FileNameWithOffset(path.toAbsolutePath().toString(), path.toFile().length());
+                    // String target = "parquet";
+                    if("parquet".equals(fileEntry.fileName.substring(fileEntry.fileName.lastIndexOf(".")+1)))
+                        directoryListing.add(fileEntry);            
+                }
+            }
         }
+        return directoryListing;
     }
 
     /**
@@ -162,7 +171,6 @@ public class ParquetFileProcessor {
     void processFile(FileNameWithOffset fileNameWithBeginOffset, long firstSequenceNumber) throws Exception {
         log.info("processFile: Ingesting file {}; beginOffset={}, firstSequenceNumber={}",
                 fileNameWithBeginOffset.fileName, fileNameWithBeginOffset.offset, firstSequenceNumber);
-
         // In case a previous iteration encountered an error, we need to ensure that
         // previous flushed transactions are committed and any unflushed transactions as aborted.
         transactionCoordinator.performRecovery();
