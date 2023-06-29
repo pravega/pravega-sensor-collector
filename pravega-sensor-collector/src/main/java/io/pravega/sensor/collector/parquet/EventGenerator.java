@@ -89,8 +89,8 @@ public class EventGenerator {
         outputStream.close();
         Path tempFilePath = new Path(tempFile.toString());
         Configuration conf = new Configuration();
+        MessageType schema = ParquetFileReader.readFooter(HadoopInputFile.fromPath(tempFilePath, conf),ParquetMetadataConverter.NO_FILTER).getFileMetaData().getSchema();
         
-        MessageType schema = ParquetFileReader.readFooter(HadoopInputFile.fromPath(tempFilePath, conf),ParquetMetadataConverter.NO_FILTER).getFileMetaData().getSchema();        
         //Modifying field names in extracted schema (removing special characters) 
         List<Type> fields = schema.getFields().stream()
                                 .map(field -> new PrimitiveType(field.getRepetition(),  
@@ -99,9 +99,15 @@ public class EventGenerator {
                                 .replaceAll("[^A-Za-z0-9_]+", "_")))
                                 .collect(Collectors.toList());
         MessageType modifiedSchema = new MessageType(schema.getName(), fields);
-        
         Schema avroSchema = new AvroSchemaConverter(conf).convert(modifiedSchema);
-        
+
+        // Add original field names as aliases to avroSchema
+        List<Type> originalFields = schema.getFields();
+        for (int i = 0; i < modifiedSchema.getFieldCount(); i++) {
+            String originalFieldName = schema.getFields().get(i).getName();
+            avroSchema.getFields().get(i).addAlias(originalFieldName);
+        }
+
         final AvroParquetReader.Builder<GenericRecord> builder = AvroParquetReader.<GenericRecord>builder(tempFilePath);
         AvroReadSupport.setAvroReadSchema(conf, avroSchema);        
         final ParquetReader<GenericRecord> reader = builder.withDataModel(GenericData.get()).withConf(conf).build();
