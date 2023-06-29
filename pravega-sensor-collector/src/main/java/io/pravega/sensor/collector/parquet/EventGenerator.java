@@ -75,9 +75,8 @@ public class EventGenerator {
     }
 
 
-    // PARQUET TO JSON
-
     /**
+     * Convert Parquet to Json
      * @param inputStream
      * @param firstSequenceNumber
      * @return next sequence number, end offset

@@ -138,7 +138,6 @@ public class ParquetFileProcessor {
                     directoryListing.addAll(getDirectoryListing(path.toString()));
                 else {
                     FileNameWithOffset fileEntry = new FileNameWithOffset(path.toAbsolutePath().toString(), path.toFile().length());
-                    // String target = "parquet";
                     if("parquet".equals(fileEntry.fileName.substring(fileEntry.fileName.lastIndexOf(".")+1)))
                         directoryListing.add(fileEntry);            
                 }
