@@ -170,6 +170,7 @@ public class ParquetFileProcessor {
     void processFile(FileNameWithOffset fileNameWithBeginOffset, long firstSequenceNumber) throws Exception {
         log.info("processFile: Ingesting file {}; beginOffset={}, firstSequenceNumber={}",
                 fileNameWithBeginOffset.fileName, fileNameWithBeginOffset.offset, firstSequenceNumber);
+        final long t0 = System.nanoTime();
         // In case a previous iteration encountered an error, we need to ensure that
         // previous flushed transactions are committed and any unflushed transactions as aborted.
         transactionCoordinator.performRecovery();
@@ -197,6 +198,14 @@ public class ParquetFileProcessor {
             log.info("processFile: Finished ingesting file {}; endOffset={}, nextSequenceNumber={}",
                     fileNameWithBeginOffset.fileName, endOffset, nextSequenceNumber);
         }
+
+        // Delete file right after ingesting
+        if (config.enableDeleteCompletedFiles) {
+            deleteCompletedFiles();
+        }
+
+        final double processMs = (double) (System.nanoTime() - t0) * 1e-6;
+        log.info("Finished ingesting file in {} ms", processMs);
     }
 
     void deleteCompletedFiles() throws Exception {

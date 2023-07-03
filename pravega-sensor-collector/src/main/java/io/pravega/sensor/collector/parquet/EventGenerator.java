@@ -101,7 +101,6 @@ public class EventGenerator {
         Schema avroSchema = new AvroSchemaConverter(conf).convert(modifiedSchema);
 
         // Add original field names as aliases to avroSchema
-        List<Type> originalFields = schema.getFields();
         for (int i = 0; i < modifiedSchema.getFieldCount(); i++) {
             String originalFieldName = schema.getFields().get(i).getName();
             avroSchema.getFields().get(i).addAlias(originalFieldName);
