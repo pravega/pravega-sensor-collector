@@ -24,6 +24,10 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 
@@ -49,6 +53,9 @@ public class ParquetFileProcessor {
     private final EventWriter<byte[]> writer;
     private final TransactionCoordinator transactionCoordinator;
     private final EventGenerator eventGenerator;
+    
+    ExecutorService executor = Executors.newFixedThreadPool(3);
+    // ExecutorService executor = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
 
     public ParquetFileProcessor(ParquetFileConfig config, ParquetFileState state, EventWriter<byte[]> writer, TransactionCoordinator transactionCoordinator, EventGenerator eventGenerator) {
         this.config = config;
@@ -98,13 +105,31 @@ public class ParquetFileProcessor {
     }
 
     public void processNewFiles() throws Exception {
-        for (;;) {
-            final Pair<FileNameWithOffset, Long> nextFile = state.getNextPendingFile();
-            if (nextFile == null) {
+        try{
+            final List<Pair<FileNameWithOffset, Long>> pendingFiles = state.getAllPendingFiles();            
+            if (pendingFiles == null) {
                 log.info("No more files to ingest");
-                break;
-            } else {
-                processFile(nextFile.getLeft(), nextFile.getRight());
+            }                 
+            log.info("Pending files = {} ",pendingFiles.toString());
+            // Process every file in new thread
+            for (Pair<FileNameWithOffset,Long> file: pendingFiles){
+                executor.submit(() -> {
+                    try{
+                        processFile(file.getLeft(), file.getRight());
+                    } catch(Exception e){
+                        log.info("Error in processNewFiles");
+                        e.printStackTrace();
+                    }
+                });
+            }
+        } 
+        finally {
+            executor.shutdown();
+            try {
+                executor.awaitTermination(10, TimeUnit.MINUTES);
+            }
+            catch(InterruptedException e){
+                e.printStackTrace();
             }
         }
     }
