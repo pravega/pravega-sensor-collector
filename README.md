@@ -346,9 +346,7 @@ If using the CSV file driver, you can simulate the functionality of it by using 
 
 #### Parquet
 
-Parquet files must not have special characters or spaces in their header.
-Data is parsed to efficiently produce events in JSON format.
-When possible, integers and floating point values will be converted to their corresponding JSON data types.
+Parquet data is parsed to efficiently produce events in JSON format. When possible, integers and floating point values will be converted to their corresponding JSON data types.
 
 The script [run-with-gradle-parquet-files-ingest.sh](pravega-sensor-collector\scripts\run-with-gradle-parquet-file-ingest.sh) can be edited for testing. 
 
