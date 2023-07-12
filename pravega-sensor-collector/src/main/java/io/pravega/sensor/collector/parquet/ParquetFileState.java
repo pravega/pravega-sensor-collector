@@ -120,30 +120,6 @@ public class ParquetFileState implements AutoCloseable{
         }
     }
 
-    /**
-     * @return ((file name, begin offset), sequence number) or null if there is no pending file
-     */
-    public List<Pair<FileNameWithOffset,Long>> getAllPendingFiles() throws SQLException {
-        try (final Statement statement = connection.createStatement();
-            final Statement statement2 = connection.createStatement();
-            final ResultSet rs = statement.executeQuery("select fileName, offset from PendingFiles order by id")) {
-             
-            final List<Pair<FileNameWithOffset,Long>> files = new ArrayList<>();
-            final ResultSet rsSequenceNumber = statement2.executeQuery("select nextSequenceNumber from SequenceNumber");
-            rsSequenceNumber.next();
-            long nextSequenceNumber = rsSequenceNumber.getLong(1); 
-
-            while (rs.next()) {
-                final FileNameWithOffset fileNameWithOffset = new FileNameWithOffset(rs.getString("fileName"), rs.getLong("offset"));
-                nextSequenceNumber++;                               
-                files.add(new ImmutablePair<>(fileNameWithOffset, nextSequenceNumber));            
-            }
-            return files;
-        } finally {
-            connection.commit();
-        }
-    }
-
     public void addCompletedFile(String fileName, long beginOffset, long endOffset, long newNextSequenceNumber, Optional<UUID> txnId) throws SQLException {
         try (final PreparedStatement updateSequenceNumberStatement = connection.prepareStatement(
                 "update SequenceNumber set nextSequenceNumber = ?");
