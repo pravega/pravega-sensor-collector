@@ -70,7 +70,7 @@ public class ParquetFileProcessor {
                 config.streamName,
                 new ByteArraySerializer(),
                 EventWriterConfig.builder()
-                        .enableConnectionPooling(true)
+                        .enableConnectionPooling(false)
                         .transactionTimeoutTime((long) (config.transactionTimeoutMinutes * 60.0 * 1000.0))
                         .build(),
                 config.exactlyOnce);
@@ -182,7 +182,10 @@ public class ParquetFileProcessor {
                     e -> {
                         log.trace("processFile: event={}", e);
                         try {
+                            final long t0 = System.nanoTime();
                             writer.writeEvent(e.routingKey, e.bytes);
+                            final double processMs = (double) (System.nanoTime() - t0) * 1e-6;
+                            log.info("Finished writing {} bytes in {} ms", e.bytes.length, processMs);
                         } catch (TxnFailedException ex) {
                             throw new RuntimeException(ex);
                         }
