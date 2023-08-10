@@ -200,6 +200,11 @@ public class ParquetFileProcessor {
             log.info("processFile: Finished ingesting file {}; endOffset={}, nextSequenceNumber={}",
                     fileNameWithBeginOffset.fileName, endOffset, nextSequenceNumber);
         }
+
+        // Delete file right after ingesting
+        if (config.enableDeleteCompletedFiles) {
+            deleteCompletedFiles();
+        }
     }
 
     void deleteCompletedFiles() throws Exception {
