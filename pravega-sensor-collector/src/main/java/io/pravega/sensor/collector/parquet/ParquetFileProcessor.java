@@ -201,7 +201,7 @@ public class ParquetFileProcessor {
             state.deleteTransactionToCommit(txnId);
             
             double elapsedSec = (System.nanoTime() - timestamp) / 1_000_000_000.0;
-            long megabyteCount = (long) (numofbytes.getAndSet(0) / 1_000_000.0);
+            double megabyteCount = numofbytes.getAndSet(0) / 1_000_000.0;
             double megabytesPerSec = megabyteCount / elapsedSec;
             log.info("processFile: Finished ingesting file {}; endOffset={}, nextSequenceNumber={}",
                     fileNameWithBeginOffset.fileName, endOffset, nextSequenceNumber);

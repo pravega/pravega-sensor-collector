@@ -13,6 +13,7 @@ package io.pravega.sensor.collector.parquet;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.nio.ByteBuffer;
 import java.util.HashMap;
 import java.util.List;
 import java.util.function.Consumer;
@@ -20,6 +21,7 @@ import java.util.stream.Collectors;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.google.common.io.ByteStreams;
 import com.google.common.io.CountingInputStream;
 
 import org.apache.avro.Schema;
@@ -42,6 +44,8 @@ import org.apache.parquet.schema.PrimitiveType;
 import org.apache.parquet.schema.Type;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import io.pravega.common.util.ByteArraySegment;
 
 public class EventGenerator {
     private static final Logger log = LoggerFactory.getLogger(EventGenerator.class);
@@ -75,75 +79,25 @@ public class EventGenerator {
 
 
     /**
-     * Convert Parquet to Json
+     * Convert Parquet to byteArray
      * @param inputStream
      * @param firstSequenceNumber
      * @return next sequence number, end offset
      */
     protected Pair<Long, Long> generateEventsFromInputStream(CountingInputStream inputStream, long firstSequenceNumber, Consumer<PravegaWriterEvent> consumer) throws IOException {
-        File tempFile = File.createTempFile("temp", ".parquet");
-        FileOutputStream outputStream = new FileOutputStream(tempFile);
-        IOUtils.copy(inputStream,outputStream);
-        outputStream.close();
-        Path tempFilePath = new Path(tempFile.toString());
-        Configuration conf = new Configuration();
-        MessageType schema = ParquetFileReader.readFooter(HadoopInputFile.fromPath(tempFilePath, conf),ParquetMetadataConverter.NO_FILTER).getFileMetaData().getSchema();
         
-        //Modifying field names in extracted schema (removing special characters) 
-        List<Type> fields = schema.getFields().stream()
-                                .map(field -> new PrimitiveType(field.getRepetition(),  
-                                                PrimitiveType.PrimitiveTypeName.valueOf(((PrimitiveType) field).getPrimitiveTypeName().toString()),
-                                                field.getName()
-                                .replaceAll("[^A-Za-z0-9_]+", "_")))
-                                .collect(Collectors.toList());
-        MessageType modifiedSchema = new MessageType(schema.getName(), fields);
-        Schema avroSchema = new AvroSchemaConverter(conf).convert(modifiedSchema);
-
-        // Add original field names as aliases to avroSchema
-        List<Type> originalFields = schema.getFields();
-        for (int i = 0; i < modifiedSchema.getFieldCount(); i++) {
-            String originalFieldName = schema.getFields().get(i).getName();
-            avroSchema.getFields().get(i).addAlias(originalFieldName);
-        }
-
-        final AvroParquetReader.Builder<GenericRecord> builder = AvroParquetReader.<GenericRecord>builder(tempFilePath);
-        AvroReadSupport.setAvroReadSchema(conf, avroSchema);        
-        final ParquetReader<GenericRecord> reader = builder.withDataModel(GenericData.get()).withConf(conf).build();
-
         long nextSequenceNumber = firstSequenceNumber;
-        int numRecordsInEvent = 0;
-        byte[] jsonEvent = null;
-        GenericRecord record;
-        while ((record = reader.read())!=null) {						
-			//final long t0 = System.nanoTime();
-            HashMap<String,Object> dataMap = new HashMap<String,Object>();
+        try{
+            byte[] byteArray = IOUtils.toByteArray(inputStream);       
 
-            for (Schema.Field field : record.getSchema().getFields()){
-                String key =  field.name();
-                Object value;
-                value = record.get(key);
+            consumer.accept(new PravegaWriterEvent(routingKey, nextSequenceNumber, byteArray));
+            nextSequenceNumber++;			        
+            final long endOffset = inputStream.getCount();
 
-                dataMap.put(key,value);              
-            }
-			
-			try {
-				jsonEvent = mapper.writeValueAsBytes(dataMap);
-			} catch (Exception e){
-				log.error("Exception {},",e);
-				throw e;
-			}
-			
-            //final double processtime = (double) (System.nanoTime() - t0)* 1e-6;
-			//log.info("Record process time = {}ms", processtime);
-			
-            consumer.accept(new PravegaWriterEvent(routingKey, nextSequenceNumber, jsonEvent));
-            nextSequenceNumber++;			
-        }
-        
-        final long endOffset = inputStream.getCount();
-        tempFile.delete();
-		
-        return new ImmutablePair<>(nextSequenceNumber, endOffset);
+            return new ImmutablePair<>(nextSequenceNumber, endOffset);
+        } catch (Exception e){
+            log.error("Exception = {}",e);
+            throw e;
+        }  
     }   
-
 }
