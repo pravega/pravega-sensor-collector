@@ -118,14 +118,14 @@ public class ParquetFileIngestService extends DeviceDriver{
     }
 
     protected void ingestParquetFiles() {
-        log.info("ingestParquetFiles: BEGIN");
+        log.trace("ingestParquetFiles: BEGIN");
         try {
             processor.ingestParquetFiles();
         } catch (Exception e) {
             log.error("Error", e);
             // Continue on any errors. We will retry on the next iteration.
         }
-        log.info("ingestParquetFiles: END");
+        log.trace("ingestParquetFiles: END");
     }
 
     @Override

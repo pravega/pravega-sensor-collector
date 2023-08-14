@@ -87,20 +87,20 @@ public class ParquetFileProcessor {
     }
 
     public void ingestParquetFiles() throws Exception {
-        log.info("ingestParquetFiles: BEGIN");
+        log.trace("ingestParquetFiles: BEGIN");
         findAndRecordNewFiles();
         processNewFiles();
         if (config.enableDeleteCompletedFiles) {
             deleteCompletedFiles();
         }
-        log.info("ingestParquetFiles: END");
+        log.trace("ingestParquetFiles: END");
     }
 
     public void processNewFiles() throws Exception {
         for (;;) {
             final Pair<FileNameWithOffset, Long> nextFile = state.getNextPendingFile();
             if (nextFile == null) {
-                log.info("No more files to ingest");
+                log.trace("No more files to ingest");
                 break;
             } else {
                 processFile(nextFile.getLeft(), nextFile.getRight());
@@ -119,7 +119,7 @@ public class ParquetFileProcessor {
      * @return list of file name and file size in bytes
      */
     protected List<FileNameWithOffset> getDirectoryListing() throws IOException {
-        log.info("getDirectoryListing: fileSpec={}", config.fileSpec);
+        log.trace("getDirectoryListing: fileSpec={}", config.fileSpec);
         final List<FileNameWithOffset> directoryListing = getDirectoryListing(config.fileSpec);
         log.trace("getDirectoryListing: directoryListing={}", directoryListing);
         return directoryListing;
@@ -159,7 +159,8 @@ public class ParquetFileProcessor {
                 newFiles.add(new FileNameWithOffset(dirFile.fileName, 0));
             }
         });
-        log.info("getNewFiles={}", newFiles);
+        if(!newFiles.isEmpty())
+            log.info("{} New files = {}", newFiles.size(), newFiles);
         return newFiles;
     }
 
