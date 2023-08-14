@@ -133,7 +133,7 @@ public class ParquetFileProcessor {
         List<FileNameWithOffset> directoryListing = new ArrayList<>();
         try(DirectoryStream<Path> dirStream=Files.newDirectoryStream(pathSpec)){
             for(Path path: dirStream){
-                if(Files.isDirectory(path))         //traverse subdirectories
+                if(Files.isDirectory(path))         
                     directoryListing.addAll(getDirectoryListing(path.toString()));
                 else {
                     FileNameWithOffset fileEntry = new FileNameWithOffset(path.toAbsolutePath().toString(), path.toFile().length());
@@ -160,20 +160,18 @@ public class ParquetFileProcessor {
             }
         });
         if(!newFiles.isEmpty())
-            log.info("{} New files = {}", newFiles.size(), newFiles);
+            log.info("{} New file(s) = {}", newFiles.size(), newFiles);
         return newFiles;
     }
 
-
-    // PROCESS FILE
 
     void processFile(FileNameWithOffset fileNameWithBeginOffset, long firstSequenceNumber) throws Exception {
         log.info("processFile: Ingesting file {}; beginOffset={}, firstSequenceNumber={}",
                 fileNameWithBeginOffset.fileName, fileNameWithBeginOffset.offset, firstSequenceNumber);
         
-        //Calculate bytes sent per file and time taken
         AtomicLong numofbytes = new AtomicLong(0);
         long timestamp = System.nanoTime();
+
         // In case a previous iteration encountered an error, we need to ensure that
         // previous flushed transactions are committed and any unflushed transactions as aborted.
         transactionCoordinator.performRecovery();
