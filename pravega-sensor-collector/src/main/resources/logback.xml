@@ -38,6 +38,9 @@
 
     </appender>
 
+    <logger name="io.pravega.client.control.impl.ControllerResolverFactory" level="WARN" />
+    <logger name="io.pravega.client.stream.impl.Pinger" level="WARN" />
+
     <!-- You can change the default log level below or set the Java system property at run time. -->
     <root level="${root.log.level:-INFO}">
         <appender-ref ref="STDOUT" />
