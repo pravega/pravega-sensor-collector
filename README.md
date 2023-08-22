@@ -27,6 +27,7 @@ Pravega Sensor Collector collects data from sensors and ingests the data into
     - [Using a Private TLS Certificate Authority](#using-a-private-tls-certificate-authority)
     - [Update Hosts File](#update-hosts-file)
     - [Maintain the Service](#maintain-the-service)
+    - [Running as a Windows Service](#running-as-a-windows-service)
   - [Data File Ingestion](#data-file-ingestion)
     - [Overview](#overview-1)
     - [Supported File Formats](#supported-file-formats)
@@ -266,6 +267,25 @@ If DNS is not configured throughout your network, you may need to edit the /etc/
     sudo systemctl status pravega-sensor-collector.service
     sudo journalctl -u pravega-sensor-collector.service -n 1000 --follow
 
+### Running as a Windows Service
+
+1.  Download winsw.exe from https://github.com/winsw/winsw/releases and rename it as PravegaSensorCollectorApp.exe.
+
+2.  Modify [PravegaSensorCollectorApp.xml](windows-service/PravegaSensorCollectorApp.xml). Check PRAVEGA_SENSOR_COLLECTOR_PARQ1_PRAVEGA_CONTROLLER_URI.
+    For parquet files, make sure PRAVEGA_SENSOR_COLLECTOR_PARQ1_FILE_SPEC is set correctly.
+
+3.  Install and run the service using following commands:
+    ```
+    PravegaSensorCollectorApp.exe install 
+    PravegaSensorCollectorApp.exe start 
+    PravegaSensorCollectorApp.exe restart 
+    PravegaSensorCollectorApp.exe status
+    PravegaSensorCollectorApp.exe stop 
+    PravegaSensorCollectorApp.exe uninstall 
+    ```
+    The logs for the sensor collector wil be available under windows-service/logs/PravegaSensorCollectorApp.wrapper.log 
+    If there are any errors during service execution, the error log will be in windows-service/logs/PravegaSensorCollectorApp.out.log 
+
 ## Data File Ingestion
 
 ### Overview
@@ -346,9 +366,7 @@ If using the CSV file driver, you can simulate the functionality of it by using 
 
 #### Parquet
 
-Parquet files must not have special characters or spaces in their header.
-Data is parsed to efficiently produce events in JSON format.
-When possible, integers and floating point values will be converted to their corresponding JSON data types.
+Parquet data is parsed to efficiently produce events in JSON format. When possible, integers and floating point values will be converted to their corresponding JSON data types.
 
 The script [run-with-gradle-parquet-files-ingest.sh](pravega-sensor-collector\scripts\run-with-gradle-parquet-file-ingest.sh) can be edited for testing. 
 
