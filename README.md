@@ -272,7 +272,6 @@ If DNS is not configured throughout your network, you may need to edit the /etc/
 1.  Download winsw.exe from https://github.com/winsw/winsw/releases and rename it as PravegaSensorCollectorApp.exe.
 
 2.  Modify [PravegaSensorCollectorApp.xml](windows-service/PravegaSensorCollectorApp.xml). Check PRAVEGA_SENSOR_COLLECTOR_RAW1_PRAVEGA_CONTROLLER_URI.
-    Make sure PRAVEGA_SENSOR_COLLECTOR_RAW1_FILE_SPEC is set correctly.
 
 3.  Install and run the service using following commands:
     ```
@@ -283,8 +282,8 @@ If DNS is not configured throughout your network, you may need to edit the /etc/
     PravegaSensorCollectorApp.exe stop 
     PravegaSensorCollectorApp.exe uninstall 
     ```
-    The logs for the sensor collector wil be available under windows-service/logs/PravegaSensorCollectorApp.wrapper.log 
-    If there are any errors during service execution, the error log will be in windows-service/logs/PravegaSensorCollectorApp.out.log 
+    The logs for the sensor collector wil be available under windows-service/PravegaSensorCollectorApp.wrapper.log 
+    If there are any errors during service execution, the error log will be in windows-service/PravegaSensorCollectorApp.out.log 
 
 ## Data File Ingestion
 
@@ -369,7 +368,7 @@ If using the CSV file driver, you can simulate the functionality of it by using 
 Raw file data can be ingested in byte array format. Each file is sent as a single event.
 
 The script [run-with-gradle-raw-file.sh](pravega-sensor-collector\scripts\run-with-gradle-raw-file.sh) can be edited for testing. 
-
+Make sure PRAVEGA_SENSOR_COLLECTOR_RAW1_FILE_SPEC is set correctly. This is where the files will be read from.
 
 ## Phase IV Leap Wireless Gateway Integration
 

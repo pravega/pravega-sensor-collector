@@ -32,7 +32,6 @@ public class RawFileIngestService extends DeviceDriver{
     private static final String DELETE_COMPLETED_FILES_KEY = "DELETE_COMPLETED_FILES";
     private static final String DATABASE_FILE_KEY = "DATABASE_FILE";
     private static final String EVENT_TEMPLATE_KEY = "EVENT_TEMPLATE";
-    private static final String SAMPLES_PER_EVENT_KEY = "SAMPLES_PER_EVENT";
     private static final String INTERVAL_MS_KEY = "INTERVAL_MS";
 
     private static final String SCOPE_KEY = "SCOPE";
@@ -83,10 +82,6 @@ public class RawFileIngestService extends DeviceDriver{
 
     String getEventTemplate() {
         return getProperty(EVENT_TEMPLATE_KEY, "{}");
-    }
-
-    int getSamplesPerEvent() {
-        return Integer.parseInt(getProperty(SAMPLES_PER_EVENT_KEY, Integer.toString(100)));
     }
 
     long getIntervalMs() {
