@@ -7,7 +7,7 @@
  *
  *     http://www.apache.org/licenses/LICENSE-2.0
  */
-package io.pravega.sensor.collector.parquet;
+package io.pravega.sensor.collector.rawfile;
 
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -40,16 +40,16 @@ import io.pravega.sensor.collector.util.EventWriter;
 import io.pravega.sensor.collector.util.PersistentId;
 import io.pravega.sensor.collector.util.TransactionCoordinator;
 
-public class ParquetFileProcessor {
-    private static final Logger log = LoggerFactory.getLogger(ParquetFileIngestService.class);
+public class RawFileProcessor {
+    private static final Logger log = LoggerFactory.getLogger(RawFileIngestService.class);
     
-    private final ParquetFileConfig config;
-    private final ParquetFileState state;
+    private final RawFileConfig config;
+    private final RawFileState state;
     private final EventWriter<byte[]> writer;
     private final TransactionCoordinator transactionCoordinator;
     private final EventGenerator eventGenerator;
 
-    public ParquetFileProcessor(ParquetFileConfig config, ParquetFileState state, EventWriter<byte[]> writer, TransactionCoordinator transactionCoordinator, EventGenerator eventGenerator) {
+    public RawFileProcessor(RawFileConfig config, RawFileState state, EventWriter<byte[]> writer, TransactionCoordinator transactionCoordinator, EventGenerator eventGenerator) {
         this.config = config;
         this.state = state;
         this.writer = writer;
@@ -57,8 +57,8 @@ public class ParquetFileProcessor {
         this.eventGenerator = eventGenerator;
     }
 
-    public static ParquetFileProcessor create(ParquetFileConfig config, EventStreamClientFactory clientFactory){
-        final Connection connection = ParquetFileState.createDatabase(config.stateDatabaseFileName);
+    public static RawFileProcessor create(RawFileConfig config, EventStreamClientFactory clientFactory){
+        final Connection connection = RawFileState.createDatabase(config.stateDatabaseFileName);
 
         final String writerId = new PersistentId(connection).getPersistentId().toString();
         log.info("Writer ID: {}", writerId);
@@ -79,21 +79,20 @@ public class ParquetFileProcessor {
 
         final EventGenerator eventGenerator = EventGenerator.create(
                 config.routingKey,
-                config.maxRecordsPerEvent,
                 config.eventTemplateStr,
                 writerId);
-        final ParquetFileState state = new ParquetFileState(connection, transactionCoordinator);
-        return new ParquetFileProcessor(config, state, writer, transactionCoordinator, eventGenerator);
+        final RawFileState state = new RawFileState(connection, transactionCoordinator);
+        return new RawFileProcessor(config, state, writer, transactionCoordinator, eventGenerator);
     }
 
-    public void ingestParquetFiles() throws Exception {
-        log.trace("ingestParquetFiles: BEGIN");
+    public void ingestRawFiles() throws Exception {
+        log.trace("ingestRawFiles: BEGIN");
         findAndRecordNewFiles();
         processNewFiles();
         if (config.enableDeleteCompletedFiles) {
             deleteCompletedFiles();
         }
-        log.trace("ingestParquetFiles: END");
+        log.trace("ingestRawFiles: END");
     }
 
     public void processNewFiles() throws Exception {
@@ -137,6 +136,7 @@ public class ParquetFileProcessor {
                     directoryListing.addAll(getDirectoryListing(path.toString()));
                 else {
                     FileNameWithOffset fileEntry = new FileNameWithOffset(path.toAbsolutePath().toString(), path.toFile().length());
+                    // Adding only parquet files
                     if("parquet".equals(fileEntry.fileName.substring(fileEntry.fileName.lastIndexOf(".")+1)))
                         directoryListing.add(fileEntry);            
                 }

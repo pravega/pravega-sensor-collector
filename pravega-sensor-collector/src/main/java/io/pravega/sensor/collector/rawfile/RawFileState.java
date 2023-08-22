@@ -7,7 +7,7 @@
  *
  *     http://www.apache.org/licenses/LICENSE-2.0
  */
-package io.pravega.sensor.collector.parquet;
+package io.pravega.sensor.collector.rawfile;
 
 import java.sql.Connection;
 import java.sql.DriverManager;
@@ -32,13 +32,13 @@ import io.pravega.sensor.collector.util.TransactionCoordinator;
 
 import static java.sql.Connection.TRANSACTION_SERIALIZABLE;
 
-public class ParquetFileState implements AutoCloseable{
-    private static final Logger log = LoggerFactory.getLogger(ParquetFileState.class);
+public class RawFileState implements AutoCloseable{
+    private static final Logger log = LoggerFactory.getLogger(RawFileState.class);
 
     private final Connection connection;
     private final TransactionCoordinator transactionCoordinator;
 
-    public ParquetFileState(Connection connection, TransactionCoordinator transactionCoordinator) {
+    public RawFileState(Connection connection, TransactionCoordinator transactionCoordinator) {
         this.connection = connection;
         this.transactionCoordinator = transactionCoordinator;
     }
@@ -74,10 +74,10 @@ public class ParquetFileState implements AutoCloseable{
     }
 
     @VisibleForTesting
-    public static ParquetFileState create(String fileName) {
+    public static RawFileState create(String fileName) {
         final Connection connection = createDatabase(fileName);
         final TransactionCoordinator transactionCoordinator = new TransactionCoordinator(connection, null);
-        return new ParquetFileState(connection, transactionCoordinator);
+        return new RawFileState(connection, transactionCoordinator);
     }
 
     @Override

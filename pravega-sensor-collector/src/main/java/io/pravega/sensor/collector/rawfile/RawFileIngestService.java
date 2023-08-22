@@ -7,7 +7,7 @@
  *
  *     http://www.apache.org/licenses/LICENSE-2.0
  */
-package io.pravega.sensor.collector.parquet;
+package io.pravega.sensor.collector.rawfile;
 
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -25,8 +25,8 @@ import io.pravega.sensor.collector.DeviceDriver;
 import io.pravega.sensor.collector.DeviceDriverConfig;
 
 
-public class ParquetFileIngestService extends DeviceDriver{
-    private static final Logger log = LoggerFactory.getLogger(ParquetFileIngestService.class);
+public class RawFileIngestService extends DeviceDriver{
+    private static final Logger log = LoggerFactory.getLogger(RawFileIngestService.class);
     
     private static final String FILE_SPEC_KEY = "FILE_SPEC";
     private static final String DELETE_COMPLETED_FILES_KEY = "DELETE_COMPLETED_FILES";
@@ -41,31 +41,30 @@ public class ParquetFileIngestService extends DeviceDriver{
     private static final String EXACTLY_ONCE_KEY = "EXACTLY_ONCE";
     private static final String TRANSACTION_TIMEOUT_MINUTES_KEY = "TRANSACTION_TIMEOUT_MINUTES";
 
-    private final ParquetFileProcessor processor;
+    private final RawFileProcessor processor;
     private final ScheduledExecutorService executor;
     private ScheduledFuture<?> task;
 
-    public ParquetFileIngestService(DeviceDriverConfig config){
+    public RawFileIngestService(DeviceDriverConfig config){
         super(config);
-        final ParquetFileConfig parquetFileConfig = new ParquetFileConfig(
+        final RawFileConfig rawFileConfig = new RawFileConfig(
                 getDatabaseFileName(),
                 getFileSpec(),
                 getRoutingKey(),
                 getStreamName(),
                 getEventTemplate(),
-                getSamplesPerEvent(),
                 getDeleteCompletedFiles(),
                 getExactlyOnce(),
                 getTransactionTimeoutMinutes());
-        log.info("Parquet File Ingest Config: {}", parquetFileConfig);
+        log.info("Raw File Ingest Config: {}", rawFileConfig);
         final String scopeName = getScopeName();
         log.info("Scope: {}", scopeName);
         createStream(scopeName, getStreamName());
 
         final EventStreamClientFactory clientFactory = getEventStreamClientFactory(scopeName);
-        processor = ParquetFileProcessor.create(parquetFileConfig, clientFactory);
+        processor = RawFileProcessor.create(rawFileConfig, clientFactory);
         ThreadFactory namedThreadFactory = new ThreadFactoryBuilder().setNameFormat(
-                ParquetFileIngestService.class.getSimpleName() + "-" + config.getInstanceName() + "-%d").build();
+                RawFileIngestService.class.getSimpleName() + "-" + config.getInstanceName() + "-%d").build();
         executor = Executors.newScheduledThreadPool(1, namedThreadFactory);
 
     }
@@ -117,21 +116,21 @@ public class ParquetFileIngestService extends DeviceDriver{
         return Double.parseDouble(getProperty(TRANSACTION_TIMEOUT_MINUTES_KEY, Double.toString(18.0 * 60.0)));
     }
 
-    protected void ingestParquetFiles() {
-        log.trace("ingestParquetFiles: BEGIN");
+    protected void ingestRawFiles() {
+        log.trace("ingestRawFiles: BEGIN");
         try {
-            processor.ingestParquetFiles();
+            processor.ingestRawFiles();
         } catch (Exception e) {
             log.error("Error", e);
             // Continue on any errors. We will retry on the next iteration.
         }
-        log.trace("ingestParquetFiles: END");
+        log.trace("ingestRawFiles: END");
     }
 
     @Override
     protected void doStart() {
         task = executor.scheduleAtFixedRate(
-                this::ingestParquetFiles,
+                this::ingestRawFiles,
                 0,
                 getIntervalMs(),
                 TimeUnit.MILLISECONDS);

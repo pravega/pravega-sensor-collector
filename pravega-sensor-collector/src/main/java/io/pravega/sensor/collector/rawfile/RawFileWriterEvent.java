@@ -7,14 +7,14 @@
  *
  *     http://www.apache.org/licenses/LICENSE-2.0
  */
-package io.pravega.sensor.collector.parquet;
+package io.pravega.sensor.collector.rawfile;
 
-public class PravegaWriterEvent {
+public class RawFileWriterEvent {
     public final String routingKey;
     public final long sequenceNumber;
     public final byte[] bytes;
 
-    public PravegaWriterEvent(String routingKey, long sequenceNumber, byte[] bytes) {
+    public RawFileWriterEvent(String routingKey, long sequenceNumber, byte[] bytes) {
         this.routingKey = routingKey;
         this.sequenceNumber = sequenceNumber;
         this.bytes = bytes;

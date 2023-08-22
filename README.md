@@ -32,7 +32,7 @@ Pravega Sensor Collector collects data from sensors and ingests the data into
     - [Overview](#overview-1)
     - [Supported File Formats](#supported-file-formats)
       - [CSV](#csv)
-      - [Parquet](#parquet)
+      - [Raw File](#raw-file)
     - [Write Sample Events](#write-sample-events)
   - [Phase IV Leap Wireless Gateway Integration](#phase-iv-leap-wireless-gateway-integration)
   - [Troubleshooting](#troubleshooting)
@@ -271,8 +271,8 @@ If DNS is not configured throughout your network, you may need to edit the /etc/
 
 1.  Download winsw.exe from https://github.com/winsw/winsw/releases and rename it as PravegaSensorCollectorApp.exe.
 
-2.  Modify [PravegaSensorCollectorApp.xml](windows-service/PravegaSensorCollectorApp.xml). Check PRAVEGA_SENSOR_COLLECTOR_PARQ1_PRAVEGA_CONTROLLER_URI.
-    For parquet files, make sure PRAVEGA_SENSOR_COLLECTOR_PARQ1_FILE_SPEC is set correctly.
+2.  Modify [PravegaSensorCollectorApp.xml](windows-service/PravegaSensorCollectorApp.xml). Check PRAVEGA_SENSOR_COLLECTOR_RAW1_PRAVEGA_CONTROLLER_URI.
+    Make sure PRAVEGA_SENSOR_COLLECTOR_RAW1_FILE_SPEC is set correctly.
 
 3.  Install and run the service using following commands:
     ```
@@ -364,13 +364,12 @@ If using the CSV file driver, you can simulate the functionality of it by using 
 4. If you have deployed Flink Tools, within 2 minutes, on the SDP host, you should see the sample events written
    to the directory `/desdp/lts/edge-data-project-pvc-*/streaming-data-platform/$(hostname)/sensors-parquet/`.
 
-#### Parquet
+#### Raw file
 
-Parquet data is parsed to efficiently produce events in JSON format. When possible, integers and floating point values will be converted to their corresponding JSON data types.
+Raw file data can be ingested in byte array format. Each file is sent as a single event.
 
-The script [run-with-gradle-parquet-files-ingest.sh](pravega-sensor-collector\scripts\run-with-gradle-parquet-file-ingest.sh) can be edited for testing. 
+The script [run-with-gradle-raw-file.sh](pravega-sensor-collector\scripts\run-with-gradle-raw-file.sh) can be edited for testing. 
 
-Note: For windows, Hadoop requires native libraries on Windows to work properly. You can download `Winutils.exe` to fix this. See [here](https://cwiki.apache.org/confluence/display/HADOOP2/WindowsProblems).
 
 ## Phase IV Leap Wireless Gateway Integration
 
