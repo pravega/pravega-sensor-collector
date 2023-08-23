@@ -9,6 +9,9 @@
  */
 package io.pravega.sensor.collector.rawfile;
 
+/**
+ * Config passed to Pravega Sensor Collector
+ */
 public class RawFileConfig {
     public final String stateDatabaseFileName;
     public final String fileSpec;

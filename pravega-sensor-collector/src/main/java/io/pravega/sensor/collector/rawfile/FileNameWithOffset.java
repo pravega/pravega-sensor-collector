@@ -11,6 +11,9 @@ package io.pravega.sensor.collector.rawfile;
 
 import java.util.Objects;
 
+/**
+ * File name and file size
+ */
 public class FileNameWithOffset implements Comparable<FileNameWithOffset> {
     public final String fileName;
     /**

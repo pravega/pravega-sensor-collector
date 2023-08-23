@@ -9,6 +9,9 @@
  */
 package io.pravega.sensor.collector.rawfile;
 
+/**
+ * Event generated from file and its sequence number
+ */
 public class RawFileWriterEvent {
     public final String routingKey;
     public final long sequenceNumber;

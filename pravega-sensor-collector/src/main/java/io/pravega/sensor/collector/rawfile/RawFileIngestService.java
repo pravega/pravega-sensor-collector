@@ -24,7 +24,9 @@ import io.pravega.client.EventStreamClientFactory;
 import io.pravega.sensor.collector.DeviceDriver;
 import io.pravega.sensor.collector.DeviceDriverConfig;
 
-
+/**
+ * Ingestion service for raw file data.  
+ */
 public class RawFileIngestService extends DeviceDriver{
     private static final Logger log = LoggerFactory.getLogger(RawFileIngestService.class);
     

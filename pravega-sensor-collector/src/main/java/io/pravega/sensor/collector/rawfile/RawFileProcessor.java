@@ -40,6 +40,10 @@ import io.pravega.sensor.collector.util.EventWriter;
 import io.pravega.sensor.collector.util.PersistentId;
 import io.pravega.sensor.collector.util.TransactionCoordinator;
 
+/**
+ * Get list of files obtained from config. Process each file for ingestion.
+ * Keep track of new files and delete ingested files if "DELETE_COMPLETED_FILES"=true. 
+ */
 public class RawFileProcessor {
     private static final Logger log = LoggerFactory.getLogger(RawFileIngestService.class);
     
