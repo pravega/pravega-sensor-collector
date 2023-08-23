@@ -31,6 +31,7 @@ public class RawFileIngestService extends DeviceDriver{
     private static final Logger log = LoggerFactory.getLogger(RawFileIngestService.class);
     
     private static final String FILE_SPEC_KEY = "FILE_SPEC";
+    private static final String FILE_EXT= "FILE_EXTENSION";
     private static final String DELETE_COMPLETED_FILES_KEY = "DELETE_COMPLETED_FILES";
     private static final String DATABASE_FILE_KEY = "DATABASE_FILE";
     private static final String EVENT_TEMPLATE_KEY = "EVENT_TEMPLATE";
@@ -51,6 +52,7 @@ public class RawFileIngestService extends DeviceDriver{
         final RawFileConfig rawFileConfig = new RawFileConfig(
                 getDatabaseFileName(),
                 getFileSpec(),
+                getFileExtension(),
                 getRoutingKey(),
                 getStreamName(),
                 getEventTemplate(),
@@ -72,6 +74,10 @@ public class RawFileIngestService extends DeviceDriver{
 
     String getFileSpec() {
         return getProperty(FILE_SPEC_KEY);
+    }
+
+    String getFileExtension() {
+        return getProperty(FILE_EXT, "");
     }
 
     boolean getDeleteCompletedFiles() {

@@ -17,6 +17,7 @@
   <env name="KEYCLOAK_SERVICE_ACCOUNT_FILE" value="\opt\pravega-sensor-collector\windows-service\PSCFiles\keycloak.json" />  
   <env name="PRAVEGA_SENSOR_COLLECTOR_RAW1_CLASS" value="io.pravega.sensor.collector.rawfile.RawFileIngestService" />
   <env name="PRAVEGA_SENSOR_COLLECTOR_RAW1_FILE_SPEC" value="\opt\pravega-sensor-collector\Files" />
+  <env name="PRAVEGA_SENSOR_COLLECTOR_RAW1_FILE_EXTENSION" value="parquet" />
   <env name="PRAVEGA_SENSOR_COLLECTOR_RAW1_DATABASE_FILE" value="\opt\pravega-sensor-collector\windows-service\PSCFiles\datafile.db" />
   <env name="PRAVEGA_SENSOR_COLLECTOR_RAW1_PRAVEGA_CONTROLLER_URI" value="tls://pravega-controller.sdp.cluster1.sdp-demo.org:443" />
   <env name="PRAVEGA_SENSOR_COLLECTOR_RAW1_SCOPE" value="project1" />

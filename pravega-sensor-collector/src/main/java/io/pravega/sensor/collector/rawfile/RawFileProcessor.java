@@ -123,7 +123,7 @@ public class RawFileProcessor {
      */
     protected List<FileNameWithOffset> getDirectoryListing() throws IOException {
         log.trace("getDirectoryListing: fileSpec={}", config.fileSpec);
-        final List<FileNameWithOffset> directoryListing = getDirectoryListing(config.fileSpec);
+        final List<FileNameWithOffset> directoryListing = getDirectoryListing(config.fileSpec, config.fileExtension);
         log.trace("getDirectoryListing: directoryListing={}", directoryListing);
         return directoryListing;
     }
@@ -131,17 +131,17 @@ public class RawFileProcessor {
     /**
      * @return list of file name and file size in bytes
      */
-    static protected List<FileNameWithOffset> getDirectoryListing(String fileSpec) throws IOException {
+    static protected List<FileNameWithOffset> getDirectoryListing(String fileSpec, String fileExtension) throws IOException {
         final Path pathSpec = Paths.get(fileSpec);
         List<FileNameWithOffset> directoryListing = new ArrayList<>();
         try(DirectoryStream<Path> dirStream=Files.newDirectoryStream(pathSpec)){
             for(Path path: dirStream){
                 if(Files.isDirectory(path))         
-                    directoryListing.addAll(getDirectoryListing(path.toString()));
+                    directoryListing.addAll(getDirectoryListing(path.toString(), fileExtension));
                 else {
                     FileNameWithOffset fileEntry = new FileNameWithOffset(path.toAbsolutePath().toString(), path.toFile().length());
-                    // Adding only parquet files
-                    if("parquet".equals(fileEntry.fileName.substring(fileEntry.fileName.lastIndexOf(".")+1)))
+                    // If extension is null, ingest all files 
+                    if(fileExtension.isEmpty() || fileExtension.equals(fileEntry.fileName.substring(fileEntry.fileName.lastIndexOf(".")+1)))
                         directoryListing.add(fileEntry);            
                 }
             }
