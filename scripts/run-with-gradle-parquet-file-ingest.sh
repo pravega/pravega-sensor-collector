@@ -30,7 +30,7 @@ export PRAVEGA_SENSOR_COLLECTOR_PARQ2_DELETE_COMPLETED_FILES=false
 export PRAVEGA_SENSOR_COLLECTOR_PARQ2_TRANSACTION_TIMEOUT_MINUTES=2.0
 export PRAVEGA_SENSOR_COLLECTOR_PARQ2_CREATE_SCOPE=false
 
-# windows - location of winutils.exe
+# windows - location of bin/winutils.exe
 export HADOOP_HOME=${HOME}/dev
 
 ./gradlew --no-daemon run

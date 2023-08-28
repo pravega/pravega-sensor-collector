@@ -350,7 +350,8 @@ Parquet data is parsed to efficiently produce events in JSON format. When possib
 
 The script [run-with-gradle-parquet-files-ingest.sh](pravega-sensor-collector\scripts\run-with-gradle-parquet-file-ingest.sh) can be edited for testing. 
 
-Note: For windows, Hadoop requires native libraries on Windows to work properly. You can download `Winutils.exe` to fix this. See [here](https://cwiki.apache.org/confluence/display/HADOOP2/WindowsProblems).
+Note: For windows, Hadoop requires native libraries on Windows to work properly. You can download `Winutils.exe` to fix this. See [here](https://cwiki.apache.org/confluence/display/HADOOP2/WindowsProblems). 
+Add the location of bin/winutils.exe in the parameter HADOOP_HOME. 
 
 ## Phase IV Leap Wireless Gateway Integration
 
