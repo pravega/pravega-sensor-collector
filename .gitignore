@@ -20,6 +20,8 @@ data/
 *.pem
 *.srl
 *.tgz
+*.log
+*.jar
 
 gradle-app.setting
 !gradle-wrapper.jar

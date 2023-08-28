@@ -27,10 +27,12 @@ Pravega Sensor Collector collects data from sensors and ingests the data into
     - [Using a Private TLS Certificate Authority](#using-a-private-tls-certificate-authority)
     - [Update Hosts File](#update-hosts-file)
     - [Maintain the Service](#maintain-the-service)
+    - [Running as a Windows Service](#running-as-a-windows-service)
   - [Data File Ingestion](#data-file-ingestion)
     - [Overview](#overview-1)
     - [Supported File Formats](#supported-file-formats)
       - [CSV](#csv)
+      - [Raw File](#raw-file)
     - [Write Sample Events](#write-sample-events)
   - [Phase IV Leap Wireless Gateway Integration](#phase-iv-leap-wireless-gateway-integration)
   - [Troubleshooting](#troubleshooting)
@@ -265,6 +267,24 @@ If DNS is not configured throughout your network, you may need to edit the /etc/
     sudo systemctl status pravega-sensor-collector.service
     sudo journalctl -u pravega-sensor-collector.service -n 1000 --follow
 
+### Running as a Windows Service
+
+1.  Download winsw.exe from https://github.com/winsw/winsw/releases and rename it as PravegaSensorCollectorApp.exe.
+
+2.  Modify [PravegaSensorCollectorApp.xml](windows-service/PravegaSensorCollectorApp.xml). Check PRAVEGA_SENSOR_COLLECTOR_RAW1_PRAVEGA_CONTROLLER_URI.
+
+3.  Install and run the service using following commands:
+    ```
+    PravegaSensorCollectorApp.exe install 
+    PravegaSensorCollectorApp.exe start 
+    PravegaSensorCollectorApp.exe restart 
+    PravegaSensorCollectorApp.exe status
+    PravegaSensorCollectorApp.exe stop 
+    PravegaSensorCollectorApp.exe uninstall 
+    ```
+    The logs for the sensor collector wil be available under windows-service/PravegaSensorCollectorApp.wrapper.log 
+    If there are any errors during service execution, the error log will be in windows-service/PravegaSensorCollectorApp.out.log 
+
 ## Data File Ingestion
 
 ### Overview
@@ -342,6 +362,13 @@ If using the CSV file driver, you can simulate the functionality of it by using 
 
 4. If you have deployed Flink Tools, within 2 minutes, on the SDP host, you should see the sample events written
    to the directory `/desdp/lts/edge-data-project-pvc-*/streaming-data-platform/$(hostname)/sensors-parquet/`.
+
+#### Raw file
+
+Raw file data can be ingested in byte array format. Each file is sent as a single event.
+
+The script [run-with-gradle-raw-file.sh](pravega-sensor-collector\scripts\run-with-gradle-raw-file.sh) can be edited for testing. 
+Make sure PRAVEGA_SENSOR_COLLECTOR_RAW1_FILE_SPEC is set correctly. This is where the files will be read from.
 
 ## Phase IV Leap Wireless Gateway Integration
 
