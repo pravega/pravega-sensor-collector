@@ -12,6 +12,7 @@ package io.pravega.sensor.collector.parquet;
 public class ParquetFileConfig {
     public final String stateDatabaseFileName;
     public final String fileSpec;
+    public final String fileExtension;
     public final String routingKey;
     public final String streamName;
     public final String eventTemplateStr;
@@ -25,9 +26,10 @@ public class ParquetFileConfig {
     public final boolean exactlyOnce;
     public final double transactionTimeoutMinutes;
 
-    public ParquetFileConfig(String stateDatabaseFileName, String fileSpec, String routingKey, String streamName, String eventTemplateStr, int maxRecordsPerEvent, boolean enableDeleteCompletedFiles, boolean exactlyOnce, double transactionTimeoutMinutes) {
+    public ParquetFileConfig(String stateDatabaseFileName, String fileSpec, String fileExtension, String routingKey, String streamName, String eventTemplateStr, int maxRecordsPerEvent, boolean enableDeleteCompletedFiles, boolean exactlyOnce, double transactionTimeoutMinutes) {
         this.stateDatabaseFileName = stateDatabaseFileName;
         this.fileSpec = fileSpec;
+        this.fileExtension = fileExtension;
         this.routingKey = routingKey;
         this.streamName = streamName;
         this.eventTemplateStr = eventTemplateStr;
@@ -42,6 +44,7 @@ public class ParquetFileConfig {
         return "ParquetFileConfig{" +
                 "stateDatabaseFileName='" + stateDatabaseFileName + '\'' +
                 ", fileSpec='" + fileSpec + '\'' +
+                ", fileExtension='" + fileExtension + '\'' +
                 ", routingKey='" + routingKey + '\'' +
                 ", streamName='" + streamName + '\'' +
                 ", eventTemplateStr='" + eventTemplateStr + '\'' +

@@ -29,6 +29,7 @@ public class ParquetFileIngestService extends DeviceDriver{
     private static final Logger log = LoggerFactory.getLogger(ParquetFileIngestService.class);
     
     private static final String FILE_SPEC_KEY = "FILE_SPEC";
+    private static final String FILE_EXT= "FILE_EXTENSION";
     private static final String DELETE_COMPLETED_FILES_KEY = "DELETE_COMPLETED_FILES";
     private static final String DATABASE_FILE_KEY = "DATABASE_FILE";
     private static final String EVENT_TEMPLATE_KEY = "EVENT_TEMPLATE";
@@ -50,6 +51,7 @@ public class ParquetFileIngestService extends DeviceDriver{
         final ParquetFileConfig parquetFileConfig = new ParquetFileConfig(
                 getDatabaseFileName(),
                 getFileSpec(),
+                getFileExtension(),
                 getRoutingKey(),
                 getStreamName(),
                 getEventTemplate(),
@@ -72,6 +74,10 @@ public class ParquetFileIngestService extends DeviceDriver{
 
     String getFileSpec() {
         return getProperty(FILE_SPEC_KEY);
+    }
+
+    String getFileExtension() {
+        return getProperty(FILE_EXT, "");
     }
 
     boolean getDeleteCompletedFiles() {
@@ -118,14 +124,14 @@ public class ParquetFileIngestService extends DeviceDriver{
     }
 
     protected void ingestParquetFiles() {
-        log.info("ingestParquetFiles: BEGIN");
+        log.trace("ingestParquetFiles: BEGIN");
         try {
             processor.ingestParquetFiles();
         } catch (Exception e) {
             log.error("Error", e);
             // Continue on any errors. We will retry on the next iteration.
         }
-        log.info("ingestParquetFiles: END");
+        log.trace("ingestParquetFiles: END");
     }
 
     @Override

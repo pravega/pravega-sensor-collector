@@ -24,8 +24,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
-import java.util.stream.Collectors;
-import java.util.stream.StreamSupport;
+import java.util.concurrent.atomic.AtomicLong;
 
 import com.google.common.io.CountingInputStream;
 
@@ -70,7 +69,7 @@ public class ParquetFileProcessor {
                 config.streamName,
                 new ByteArraySerializer(),
                 EventWriterConfig.builder()
-                        .enableConnectionPooling(true)
+                        .enableConnectionPooling(false)
                         .transactionTimeoutTime((long) (config.transactionTimeoutMinutes * 60.0 * 1000.0))
                         .build(),
                 config.exactlyOnce);
@@ -88,20 +87,20 @@ public class ParquetFileProcessor {
     }
 
     public void ingestParquetFiles() throws Exception {
-        log.info("ingestParquetFiles: BEGIN");
+        log.trace("ingestParquetFiles: BEGIN");
         findAndRecordNewFiles();
         processNewFiles();
         if (config.enableDeleteCompletedFiles) {
             deleteCompletedFiles();
         }
-        log.info("ingestParquetFiles: END");
+        log.trace("ingestParquetFiles: END");
     }
 
     public void processNewFiles() throws Exception {
         for (;;) {
             final Pair<FileNameWithOffset, Long> nextFile = state.getNextPendingFile();
             if (nextFile == null) {
-                log.info("No more files to ingest");
+                log.trace("No more files to ingest");
                 break;
             } else {
                 processFile(nextFile.getLeft(), nextFile.getRight());
@@ -121,7 +120,7 @@ public class ParquetFileProcessor {
      */
     protected List<FileNameWithOffset> getDirectoryListing() throws IOException {
         log.info("getDirectoryListing: fileSpec={}", config.fileSpec);
-        final List<FileNameWithOffset> directoryListing = getDirectoryListing(config.fileSpec);
+        final List<FileNameWithOffset> directoryListing = getDirectoryListing(config.fileSpec, config.fileExtension);
         log.trace("getDirectoryListing: directoryListing={}", directoryListing);
         return directoryListing;
     }
@@ -129,16 +128,17 @@ public class ParquetFileProcessor {
     /**
      * @return list of file name and file size in bytes
      */
-    static protected List<FileNameWithOffset> getDirectoryListing(String fileSpec) throws IOException {
+    static protected List<FileNameWithOffset> getDirectoryListing(String fileSpec, String fileExtension) throws IOException {
         final Path pathSpec = Paths.get(fileSpec);
         List<FileNameWithOffset> directoryListing = new ArrayList<>();
         try(DirectoryStream<Path> dirStream=Files.newDirectoryStream(pathSpec)){
             for(Path path: dirStream){
                 if(Files.isDirectory(path))         //traverse subdirectories
-                    directoryListing.addAll(getDirectoryListing(path.toString()));
+                    directoryListing.addAll(getDirectoryListing(path.toString(), fileExtension));
                 else {
                     FileNameWithOffset fileEntry = new FileNameWithOffset(path.toAbsolutePath().toString(), path.toFile().length());
-                    if("parquet".equals(fileEntry.fileName.substring(fileEntry.fileName.lastIndexOf(".")+1)))
+                    // If extension is null, ingest all files 
+                    if(fileExtension.isEmpty() || fileExtension.equals(fileEntry.fileName.substring(fileEntry.fileName.lastIndexOf(".")+1)))
                         directoryListing.add(fileEntry);            
                 }
             }
@@ -160,7 +160,8 @@ public class ParquetFileProcessor {
                 newFiles.add(new FileNameWithOffset(dirFile.fileName, 0));
             }
         });
-        log.info("getNewFiles={}", newFiles);
+        if(!newFiles.isEmpty())	
+            log.info("{} New file(s) = {}", newFiles.size(), newFiles);
         return newFiles;
     }
 
@@ -170,7 +171,10 @@ public class ParquetFileProcessor {
     void processFile(FileNameWithOffset fileNameWithBeginOffset, long firstSequenceNumber) throws Exception {
         log.info("processFile: Ingesting file {}; beginOffset={}, firstSequenceNumber={}",
                 fileNameWithBeginOffset.fileName, fileNameWithBeginOffset.offset, firstSequenceNumber);
-        final long t0 = System.nanoTime();
+        
+        AtomicLong numofbytes = new AtomicLong(0);
+        long timestamp = System.nanoTime();
+        
         // In case a previous iteration encountered an error, we need to ensure that
         // previous flushed transactions are committed and any unflushed transactions as aborted.
         transactionCoordinator.performRecovery();
@@ -184,6 +188,7 @@ public class ParquetFileProcessor {
                         log.trace("processFile: event={}", e);
                         try {
                             writer.writeEvent(e.routingKey, e.bytes);
+                            numofbytes.addAndGet(e.bytes.length);
                         } catch (TxnFailedException ex) {
                             throw new RuntimeException(ex);
                         }
@@ -195,8 +200,14 @@ public class ParquetFileProcessor {
             // injectCommitFailure();
             writer.commit();
             state.deleteTransactionToCommit(txnId);
+            
+            double elapsedSec = (System.nanoTime() - timestamp) / 1_000_000_000.0;
+            double megabyteCount = numofbytes.getAndSet(0) / 1_000_000.0;
+            double megabytesPerSec = megabyteCount / elapsedSec;
             log.info("processFile: Finished ingesting file {}; endOffset={}, nextSequenceNumber={}",
                     fileNameWithBeginOffset.fileName, endOffset, nextSequenceNumber);
+            log.info("Sent {} MB in {} sec", megabyteCount, elapsedSec );
+            log.info("Transfer rate: {} MB/sec", megabytesPerSec);        
         }
 
         // Delete file right after ingesting
@@ -204,8 +215,6 @@ public class ParquetFileProcessor {
             deleteCompletedFiles();
         }
 
-        final double processMs = (double) (System.nanoTime() - t0) * 1e-6;
-        log.info("Finished ingesting file in {} ms", processMs);
     }
 
     void deleteCompletedFiles() throws Exception {
