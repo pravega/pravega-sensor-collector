@@ -13,13 +13,12 @@ package io.pravega.sensor.collector.parquet;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.util.HashMap;
 import java.util.List;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
-import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.io.CountingInputStream;
 
@@ -111,63 +110,31 @@ public class EventGenerator {
         final ParquetReader<GenericRecord> reader = builder.withDataModel(GenericData.get()).withConf(conf).build();
 
         long nextSequenceNumber = firstSequenceNumber;
-        int numRecordsInEvent = 0;
-        ObjectNode jsonEvent = null;
+        // int numRecordsInEvent = 0;
+        byte[] jsonEvent = null;
         GenericRecord record;
-        while ((record = reader.read())!=null) {
-            if (numRecordsInEvent >= maxRecordsPerEvent) {
-                consumer.accept(new PravegaWriterEvent(routingKey, nextSequenceNumber, mapper.writeValueAsBytes(jsonEvent)));
-                nextSequenceNumber++;
-                jsonEvent = null;
-                numRecordsInEvent = 0;
+        while ((record=reader.read())!=null){
+            HashMap<String,Object> dataMap = new HashMap<String,Object>();
+            for(Schema.Field field : record.getSchema().getFields()){
+                String key = field.name();
+                Object value;
+                value = record.get(key);
+
+                dataMap.put(key,value);
             }
-            if (jsonEvent == null) {
-                jsonEvent = eventTemplate.deepCopy();
+            try{
+                jsonEvent = mapper.writeValueAsBytes(dataMap);
+            }catch(Exception e){
+                log.error("Exception {}", e);
+                throw e;
             }
-            for (Schema.Field field : record.getSchema().getFields()){
-                String key =  field.name();
-                String value;
-                if(record.get(key)!= null)
-                    value = record.get(key).toString();
-                else
-                    value = null;
-                addValueToArray(jsonEvent, key, value);
-            }
-            numRecordsInEvent++;
-        }
-        if (jsonEvent != null) {
-            consumer.accept(new PravegaWriterEvent(routingKey, nextSequenceNumber, mapper.writeValueAsBytes(jsonEvent)));
+            consumer.accept(new PravegaWriterEvent(routingKey, nextSequenceNumber, jsonEvent));
             nextSequenceNumber++;
+
         }
         final long endOffset = inputStream.getCount();
         tempFile.delete();
         return new ImmutablePair<>(nextSequenceNumber, endOffset);
-    }
-
-    protected JsonNode stringValueToJsonNode(String s) {
-        // TODO: convert timestamp
-        try {
-            return mapper.getNodeFactory().numberNode(Long.parseLong(s));
-        } catch (NumberFormatException ignored) {}
-        try {
-            return mapper.getNodeFactory().numberNode(Double.parseDouble(s));
-        } catch (NumberFormatException ignored) {}
-        return mapper.getNodeFactory().textNode(s);
-    }
-
-    protected void addValueToArray(ObjectNode objectNode, String key, String value) {
-        if(value == null){
-            objectNode.putNull(key);
-        }
-        else{    
-            final JsonNode node = objectNode.get(key);
-            final JsonNode valueNode = stringValueToJsonNode(value);
-            if (node instanceof ArrayNode ) {
-                ((ArrayNode) node).add(valueNode);
-            } else {
-                objectNode.putArray(key).add(valueNode);
-            }
-        }
     }
 
 }
