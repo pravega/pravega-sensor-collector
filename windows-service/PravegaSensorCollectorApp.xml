@@ -1,0 +1,32 @@
+<service>
+  <id>psc</id>
+  <name>Pravega Sensor Collector</name>
+  <description>Pravega Sensor Collector collects data from sensors and ingests the data into Pravega streams</description>
+  <executable>"C:/Program Files/Java/jdk-11/bin/java"</executable>
+  <arguments>-Xmx512m -jar "windows-service\PSCFiles\pravega-sensor-collector-0.2.15.jar"</arguments>
+  
+  <!-- old log files are truncated when service restarts. Can change logmode to append, roll-by-size and roll-by-time -->
+  <logmode>reset</logmode>
+
+  <env name="HOME" value="C:\Users\username" />
+  <env name="CREATE_SCOPE" value="false" />
+  <env name="ROUTING_KEY" value="routingkey1" />
+  <env name="ENABLE_PRAVEGA" value="true" />
+  <env name="pravega_client_auth_method" value="Bearer" />
+  <env name="pravega_client_auth_loadDynamic" value="true" />
+  <env name="KEYCLOAK_SERVICE_ACCOUNT_FILE" value="\opt\pravega-sensor-collector\windows-service\PSCFiles\keycloak.json" />  
+  <env name="PRAVEGA_SENSOR_COLLECTOR_RAW1_CLASS" value="io.pravega.sensor.collector.rawfile.RawFileIngestService" />
+  <env name="PRAVEGA_SENSOR_COLLECTOR_RAW1_FILE_SPEC" value="\opt\pravega-sensor-collector\Files" />
+  <env name="PRAVEGA_SENSOR_COLLECTOR_RAW1_FILE_EXTENSION" value="parquet" />
+  <env name="PRAVEGA_SENSOR_COLLECTOR_RAW1_DATABASE_FILE" value="\opt\pravega-sensor-collector\windows-service\PSCFiles\datafile.db" />
+  <env name="PRAVEGA_SENSOR_COLLECTOR_RAW1_PRAVEGA_CONTROLLER_URI" value="tls://pravega-controller.sdp.cluster1.sdp-demo.org:443" />
+  <env name="PRAVEGA_SENSOR_COLLECTOR_RAW1_SCOPE" value="project1" />
+  <env name="PRAVEGA_SENSOR_COLLECTOR_RAW1_STREAM" value="stream1" />
+  <env name="PRAVEGA_SENSOR_COLLECTOR_RAW1_ROUTING_KEY" value="routingkey1" />
+  <env name="PRAVEGA_SENSOR_COLLECTOR_RAW1_DELETE_COMPLETED_FILES" value="false" />
+  <env name="PRAVEGA_SENSOR_COLLECTOR_RAW1_TRANSACTION_TIMEOUT_MINUTES" value="2.0" />
+  <env name="PRAVEGA_SENSOR_COLLECTOR_RAW1_CREATE_SCOPE" value="false" />
+  
+  <onfailure action="restart"/>
+
+</service>
