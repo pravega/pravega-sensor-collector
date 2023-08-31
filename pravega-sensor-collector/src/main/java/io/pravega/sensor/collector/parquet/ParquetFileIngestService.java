@@ -25,6 +25,9 @@ import io.pravega.sensor.collector.DeviceDriver;
 import io.pravega.sensor.collector.DeviceDriverConfig;
 
 
+/**
+ * Ingestion service for parquet file data.  
+ */
 public class ParquetFileIngestService extends DeviceDriver{
     private static final Logger log = LoggerFactory.getLogger(ParquetFileIngestService.class);
     

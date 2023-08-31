@@ -9,6 +9,9 @@
  */
 package io.pravega.sensor.collector.parquet;
 
+/**
+ * Config passed to Pravega Sensor Collector
+ */
 public class ParquetFileConfig {
     public final String stateDatabaseFileName;
     public final String fileSpec;

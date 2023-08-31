@@ -40,6 +40,10 @@ import io.pravega.sensor.collector.util.EventWriter;
 import io.pravega.sensor.collector.util.PersistentId;
 import io.pravega.sensor.collector.util.TransactionCoordinator;
 
+/**
+ * Get list of files obtained from config. Process each file for ingestion.
+ * Keep track of new files and delete ingested files if "DELETE_COMPLETED_FILES"=true. 
+ */
 public class ParquetFileProcessor {
     private static final Logger log = LoggerFactory.getLogger(ParquetFileIngestService.class);
     
@@ -119,7 +123,7 @@ public class ParquetFileProcessor {
      * @return list of file name and file size in bytes
      */
     protected List<FileNameWithOffset> getDirectoryListing() throws IOException {
-        log.info("getDirectoryListing: fileSpec={}", config.fileSpec);
+        log.trace("getDirectoryListing: fileSpec={}", config.fileSpec);
         final List<FileNameWithOffset> directoryListing = getDirectoryListing(config.fileSpec, config.fileExtension);
         log.trace("getDirectoryListing: directoryListing={}", directoryListing);
         return directoryListing;

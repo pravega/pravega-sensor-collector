@@ -44,6 +44,9 @@ import org.apache.parquet.schema.Type;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+/**
+ * Generate Event from file  
+ */
 public class EventGenerator {
     private static final Logger log = LoggerFactory.getLogger(EventGenerator.class);
 

@@ -9,6 +9,9 @@
  */
 package io.pravega.sensor.collector.parquet;
 
+/**
+ * Event generated from file and its sequence number
+ */
 public class PravegaWriterEvent {
     public final String routingKey;
     public final long sequenceNumber;

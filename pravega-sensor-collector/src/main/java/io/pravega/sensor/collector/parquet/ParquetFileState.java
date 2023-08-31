@@ -33,6 +33,9 @@ import io.pravega.sensor.collector.util.TransactionCoordinator;
 
 import static java.sql.Connection.TRANSACTION_SERIALIZABLE;
 
+/**
+ * Maintain state of pending and completed files in SQLite database.  
+ */
 public class ParquetFileState implements AutoCloseable{
     private static final Logger log = LoggerFactory.getLogger(ParquetFileState.class);
 
