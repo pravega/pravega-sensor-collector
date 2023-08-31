@@ -13,6 +13,7 @@ package io.pravega.sensor.collector.parquet;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.function.Consumer;
@@ -110,8 +111,8 @@ public class EventGenerator {
         final ParquetReader<GenericRecord> reader = builder.withDataModel(GenericData.get()).withConf(conf).build();
 
         long nextSequenceNumber = firstSequenceNumber;
-        // int numRecordsInEvent = 0;
-        byte[] jsonEvent = null;
+        int numRecordsInEvent = 0;
+        List<HashMap<String,Object>> eventBatch = new ArrayList<>();
         GenericRecord record;
         while ((record=reader.read())!=null){
             HashMap<String,Object> dataMap = new HashMap<String,Object>();
@@ -119,18 +120,22 @@ public class EventGenerator {
                 String key = field.name();
                 Object value;
                 value = record.get(key);
-
                 dataMap.put(key,value);
             }
-            try{
-                jsonEvent = mapper.writeValueAsBytes(dataMap);
-            }catch(Exception e){
-                log.error("Exception {}", e);
-                throw e;
+            eventBatch.add(dataMap);
+            numRecordsInEvent++;
+            if(numRecordsInEvent>=maxRecordsPerEvent){
+                byte[] batchJsonEvent = mapper.writeValueAsBytes(eventBatch);
+                consumer.accept(new PravegaWriterEvent(routingKey, nextSequenceNumber, batchJsonEvent));
+                nextSequenceNumber++;
+                numRecordsInEvent = 0;
+                eventBatch.clear();
             }
-            consumer.accept(new PravegaWriterEvent(routingKey, nextSequenceNumber, jsonEvent));
+        }
+        if (!eventBatch.isEmpty()){
+            byte[] batchJsonEvent = mapper.writeValueAsBytes(eventBatch);
+            consumer.accept(new PravegaWriterEvent(routingKey, nextSequenceNumber, batchJsonEvent));
             nextSequenceNumber++;
-
         }
         final long endOffset = inputStream.getCount();
         tempFile.delete();
