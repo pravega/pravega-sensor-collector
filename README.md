@@ -33,6 +33,7 @@ Pravega Sensor Collector collects data from sensors and ingests the data into
     - [Supported File Formats](#supported-file-formats)
       - [CSV](#csv)
       - [Raw File](#raw-file)
+      - [Parquet](#parquet)
     - [Write Sample Events](#write-sample-events)
   - [Phase IV Leap Wireless Gateway Integration](#phase-iv-leap-wireless-gateway-integration)
   - [Troubleshooting](#troubleshooting)
@@ -363,12 +364,24 @@ If using the CSV file driver, you can simulate the functionality of it by using 
 4. If you have deployed Flink Tools, within 2 minutes, on the SDP host, you should see the sample events written
    to the directory `/desdp/lts/edge-data-project-pvc-*/streaming-data-platform/$(hostname)/sensors-parquet/`.
 
+
 #### Raw file
 
 Raw file data can be ingested in byte array format. Each file is sent as a single event.
 
 The script [run-with-gradle-raw-file.sh](pravega-sensor-collector\scripts\run-with-gradle-raw-file.sh) can be edited for testing. 
 Make sure PRAVEGA_SENSOR_COLLECTOR_RAW1_FILE_SPEC is set correctly. This is where the files will be read from.
+
+
+#### Parquet
+
+Parquet data is parsed to efficiently produce events in JSON format. When possible, integers and floating point values will be converted to their corresponding JSON data types.
+
+The script [run-with-gradle-parquet-files-ingest.sh](pravega-sensor-collector\scripts\run-with-gradle-parquet-file-ingest.sh) can be edited for testing. 
+
+Note: For windows, Hadoop requires native libraries on Windows to work properly. You can download `Winutils.exe` to fix this. See [here](https://cwiki.apache.org/confluence/display/HADOOP2/WindowsProblems). 
+Add the location of bin/winutils.exe in the parameter HADOOP_HOME. 
+
 
 ## Phase IV Leap Wireless Gateway Integration
 

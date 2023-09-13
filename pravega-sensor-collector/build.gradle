@@ -40,6 +40,10 @@ dependencies {
     compile "org.eclipse.milo:sdk-client:${miloVersion}"
     compile "com.google.code.gson:gson:${gsonVersion}"
 
+    compile "org.apache.parquet:parquet-avro:${parquetVersion}"
+    compile "org.apache.parquet:parquet-hadoop:${parquetVersion}"
+    compile "org.apache.hadoop:hadoop-client:${hadoopVersion}"
+
     testCompile "junit:junit:${junitVersion}"
 
     testCompile "org.glassfish.jersey.containers:jersey-container-grizzly2-http:${grizzlyVersion}"
