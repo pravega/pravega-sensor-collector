@@ -75,6 +75,8 @@ public class EventGenerator {
         } catch (Exception e){
             log.error("Exception = {}",e);
             throw e;
-        }  
+        } finally {
+            inputStream.close();
+        }
     }   
 }

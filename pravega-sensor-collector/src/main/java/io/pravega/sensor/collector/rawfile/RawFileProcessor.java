@@ -12,10 +12,13 @@ package io.pravega.sensor.collector.rawfile;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.channels.FileChannel;
+import java.nio.channels.FileLock;
 import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.nio.file.StandardOpenOption;
 import java.sql.Connection;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -93,9 +96,9 @@ public class RawFileProcessor {
         log.trace("ingestRawFiles: BEGIN");
         findAndRecordNewFiles();
         processNewFiles();
-        if (config.enableDeleteCompletedFiles) {
-            deleteCompletedFiles();
-        }
+        // if (config.enableDeleteCompletedFiles) {
+        //     deleteCompletedFiles();
+        // }
         log.trace("ingestRawFiles: END");
     }
 
@@ -221,14 +224,24 @@ public class RawFileProcessor {
     void deleteCompletedFiles() throws Exception {
         final List<FileNameWithOffset> completedFiles = state.getCompletedFiles();
         completedFiles.forEach(file -> {
-            try {
-                Files.deleteIfExists(Paths.get(file.fileName));
-                log.info("deleteCompletedFiles: Deleted file {}", file.fileName);
-                // Only remove from database if we could delete file.
-                state.deleteCompletedFile(file.fileName);
+            //Obtain a lock on file
+            try(FileChannel channel = FileChannel.open(Paths.get(file.fileName),StandardOpenOption.WRITE)){
+                FileLock lock = channel.tryLock();
+                if(lock!=null){
+                    Files.deleteIfExists(Paths.get(file.fileName));
+                    log.info("deleteCompletedFiles: Deleted file {}", file.fileName);
+                    lock.release();
+                    // Only remove from database if we could delete file.
+                    state.deleteCompletedFile(file.fileName);                        
+                }   
+                else{
+                    log.info("Unable to obtain lock");
+                    throw new Exception();
+                }
             } catch (Exception e) {
-                log.warn("Unable to delete ingested file {}", e);
-                // We can continue on this error. It will be retried on the next iteration.
+                log.warn("Unable to delete ingested file {}", e.getMessage());
+                log.warn("File is locked by another process. Will retry deletion on the next iteration");
+                // We can continue on this error. Deletion will be retried on the next iteration.
             }
         });
     }
