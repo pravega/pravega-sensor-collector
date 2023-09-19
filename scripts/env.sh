@@ -11,5 +11,5 @@ export ENV_LOCAL_SCRIPT=$(dirname $0)/env-local.sh
 if [[ -f ${ENV_LOCAL_SCRIPT} ]]; then
     source ${ENV_LOCAL_SCRIPT}
 fi
-export APP_VERSION=${APP_VERSION:-0.2.16}
+export APP_VERSION=${APP_VERSION:-0.2.16.1}
 export GRADLE_OPTIONS="${GRADLE_OPTIONS:-"-Pversion=${APP_VERSION}"}"
