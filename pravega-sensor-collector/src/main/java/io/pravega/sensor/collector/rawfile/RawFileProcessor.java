@@ -94,11 +94,12 @@ public class RawFileProcessor {
 
     public void ingestRawFiles() throws Exception {
         log.trace("ingestRawFiles: BEGIN");
+        // delete leftover completed files
+        if (config.enableDeleteCompletedFiles) {
+            deleteCompletedFiles();
+        }
         findAndRecordNewFiles();
         processNewFiles();
-        // if (config.enableDeleteCompletedFiles) {
-        //     deleteCompletedFiles();
-        // }
         log.trace("ingestRawFiles: END");
     }
 
@@ -185,34 +186,35 @@ public class RawFileProcessor {
         writer.abort();
 
         try (final InputStream inputStream = new FileInputStream(fileNameWithBeginOffset.fileName)) {
-            final CountingInputStream countingInputStream = new CountingInputStream(inputStream);
-            countingInputStream.skip(fileNameWithBeginOffset.offset);
-            final Pair<Long,Long> result = eventGenerator.generateEventsFromInputStream(countingInputStream, firstSequenceNumber,
-                    e -> {
-                        log.trace("processFile: event={}", e);
-                        try {
-                            writer.writeEvent(e.routingKey, e.bytes);
-                            numofbytes.addAndGet(e.bytes.length);
+            try(final CountingInputStream countingInputStream = new CountingInputStream(inputStream)) {
+                countingInputStream.skip(fileNameWithBeginOffset.offset);
+                final Pair<Long,Long> result = eventGenerator.generateEventsFromInputStream(countingInputStream, firstSequenceNumber,
+                        e -> {
+                            log.trace("processFile: event={}", e);
+                            try {
+                                writer.writeEvent(e.routingKey, e.bytes);
+                                numofbytes.addAndGet(e.bytes.length);
 
-                        } catch (TxnFailedException ex) {
-                            throw new RuntimeException(ex);
-                        } 
-                    });
-            final Optional<UUID> txnId = writer.flush();
-            final long nextSequenceNumber = result.getLeft();
-            final long endOffset = result.getRight();
-            state.addCompletedFile(fileNameWithBeginOffset.fileName, fileNameWithBeginOffset.offset, endOffset, nextSequenceNumber, txnId);
-            // injectCommitFailure();
-            writer.commit();
-            state.deleteTransactionToCommit(txnId);
+                            } catch (TxnFailedException ex) {
+                                throw new RuntimeException(ex);
+                            }
+                        });
+                final Optional<UUID> txnId = writer.flush();
+                final long nextSequenceNumber = result.getLeft();
+                final long endOffset = result.getRight();
+                state.addCompletedFile(fileNameWithBeginOffset.fileName, fileNameWithBeginOffset.offset, endOffset, nextSequenceNumber, txnId);
+                // injectCommitFailure();
+                writer.commit();
+                state.deleteTransactionToCommit(txnId);
             
-            double elapsedSec = (System.nanoTime() - timestamp) / 1_000_000_000.0;
-            double megabyteCount = numofbytes.getAndSet(0) / 1_000_000.0;
-            double megabytesPerSec = megabyteCount / elapsedSec;
-            log.info("processFile: Finished ingesting file {}; endOffset={}, nextSequenceNumber={}",
-                    fileNameWithBeginOffset.fileName, endOffset, nextSequenceNumber);
-            log.info("Sent {} MB in {} sec", megabyteCount, elapsedSec );
-            log.info("Transfer rate: {} MB/sec", megabytesPerSec);            
+                double elapsedSec = (System.nanoTime() - timestamp) / 1_000_000_000.0;
+                double megabyteCount = numofbytes.getAndSet(0) / 1_000_000.0;
+                double megabytesPerSec = megabyteCount / elapsedSec;
+                log.info("processFile: Finished ingesting file {}; endOffset={}, nextSequenceNumber={}",
+                        fileNameWithBeginOffset.fileName, endOffset, nextSequenceNumber);
+                log.info("Sent {} MB in {} sec", megabyteCount, elapsedSec );
+                log.info("Transfer rate: {} MB/sec", megabytesPerSec);            
+            }
         }
 
         // Delete file right after ingesting
@@ -226,21 +228,22 @@ public class RawFileProcessor {
         completedFiles.forEach(file -> {
             //Obtain a lock on file
             try(FileChannel channel = FileChannel.open(Paths.get(file.fileName),StandardOpenOption.WRITE)){
-                FileLock lock = channel.tryLock();
-                if(lock!=null){
-                    Files.deleteIfExists(Paths.get(file.fileName));
-                    log.info("deleteCompletedFiles: Deleted file {}", file.fileName);
-                    lock.release();
-                    // Only remove from database if we could delete file.
-                    state.deleteCompletedFile(file.fileName);                        
-                }   
-                else{
-                    log.info("Unable to obtain lock");
-                    throw new Exception();
+                try(FileLock lock = channel.tryLock()) {
+                    if(lock!=null){
+                        Files.deleteIfExists(Paths.get(file.fileName));
+                        log.info("deleteCompletedFiles: Deleted file {}", file.fileName);
+                        lock.release();
+                        // Only remove from database if we could delete file.
+                        state.deleteCompletedFile(file.fileName);                        
+                    }
+                    else{
+                        log.info("Unable to obtain lock");
+                        throw new Exception();
+                    }
                 }
             } catch (Exception e) {
                 log.warn("Unable to delete ingested file {}", e.getMessage());
-                log.warn("File is locked by another process. Will retry deletion on the next iteration");
+                log.warn("File is locked by another process. Will retry deletion.");
                 // We can continue on this error. Deletion will be retried on the next iteration.
             }
         });
