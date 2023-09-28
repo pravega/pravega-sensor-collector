@@ -241,13 +241,13 @@ public class ParquetFileProcessor {
                         state.deleteCompletedFile(file.fileName);                        
                     }
                     else{
-                        log.info("Unable to obtain lock");
+                        log.warn("Unable to obtain lock on file {}. File is locked by another process.", file.fileName);    
                         throw new Exception();
                     }
                 }
             } catch (Exception e) {
                 log.warn("Unable to delete ingested file {}", e.getMessage());
-                log.warn("File is locked by another process. Will retry deletion.");
+                log.warn("Deletion will be retried on the next iteration.");
                 // We can continue on this error. Deletion will be retried on the next iteration.
             }
         });
