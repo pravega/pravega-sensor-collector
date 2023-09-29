@@ -12,10 +12,13 @@ package io.pravega.sensor.collector.rawfile;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.channels.FileChannel;
+import java.nio.channels.FileLock;
 import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.nio.file.StandardOpenOption;
 import java.sql.Connection;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -91,11 +94,12 @@ public class RawFileProcessor {
 
     public void ingestRawFiles() throws Exception {
         log.trace("ingestRawFiles: BEGIN");
-        findAndRecordNewFiles();
-        processNewFiles();
+        // delete leftover completed files
         if (config.enableDeleteCompletedFiles) {
             deleteCompletedFiles();
         }
+        findAndRecordNewFiles();
+        processNewFiles();
         log.trace("ingestRawFiles: END");
     }
 
@@ -182,34 +186,35 @@ public class RawFileProcessor {
         writer.abort();
 
         try (final InputStream inputStream = new FileInputStream(fileNameWithBeginOffset.fileName)) {
-            final CountingInputStream countingInputStream = new CountingInputStream(inputStream);
-            countingInputStream.skip(fileNameWithBeginOffset.offset);
-            final Pair<Long,Long> result = eventGenerator.generateEventsFromInputStream(countingInputStream, firstSequenceNumber,
-                    e -> {
-                        log.trace("processFile: event={}", e);
-                        try {
-                            writer.writeEvent(e.routingKey, e.bytes);
-                            numofbytes.addAndGet(e.bytes.length);
+            try(final CountingInputStream countingInputStream = new CountingInputStream(inputStream)) {
+                countingInputStream.skip(fileNameWithBeginOffset.offset);
+                final Pair<Long,Long> result = eventGenerator.generateEventsFromInputStream(countingInputStream, firstSequenceNumber,
+                        e -> {
+                            log.trace("processFile: event={}", e);
+                            try {
+                                writer.writeEvent(e.routingKey, e.bytes);
+                                numofbytes.addAndGet(e.bytes.length);
 
-                        } catch (TxnFailedException ex) {
-                            throw new RuntimeException(ex);
-                        } 
-                    });
-            final Optional<UUID> txnId = writer.flush();
-            final long nextSequenceNumber = result.getLeft();
-            final long endOffset = result.getRight();
-            state.addCompletedFile(fileNameWithBeginOffset.fileName, fileNameWithBeginOffset.offset, endOffset, nextSequenceNumber, txnId);
-            // injectCommitFailure();
-            writer.commit();
-            state.deleteTransactionToCommit(txnId);
+                            } catch (TxnFailedException ex) {
+                                throw new RuntimeException(ex);
+                            }
+                        });
+                final Optional<UUID> txnId = writer.flush();
+                final long nextSequenceNumber = result.getLeft();
+                final long endOffset = result.getRight();
+                state.addCompletedFile(fileNameWithBeginOffset.fileName, fileNameWithBeginOffset.offset, endOffset, nextSequenceNumber, txnId);
+                // injectCommitFailure();
+                writer.commit();
+                state.deleteTransactionToCommit(txnId);
             
-            double elapsedSec = (System.nanoTime() - timestamp) / 1_000_000_000.0;
-            double megabyteCount = numofbytes.getAndSet(0) / 1_000_000.0;
-            double megabytesPerSec = megabyteCount / elapsedSec;
-            log.info("processFile: Finished ingesting file {}; endOffset={}, nextSequenceNumber={}",
-                    fileNameWithBeginOffset.fileName, endOffset, nextSequenceNumber);
-            log.info("Sent {} MB in {} sec", megabyteCount, elapsedSec );
-            log.info("Transfer rate: {} MB/sec", megabytesPerSec);            
+                double elapsedSec = (System.nanoTime() - timestamp) / 1_000_000_000.0;
+                double megabyteCount = numofbytes.getAndSet(0) / 1_000_000.0;
+                double megabytesPerSec = megabyteCount / elapsedSec;
+                log.info("processFile: Finished ingesting file {}; endOffset={}, nextSequenceNumber={}",
+                        fileNameWithBeginOffset.fileName, endOffset, nextSequenceNumber);
+                log.info("Sent {} MB in {} sec", megabyteCount, elapsedSec );
+                log.info("Transfer rate: {} MB/sec", megabytesPerSec);            
+            }
         }
 
         // Delete file right after ingesting
@@ -221,14 +226,25 @@ public class RawFileProcessor {
     void deleteCompletedFiles() throws Exception {
         final List<FileNameWithOffset> completedFiles = state.getCompletedFiles();
         completedFiles.forEach(file -> {
-            try {
-                Files.deleteIfExists(Paths.get(file.fileName));
-                log.info("deleteCompletedFiles: Deleted file {}", file.fileName);
-                // Only remove from database if we could delete file.
-                state.deleteCompletedFile(file.fileName);
+            //Obtain a lock on file
+            try(FileChannel channel = FileChannel.open(Paths.get(file.fileName),StandardOpenOption.WRITE)){
+                try(FileLock lock = channel.tryLock()) {
+                    if(lock!=null){
+                        Files.deleteIfExists(Paths.get(file.fileName));
+                        log.info("deleteCompletedFiles: Deleted file {}", file.fileName);
+                        lock.release();
+                        // Only remove from database if we could delete file.
+                        state.deleteCompletedFile(file.fileName);                        
+                    }
+                    else{
+                        log.warn("Unable to obtain lock on file {}. File is locked by another process.", file.fileName);    
+                        throw new Exception();
+                    }
+                }
             } catch (Exception e) {
-                log.warn("Unable to delete ingested file {}", e);
-                // We can continue on this error. It will be retried on the next iteration.
+                log.warn("Unable to delete ingested file {}", e.getMessage());
+                log.warn("Deletion will be retried on the next iteration.");
+                // We can continue on this error. Deletion will be retried on the next iteration.
             }
         });
     }
