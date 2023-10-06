@@ -136,12 +136,22 @@ public class RawFileProcessor {
      * @return list of file name and file size in bytes
      */
     static protected List<FileNameWithOffset> getDirectoryListing(String fileSpec, String fileExtension) throws IOException {
-        final Path pathSpec = Paths.get(fileSpec);
+        String[] directories= fileSpec.split(",");
         List<FileNameWithOffset> directoryListing = new ArrayList<>();
-        try(DirectoryStream<Path> dirStream=Files.newDirectoryStream(pathSpec)){
+        
+        for (String directory : directories) {
+            final Path pathSpec = Paths.get(directory);
+            directoryListing.addAll(allDirectoryListing(pathSpec, fileExtension));   
+        }
+        return directoryListing;
+    }
+
+    static protected List<FileNameWithOffset> allDirectoryListing(Path dirPath, String fileExtension) throws IOException{
+        List<FileNameWithOffset> directoryListing = new ArrayList<>();
+        try(DirectoryStream<Path> dirStream=Files.newDirectoryStream(dirPath)){
             for(Path path: dirStream){
                 if(Files.isDirectory(path))         
-                    directoryListing.addAll(getDirectoryListing(path.toString(), fileExtension));
+                    directoryListing.addAll(allDirectoryListing(path, fileExtension));
                 else {
                     FileNameWithOffset fileEntry = new FileNameWithOffset(path.toAbsolutePath().toString(), path.toFile().length());
                     // If extension is null, ingest all files 
