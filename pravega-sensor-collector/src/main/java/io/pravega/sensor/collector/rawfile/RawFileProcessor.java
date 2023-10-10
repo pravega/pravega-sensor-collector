@@ -138,20 +138,21 @@ public class RawFileProcessor {
     static protected List<FileNameWithOffset> getDirectoryListing(String fileSpec, String fileExtension) throws IOException {
         String[] directories= fileSpec.split(",");
         List<FileNameWithOffset> directoryListing = new ArrayList<>();
-        
         for (String directory : directories) {
             final Path pathSpec = Paths.get(directory);
-            directoryListing.addAll(allDirectoryListing(pathSpec, fileExtension));   
+            getDirectoryFiles(pathSpec, fileExtension,directoryListing);   
         }
         return directoryListing;
     }
 
-    static protected List<FileNameWithOffset> allDirectoryListing(Path dirPath, String fileExtension) throws IOException{
-        List<FileNameWithOffset> directoryListing = new ArrayList<>();
+    /**
+     * @return get all files in directory(including subdirectories) and their respective file size in bytes
+     */
+    static protected void getDirectoryFiles(Path dirPath, String fileExtension, List<FileNameWithOffset> directoryListing) throws IOException{        
         try(DirectoryStream<Path> dirStream=Files.newDirectoryStream(dirPath)){
             for(Path path: dirStream){
                 if(Files.isDirectory(path))         
-                    directoryListing.addAll(allDirectoryListing(path, fileExtension));
+                    getDirectoryFiles(path, fileExtension, directoryListing);
                 else {
                     FileNameWithOffset fileEntry = new FileNameWithOffset(path.toAbsolutePath().toString(), path.toFile().length());
                     // If extension is null, ingest all files 
@@ -160,7 +161,7 @@ public class RawFileProcessor {
                 }
             }
         }
-        return directoryListing;
+        return;
     }
 
     /**
