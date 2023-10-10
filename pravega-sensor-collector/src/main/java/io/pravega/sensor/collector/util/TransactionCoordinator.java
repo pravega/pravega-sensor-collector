@@ -9,6 +9,7 @@
  */
 package io.pravega.sensor.collector.util;
 
+import io.pravega.client.stream.Transaction;
 import io.pravega.client.stream.TxnFailedException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -160,6 +161,9 @@ public class TransactionCoordinator {
                                 txnId, e);
                         // Continue recovery and run as normal.
                     } else {
+                        log.error(
+                                "Unable to commit transaction {} from a previous process. Events may have been lost. " +
+                                        "Try increasing the transaction timeout.", txnId, e);
                         throw e;
                     }
                 }

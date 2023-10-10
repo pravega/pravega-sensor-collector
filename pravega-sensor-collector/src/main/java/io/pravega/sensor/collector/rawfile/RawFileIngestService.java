@@ -46,6 +46,7 @@ public class RawFileIngestService extends DeviceDriver{
     private final RawFileProcessor processor;
     private final ScheduledExecutorService executor;
     private ScheduledFuture<?> task;
+    private ScheduledFuture<?> processFileTask;
 
     public RawFileIngestService(DeviceDriverConfig config){
         super(config);
@@ -124,10 +125,20 @@ public class RawFileIngestService extends DeviceDriver{
         try {
             processor.ingestRawFiles();
         } catch (Exception e) {
-            log.error("Error", e);
+            log.error("ingestRawFiles: ingest file error", e);
             // Continue on any errors. We will retry on the next iteration.
         }
         log.trace("ingestRawFiles: END");
+    }
+    protected void processRawFiles() {
+        log.info("processRawFiles: BEGIN");
+        try {
+            processor.processRawFiles();
+        } catch (Exception e) {
+            log.error("processRawFiles: Process file error", e);
+            // Continue on any errors. We will retry on the next iteration.
+        }
+        log.info("processRawFiles: END");
     }
 
     @Override
@@ -137,12 +148,18 @@ public class RawFileIngestService extends DeviceDriver{
                 0,
                 getIntervalMs(),
                 TimeUnit.MILLISECONDS);
+        processFileTask = executor.scheduleWithFixedDelay(
+                this::processRawFiles,
+                0,
+                0,
+                TimeUnit.MILLISECONDS);
         notifyStarted();        
     }
 
     @Override
     protected void doStop() {
-        task.cancel(false);        
+        task.cancel(false);
+        processFileTask.cancel(false);
     }
 
 }

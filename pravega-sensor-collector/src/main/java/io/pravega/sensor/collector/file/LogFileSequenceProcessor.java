@@ -15,6 +15,7 @@ import io.pravega.client.EventStreamClientFactory;
 import io.pravega.client.admin.StreamManager;
 import io.pravega.client.stream.EventWriterConfig;
 import io.pravega.client.stream.StreamConfiguration;
+import io.pravega.client.stream.Transaction;
 import io.pravega.client.stream.TxnFailedException;
 import io.pravega.client.stream.impl.ByteArraySerializer;
 import io.pravega.sensor.collector.util.EventWriter;
@@ -27,18 +28,14 @@ import org.slf4j.LoggerFactory;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.nio.file.DirectoryStream;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
+import java.nio.channels.FileChannel;
+import java.nio.channels.FileLock;
+import java.nio.file.*;
 import java.sql.Connection;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Optional;
-import java.util.Set;
-import java.util.UUID;
+import java.util.*;
+import java.util.concurrent.atomic.AtomicLong;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 
@@ -91,20 +88,29 @@ public class LogFileSequenceProcessor {
     }
 
     public void ingestLogFiles() throws Exception {
-        log.info("ingestLogFiles: BEGIN");
         findAndRecordNewFiles();
+    }
+    public void processLogFiles() throws Exception {
+        log.info("processLogFiles: BEGIN");
         processNewFiles();
         if (config.enableDeleteCompletedFiles) {
+            log.debug("processLogFiles: Deleting completed files");
             deleteCompletedFiles();
         }
-        log.info("ingestLogFiles: END");
+        log.info("processLogFiles: END");
     }
 
     public void processNewFiles() throws Exception {
         for (;;) {
+            /*
+            Todo
+                1. Can we get list of files instead of reading one by one?
+                2. If nextFile is null then check the db again after given interval(1 sec)
+                    Handled with as part of scheduleWithDelay
+             */
             final Pair<FileNameWithOffset, Long> nextFile = state.getNextPendingFile();
             if (nextFile == null) {
-                log.info("No more files to ingest");
+                log.info("processNewFiles: No more files to ingest");
                 break;
             } else {
                 processFile(nextFile.getLeft(), nextFile.getRight());
@@ -124,21 +130,36 @@ public class LogFileSequenceProcessor {
      */
     protected List<FileNameWithOffset> getDirectoryListing() throws IOException {
         log.info("getDirectoryListing: fileSpec={}", config.fileSpec);
-        final List<FileNameWithOffset> directoryListing = getDirectoryListing(config.fileSpec);
+        final List<FileNameWithOffset> directoryListing = getDirectoryListing(config.fileSpec, config.fileExtension);
         log.trace("getDirectoryListing: directoryListing={}", directoryListing);
         return directoryListing;
     }
 
     /**
      * @return list of file name and file size in bytes
+     * Todo handle the below cases
+     *  1. If given file path does not exist then log the message and abort the task
+     *  2. If directory does not exist and no file with given extn like .csv then log the message and abort the task
+     *  3. check for empty file, log the message and continue with valid files
+     *  How to abort the task? By throwing an exception back to caller?
+     *
      */
-    static protected List<FileNameWithOffset> getDirectoryListing(String fileSpec) throws IOException {
+    static protected List<FileNameWithOffset> getDirectoryListing(String fileSpec, String fileExtension) throws IOException {
         final Path pathSpec = Paths.get(fileSpec);
-        try (DirectoryStream<Path> dirStream = Files.newDirectoryStream(pathSpec.getParent(), pathSpec.getFileName().toString())) {
-            return StreamSupport.stream(dirStream.spliterator(), false)
-                    .map(f -> new FileNameWithOffset(f.toAbsolutePath().toString(), f.toFile().length()))
-                    .collect(Collectors.toList());
+        List<FileNameWithOffset> directoryListing = new ArrayList<>();
+        try (DirectoryStream<Path> dirStream = Files.newDirectoryStream(pathSpec)) {
+            for (Path path : dirStream) {
+                if (Files.isDirectory(path))         //traverse subdirectories
+                    directoryListing.addAll(getDirectoryListing(path.toString(), fileExtension));
+                else {
+                    FileNameWithOffset fileEntry = new FileNameWithOffset(path.toAbsolutePath().toString(), path.toFile().length());
+                    if (isValidFile(fileEntry, fileExtension)) {
+                        directoryListing.add(fileEntry);
+                    }
+                }
+            }
         }
+        return directoryListing;
     }
 
     /**
@@ -155,7 +176,7 @@ public class LogFileSequenceProcessor {
                 newFiles.add(new FileNameWithOffset(dirFile.fileName, 0));
             }
         });
-        log.info("getNewFiles={}", newFiles);
+        log.info("getNewFiles: new file lists ={}", newFiles);
         return newFiles;
     }
 
@@ -163,10 +184,18 @@ public class LogFileSequenceProcessor {
         log.info("processFile: Ingesting file {}; beginOffset={}, firstSequenceNumber={}",
                 fileNameWithBeginOffset.fileName, fileNameWithBeginOffset.offset, firstSequenceNumber);
 
+        AtomicLong numofbytes = new AtomicLong(0);
+        long timestamp = System.nanoTime();
         // In case a previous iteration encountered an error, we need to ensure that
         // previous flushed transactions are committed and any unflushed transactions as aborted.
         transactionCoordinator.performRecovery();
-        writer.abort();
+        /* Check if transactions can be aborted.
+        * Will fail with {@link TxnFailedException} if the transaction has already been committed or aborted.
+         */
+        log.debug("processFile: Transaction status {} ", writer.getTransactionStatus());
+        if(writer.getTransactionStatus() == Transaction.Status.OPEN){
+            writer.abort();
+        }
 
         try (final InputStream inputStream = new FileInputStream(fileNameWithBeginOffset.fileName)) {
             final CountingInputStream countingInputStream = new CountingInputStream(inputStream);
@@ -177,6 +206,11 @@ public class LogFileSequenceProcessor {
                         try {
                             writer.writeEvent(e.routingKey, e.bytes);
                         } catch (TxnFailedException ex) {
+                            log.error("processFile: Write event to transaction failed with exception {} while processing file: {}, event: {}", ex, fileNameWithBeginOffset.fileName, e);
+                            /*
+                            TODO while writing event if we get Transaction failed exception then should we abort the trasaction and process again?
+                            This will occur only if Transaction state is not open
+                             */
                             throw new RuntimeException(ex);
                         }
                     });
@@ -185,26 +219,71 @@ public class LogFileSequenceProcessor {
             final long endOffset = result.getRight();
             state.addCompletedFile(fileNameWithBeginOffset.fileName, fileNameWithBeginOffset.offset, endOffset, nextSequenceNumber, txnId);
             // injectCommitFailure();
-            writer.commit();
+            try {
+                // commit fails only if Transaction is not in open state.
+                writer.commit();
+            } catch (TxnFailedException ex) {
+                log.error("processFile: Commit transaction for id: {}, file : {}, failed with exception: {}", txnId, fileNameWithBeginOffset.fileName, ex);
+                throw new RuntimeException(ex);
+            }
+            // Add to completed file list only if commit is successfully.
             state.deleteTransactionToCommit(txnId);
+            double elapsedSec = (System.nanoTime() - timestamp) / 1_000_000_000.0;
+            double megabyteCount = numofbytes.getAndSet(0) / 1_000_000.0;
+            double megabytesPerSec = megabyteCount / elapsedSec;
+            log.info("Sent {} MB in {} sec. Transfer rate: {} MB/sec ", megabyteCount, elapsedSec, megabytesPerSec );
             log.info("processFile: Finished ingesting file {}; endOffset={}, nextSequenceNumber={}",
                     fileNameWithBeginOffset.fileName, endOffset, nextSequenceNumber);
+        }
+        // Delete file right after ingesting
+        if (config.enableDeleteCompletedFiles) {
+            deleteCompletedFiles();
         }
     }
 
     void deleteCompletedFiles() throws Exception {
         final List<FileNameWithOffset> completedFiles = state.getCompletedFiles();
         completedFiles.forEach(file -> {
-            try {
-                Files.deleteIfExists(Paths.get(file.fileName));
-                log.info("deleteCompletedFiles: Deleted file {}", file.fileName);
-                // Only remove from database if we could delete file.
-                state.deleteCompletedFile(file.fileName);
+            //Obtain a lock on file
+            try(FileChannel channel = FileChannel.open(Paths.get(file.fileName), StandardOpenOption.WRITE)){
+                try(FileLock lock = channel.tryLock()) {
+                    if(lock!=null){
+                        Files.deleteIfExists(Paths.get(file.fileName));
+                        log.info("deleteCompletedFiles: Deleted file {}", file.fileName);
+                        lock.release();
+                        // Only remove from database if we could delete file.
+                        state.deleteCompletedFile(file.fileName);
+                    }
+                    else{
+                        log.warn("Unable to obtain lock on file {}. File is locked by another process.", file.fileName);
+                        throw new Exception();
+                    }
+                }
             } catch (Exception e) {
-                log.warn("Unable to delete ingested file {}", e);
-                // We can continue on this error. It will be retried on the next iteration.
+                log.warn("Unable to delete ingested file {}", e.getMessage());
+                log.warn("Deletion will be retried on the next iteration.");
+                // We can continue on this error. Deletion will be retried on the next iteration.
             }
         });
+    }
+
+    /*
+    Check for below file validation
+        1. Is File empty
+        2. If extension is null or extension is valid ingest all file
+     */
+    public static boolean isValidFile(FileNameWithOffset fileEntry, String fileExtension ){
+
+        if(fileEntry.offset<=0){
+            log.warn("isValidFile: Empty file {} can not be processed ",fileEntry.fileName);
+        }
+        // If extension is null, ingest all files
+        else if(fileExtension.isEmpty() || fileExtension.equals(fileEntry.fileName.substring(fileEntry.fileName.lastIndexOf(".")+1)))
+            return true;
+        else
+            log.warn("isValidFile: File format {} is not supported ", fileEntry.fileName);
+
+        return false;
     }
 
     /**

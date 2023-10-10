@@ -10,6 +10,7 @@
 package io.pravega.sensor.collector.util;
 
 import io.pravega.client.stream.EventStreamWriter;
+import io.pravega.client.stream.Transaction;
 import io.pravega.client.stream.TxnFailedException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -51,6 +52,11 @@ public class NonTransactionalEventWriter<T> implements EventWriter<T> {
     }
 
     public void abort() {
+    }
+
+    @Override
+    public Transaction.Status getTransactionStatus() {
+        throw new UnsupportedOperationException("Non-transactional writer do not have transaction status");
     }
 
     public void close() {

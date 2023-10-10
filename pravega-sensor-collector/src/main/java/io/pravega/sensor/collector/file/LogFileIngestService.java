@@ -26,6 +26,7 @@ public class LogFileIngestService extends DeviceDriver {
     private static final Logger log = LoggerFactory.getLogger(LogFileIngestService.class);
 
     private static final String FILE_SPEC_KEY = "FILE_SPEC";
+    private static final String FILE_EXT= "FILE_EXTENSION";
     private static final String DELETE_COMPLETED_FILES_KEY = "DELETE_COMPLETED_FILES";
     private static final String DATABASE_FILE_KEY = "DATABASE_FILE";
     private static final String EVENT_TEMPLATE_KEY = "EVENT_TEMPLATE";
@@ -42,12 +43,14 @@ public class LogFileIngestService extends DeviceDriver {
     private final ScheduledExecutorService executor;
 
     private ScheduledFuture<?> task;
+    private ScheduledFuture<?> processFileTask;
 
     public LogFileIngestService(DeviceDriverConfig config) {
         super(config);
         final LogFileSequenceConfig logFileSequenceConfig = new LogFileSequenceConfig(
                 getDatabaseFileName(),
                 getFileSpec(),
+                getFileExtension(),
                 getRoutingKey(),
                 getStreamName(),
                 getEventTemplate(),
@@ -68,6 +71,9 @@ public class LogFileIngestService extends DeviceDriver {
 
     String getFileSpec() {
         return getProperty(FILE_SPEC_KEY);
+    }
+    String getFileExtension() {
+        return getProperty(FILE_EXT, "");
     }
 
     boolean getDeleteCompletedFiles() {
@@ -118,10 +124,20 @@ public class LogFileIngestService extends DeviceDriver {
         try {
             processor.ingestLogFiles();
         } catch (Exception e) {
-            log.error("Error", e);
+            log.error("ingestLogFiles: Ingest file error", e);
             // Continue on any errors. We will retry on the next iteration.
         }
         log.info("ingestLogFiles: END");
+    }
+    protected void processLogFiles() {
+        log.info("processLogFiles: BEGIN");
+        try {
+            processor.processLogFiles();
+        } catch (Exception e) {
+            log.error("processLogFiles: Process file error", e);
+            // Continue on any errors. We will retry on the next iteration.
+        }
+        log.info("processLogFiles: END");
     }
 
     @Override
@@ -131,11 +147,22 @@ public class LogFileIngestService extends DeviceDriver {
                 0,
                 getIntervalMs(),
                 TimeUnit.MILLISECONDS);
+        /*
+        Submits a periodic action that becomes enabled immediately  for the first time,
+        and subsequently with the delay of 0 milliseconds between the termination of one execution and the commencement of the next
+        ie immediately after completion of first action.
+         */
+        processFileTask = executor.scheduleWithFixedDelay(
+                this::processLogFiles,
+                0,
+                0,
+                TimeUnit.MILLISECONDS);
         notifyStarted();
     }
 
     @Override
     protected void doStop() {
         task.cancel(false);
+        processFileTask.cancel(false);
     }
 }
