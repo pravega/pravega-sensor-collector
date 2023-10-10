@@ -137,12 +137,23 @@ public class ParquetFileProcessor {
      * @return list of file name and file size in bytes
      */
     static protected List<FileNameWithOffset> getDirectoryListing(String fileSpec, String fileExtension) throws IOException {
-        final Path pathSpec = Paths.get(fileSpec);
+        String[] directories= fileSpec.split(",");
         List<FileNameWithOffset> directoryListing = new ArrayList<>();
-        try(DirectoryStream<Path> dirStream=Files.newDirectoryStream(pathSpec)){
+        for (String directory : directories) {
+            final Path pathSpec = Paths.get(directory);
+            getDirectoryFiles(pathSpec, fileExtension,directoryListing);   
+        }
+        return directoryListing;
+    }
+
+    /**
+     * @return get all files in directory(including subdirectories) and their respective file size in bytes
+     */
+    static protected void getDirectoryFiles(Path dirPath, String fileExtension, List<FileNameWithOffset> directoryListing) throws IOException{        
+        try(DirectoryStream<Path> dirStream=Files.newDirectoryStream(dirPath)){
             for(Path path: dirStream){
-                if(Files.isDirectory(path))         //traverse subdirectories
-                    directoryListing.addAll(getDirectoryListing(path.toString(), fileExtension));
+                if(Files.isDirectory(path))         
+                    getDirectoryFiles(path, fileExtension, directoryListing);
                 else {
                     FileNameWithOffset fileEntry = new FileNameWithOffset(path.toAbsolutePath().toString(), path.toFile().length());
                     // If extension is null, ingest all files 
@@ -151,7 +162,7 @@ public class ParquetFileProcessor {
                 }
             }
         }
-        return directoryListing;
+        return;
     }
 
     /**
