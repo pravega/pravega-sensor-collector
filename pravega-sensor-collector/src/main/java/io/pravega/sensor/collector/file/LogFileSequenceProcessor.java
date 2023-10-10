@@ -146,6 +146,10 @@ public class LogFileSequenceProcessor {
      */
     static protected List<FileNameWithOffset> getDirectoryListing(String fileSpec, String fileExtension) throws IOException {
         final Path pathSpec = Paths.get(fileSpec);
+        if (!Files.isDirectory(pathSpec.toAbsolutePath())) {
+            log.error("getDirectoryListing: Directory does not exist or spec is not valid : {}", pathSpec.toAbsolutePath());
+            throw new IOException("Directory does not exist or spec is not valid");
+        }
         List<FileNameWithOffset> directoryListing = new ArrayList<>();
         try (DirectoryStream<Path> dirStream = Files.newDirectoryStream(pathSpec)) {
             for (Path path : dirStream) {
