@@ -14,11 +14,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.channels.FileChannel;
 import java.nio.channels.FileLock;
-import java.nio.file.DirectoryStream;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.nio.file.StandardOpenOption;
+import java.nio.file.*;
 import java.sql.Connection;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -144,10 +140,7 @@ public class RawFileProcessor {
      */
     static protected List<FileNameWithOffset> getDirectoryListing(String fileSpec, String fileExtension) throws IOException {
         final Path pathSpec = Paths.get(fileSpec);
-        if (!Files.isDirectory(pathSpec.toAbsolutePath())) {
-            log.error("getDirectoryListing: Directory does not exist or spec is not valid : {}", pathSpec.toAbsolutePath());
-            throw new IOException("Directory does not exist or spec is not valid");
-        }
+
         List<FileNameWithOffset> directoryListing = new ArrayList<>();
         try(DirectoryStream<Path> dirStream=Files.newDirectoryStream(pathSpec)){
             for(Path path: dirStream){
@@ -159,6 +152,14 @@ public class RawFileProcessor {
                         directoryListing.add(fileEntry);
                     }
                 }
+            }
+        }catch(Exception ex){
+            if(ex instanceof IOException){
+                log.error("getDirectoryListing: Directory does not exist or spec is not valid : {}", pathSpec.toAbsolutePath());
+                throw new IOException("Directory does not exist or spec is not valid");
+            }else{
+                log.error("getDirectoryListing: Exception while listing files: {}", pathSpec.toAbsolutePath());
+                throw new IOException(ex);
             }
         }
         return directoryListing;
@@ -194,7 +195,7 @@ public class RawFileProcessor {
         // In case a previous iteration encountered an error, we need to ensure that
         // previous flushed transactions are committed and any unflushed transactions as aborted.
         transactionCoordinator.performRecovery();
-        log.info("processFile: Transaction status {} ", writer.getTransactionStatus());
+        log.debug("processFile: Transaction status {} ", writer.getTransactionStatus());
         if(writer.getTransactionStatus() == Transaction.Status.OPEN){
             writer.abort();
         }
@@ -217,17 +218,24 @@ public class RawFileProcessor {
                 final Optional<UUID> txnId = writer.flush();
                 final long nextSequenceNumber = result.getLeft();
                 final long endOffset = result.getRight();
+                log.debug("processFile: Adding completed file: {}",  fileNameWithBeginOffset.fileName);
                 state.addCompletedFile(fileNameWithBeginOffset.fileName, fileNameWithBeginOffset.offset, endOffset, nextSequenceNumber, txnId);
                 // injectCommitFailure();
                 try {
                     // commit fails only if Transaction is not in open state.
+                    log.info("processFile: Commit transaction for Id: {}; file: {}", txnId.orElse(null), fileNameWithBeginOffset.fileName);
                     writer.commit();
                 } catch (TxnFailedException ex) {
                     log.error("processFile: Commit transaction for id: {}, file : {}, failed with exception: {}", txnId, fileNameWithBeginOffset.fileName, ex);
                     throw new RuntimeException(ex);
                 }
-                state.deleteTransactionToCommit(txnId);
-            
+                // Add to completed file list only if commit is successfull else it will be taken care as part of recovery
+                if(txnId.isPresent()){
+                    Transaction.Status status = writer.getTransactionStatus(txnId.get());
+                    if(status == Transaction.Status.COMMITTED || status == Transaction.Status.ABORTED)
+                        state.deleteTransactionToCommit(txnId);
+                }
+
                 double elapsedSec = (System.nanoTime() - timestamp) / 1_000_000_000.0;
                 double megabyteCount = numofbytes.getAndSet(0) / 1_000_000.0;
                 double megabytesPerSec = megabyteCount / elapsedSec;

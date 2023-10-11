@@ -42,7 +42,7 @@ public class LogFileIngestService extends DeviceDriver {
     private final LogFileSequenceProcessor processor;
     private final ScheduledExecutorService executor;
 
-    private ScheduledFuture<?> task;
+    private ScheduledFuture<?> ingestFiletask;
     private ScheduledFuture<?> processFileTask;
 
     public LogFileIngestService(DeviceDriverConfig config) {
@@ -130,19 +130,19 @@ public class LogFileIngestService extends DeviceDriver {
         log.info("ingestLogFiles: END");
     }
     protected void processLogFiles() {
-        log.info("processLogFiles: BEGIN");
+        log.trace("processLogFiles: BEGIN");
         try {
             processor.processLogFiles();
         } catch (Exception e) {
             log.error("processLogFiles: Process file error", e);
             // Continue on any errors. We will retry on the next iteration.
         }
-        log.info("processLogFiles: END");
+        log.trace("processLogFiles: END");
     }
 
     @Override
     protected void doStart() {
-        task = executor.scheduleAtFixedRate(
+        ingestFiletask = executor.scheduleAtFixedRate(
                 this::ingestLogFiles,
                 0,
                 getIntervalMs(),
@@ -162,7 +162,8 @@ public class LogFileIngestService extends DeviceDriver {
 
     @Override
     protected void doStop() {
-        task.cancel(false);
+        log.info("doStop: Cancelling ingestion task and process file task");
+        ingestFiletask.cancel(false);
         processFileTask.cancel(false);
     }
 }

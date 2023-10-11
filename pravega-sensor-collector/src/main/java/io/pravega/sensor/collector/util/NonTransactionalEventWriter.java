@@ -55,6 +55,11 @@ public class NonTransactionalEventWriter<T> implements EventWriter<T> {
     }
 
     @Override
+    public Transaction.Status getTransactionStatus(UUID txnId) {
+        throw new UnsupportedOperationException("Non-transactional writer cannot commit transactions");
+    }
+
+    @Override
     public Transaction.Status getTransactionStatus() {
         throw new UnsupportedOperationException("Non-transactional writer do not have transaction status");
     }

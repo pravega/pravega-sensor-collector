@@ -47,7 +47,7 @@ public class ParquetFileIngestService extends DeviceDriver{
 
     private final ParquetFileProcessor processor;
     private final ScheduledExecutorService executor;
-    private ScheduledFuture<?> task;
+    private ScheduledFuture<?> ingestFileTask;
     private ScheduledFuture<?> processFileTask;
 
     public ParquetFileIngestService(DeviceDriverConfig config){
@@ -138,19 +138,19 @@ public class ParquetFileIngestService extends DeviceDriver{
         log.trace("ingestParquetFiles: END");
     }
     protected void processParquetFiles() {
-        log.info("processParquetFiles: BEGIN");
+        log.trace("processParquetFiles: BEGIN");
         try {
             processor.processParquetFiles();
         } catch (Exception e) {
             log.error("processParquetFiles: Process file error", e);
             // Continue on any errors. We will retry on the next iteration.
         }
-        log.info("processParquetFiles: END");
+        log.trace("processParquetFiles: END");
     }
 
     @Override
     protected void doStart() {
-        task = executor.scheduleAtFixedRate(
+        ingestFileTask = executor.scheduleAtFixedRate(
                 this::ingestParquetFiles,
                 0,
                 getIntervalMs(),
@@ -165,7 +165,8 @@ public class ParquetFileIngestService extends DeviceDriver{
 
     @Override
     protected void doStop() {
-        task.cancel(false);
+        log.info("doStop: Cancelling ingestion task and process file task");
+        ingestFileTask.cancel(false);
         processFileTask.cancel(false);
     }
 
