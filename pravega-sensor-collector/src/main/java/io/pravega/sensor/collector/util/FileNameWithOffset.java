@@ -7,13 +7,10 @@
  *
  *     http://www.apache.org/licenses/LICENSE-2.0
  */
-package io.pravega.sensor.collector.parquet;
+package io.pravega.sensor.collector.util;
 
 import java.util.Objects;
 
-/**
- * File name and file size
- */
 public class FileNameWithOffset implements Comparable<FileNameWithOffset> {
     public final String fileName;
     /**

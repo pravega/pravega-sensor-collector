@@ -40,6 +40,8 @@ import io.pravega.client.stream.EventWriterConfig;
 import io.pravega.client.stream.TxnFailedException;
 import io.pravega.client.stream.impl.ByteArraySerializer;
 import io.pravega.sensor.collector.util.EventWriter;
+import io.pravega.sensor.collector.util.FileNameWithOffset;
+import io.pravega.sensor.collector.util.FileUtils;
 import io.pravega.sensor.collector.util.PersistentId;
 import io.pravega.sensor.collector.util.TransactionCoordinator;
 
@@ -128,41 +130,9 @@ public class ParquetFileProcessor {
      */
     protected List<FileNameWithOffset> getDirectoryListing() throws IOException {
         log.trace("getDirectoryListing: fileSpec={}", config.fileSpec);
-        final List<FileNameWithOffset> directoryListing = getDirectoryListing(config.fileSpec, config.fileExtension);
+        final List<FileNameWithOffset> directoryListing = FileUtils.getDirectoryListing(config.fileSpec, config.fileExtension);
         log.trace("getDirectoryListing: directoryListing={}", directoryListing);
         return directoryListing;
-    }
-
-    /**
-     * @return list of file name and file size in bytes
-     */
-    static protected List<FileNameWithOffset> getDirectoryListing(String fileSpec, String fileExtension) throws IOException {
-        String[] directories= fileSpec.split(",");
-        List<FileNameWithOffset> directoryListing = new ArrayList<>();
-        for (String directory : directories) {
-            final Path pathSpec = Paths.get(directory);
-            getDirectoryFiles(pathSpec, fileExtension,directoryListing);   
-        }
-        return directoryListing;
-    }
-
-    /**
-     * @return get all files in directory(including subdirectories) and their respective file size in bytes
-     */
-    static protected void getDirectoryFiles(Path dirPath, String fileExtension, List<FileNameWithOffset> directoryListing) throws IOException{        
-        try(DirectoryStream<Path> dirStream=Files.newDirectoryStream(dirPath)){
-            for(Path path: dirStream){
-                if(Files.isDirectory(path))         
-                    getDirectoryFiles(path, fileExtension, directoryListing);
-                else {
-                    FileNameWithOffset fileEntry = new FileNameWithOffset(path.toAbsolutePath().toString(), path.toFile().length());
-                    // If extension is null, ingest all files 
-                    if(fileExtension.isEmpty() || fileExtension.equals(fileEntry.fileName.substring(fileEntry.fileName.lastIndexOf(".")+1)))
-                        directoryListing.add(fileEntry);            
-                }
-            }
-        }
-        return;
     }
 
     /**
