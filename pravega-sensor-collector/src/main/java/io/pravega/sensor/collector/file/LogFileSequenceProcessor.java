@@ -102,12 +102,7 @@ public class LogFileSequenceProcessor {
 
     public void processNewFiles() throws Exception {
         for (;;) {
-            /*
-            Todo
-                1. Can we get list of files instead of reading one by one?
-                2. If nextFile is null then check the db again after given interval(1 sec)
-                    Handled with as part of scheduleWithDelay
-             */
+            // If nextFile is null then check for new files to process is handled as part of scheduleWithDelay
             final Pair<FileNameWithOffset, Long> nextFile = state.getNextPendingFile();
             if (nextFile == null) {
                 log.info("processNewFiles: No more files to watch");
@@ -137,11 +132,10 @@ public class LogFileSequenceProcessor {
 
     /**
      * @return list of file name and file size in bytes
-     * Todo handle the below cases
-     *  1. If given file path does not exist then log the message and abort the task
-     *  2. If directory does not exist and no file with given extn like .csv then log the message and abort the task
+     * Handle the below cases
+     *  1. If given file path does not exist then log the message and continue
+     *  2. If directory does not exist and no file with given extn like .csv then log the message and continue
      *  3. check for empty file, log the message and continue with valid files
-     *  How to abort the task? By throwing an exception back to caller?
      *
      */
     static protected List<FileNameWithOffset> getDirectoryListing(String fileSpec, String fileExtension) throws IOException {
