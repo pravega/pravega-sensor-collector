@@ -91,10 +91,10 @@ public class RawFileProcessor {
         return new RawFileProcessor(config, state, writer, transactionCoordinator, eventGenerator);
     }
 
-    public void ingestRawFiles() throws Exception {
-        log.trace("ingestRawFiles: BEGIN");
+    public void watchRawFiles() throws Exception {
+        log.trace("watchRawFiles: BEGIN");
         findAndRecordNewFiles();
-        log.trace("ingestRawFiles: END");
+        log.trace("watchRawFiles: END");
     }
     public void processRawFiles() throws Exception {
         log.trace("processRawFiles: BEGIN");

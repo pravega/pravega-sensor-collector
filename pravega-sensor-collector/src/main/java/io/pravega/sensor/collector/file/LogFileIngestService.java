@@ -42,7 +42,7 @@ public class LogFileIngestService extends DeviceDriver {
     private final LogFileSequenceProcessor processor;
     private final ScheduledExecutorService executor;
 
-    private ScheduledFuture<?> ingestFiletask;
+    private ScheduledFuture<?> watchFiletask;
     private ScheduledFuture<?> processFileTask;
 
     public LogFileIngestService(DeviceDriverConfig config) {
@@ -119,15 +119,15 @@ public class LogFileIngestService extends DeviceDriver {
         return Double.parseDouble(getProperty(TRANSACTION_TIMEOUT_MINUTES_KEY, Double.toString(18.0 * 60.0)));
     }
 
-    protected void ingestLogFiles() {
-        log.info("ingestLogFiles: BEGIN");
+    protected void watchLogFiles() {
+        log.info("watchLogFiles: BEGIN");
         try {
-            processor.ingestLogFiles();
+            processor.watchLogFiles();
         } catch (Exception e) {
-            log.error("ingestLogFiles: Ingest file error", e);
+            log.error("watchLogFiles: watch file error", e);
             // Continue on any errors. We will retry on the next iteration.
         }
-        log.info("ingestLogFiles: END");
+        log.info("watchLogFiles: END");
     }
     protected void processLogFiles() {
         log.trace("processLogFiles: BEGIN");
@@ -142,8 +142,8 @@ public class LogFileIngestService extends DeviceDriver {
 
     @Override
     protected void doStart() {
-        ingestFiletask = executor.scheduleAtFixedRate(
-                this::ingestLogFiles,
+        watchFiletask = executor.scheduleAtFixedRate(
+                this::watchLogFiles,
                 0,
                 getIntervalMs(),
                 TimeUnit.MILLISECONDS);
@@ -163,7 +163,7 @@ public class LogFileIngestService extends DeviceDriver {
     @Override
     protected void doStop() {
         log.info("doStop: Cancelling ingestion task and process file task");
-        ingestFiletask.cancel(false);
+        watchFiletask.cancel(false);
         processFileTask.cancel(false);
     }
 }

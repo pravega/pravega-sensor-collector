@@ -87,7 +87,7 @@ public class LogFileSequenceProcessor {
         return new LogFileSequenceProcessor(config, state, writer, transactionCoordinator, eventGenerator);
     }
 
-    public void ingestLogFiles() throws Exception {
+    public void watchLogFiles() throws Exception {
         findAndRecordNewFiles();
     }
     public void processLogFiles() throws Exception {
@@ -110,7 +110,7 @@ public class LogFileSequenceProcessor {
              */
             final Pair<FileNameWithOffset, Long> nextFile = state.getNextPendingFile();
             if (nextFile == null) {
-                log.info("processNewFiles: No more files to ingest");
+                log.info("processNewFiles: No more files to watch");
                 break;
             } else {
                 processFile(nextFile.getLeft(), nextFile.getRight());

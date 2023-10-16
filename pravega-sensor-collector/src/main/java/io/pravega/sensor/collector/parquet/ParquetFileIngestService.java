@@ -47,7 +47,7 @@ public class ParquetFileIngestService extends DeviceDriver{
 
     private final ParquetFileProcessor processor;
     private final ScheduledExecutorService executor;
-    private ScheduledFuture<?> ingestFileTask;
+    private ScheduledFuture<?> watchFileTask;
     private ScheduledFuture<?> processFileTask;
 
     public ParquetFileIngestService(DeviceDriverConfig config){
@@ -127,15 +127,15 @@ public class ParquetFileIngestService extends DeviceDriver{
         return Double.parseDouble(getProperty(TRANSACTION_TIMEOUT_MINUTES_KEY, Double.toString(18.0 * 60.0)));
     }
 
-    protected void ingestParquetFiles() {
-        log.trace("ingestParquetFiles: BEGIN");
+    protected void watchParquetFiles() {
+        log.trace("watchParquetFiles: BEGIN");
         try {
-            processor.ingestParquetFiles();
+            processor.watchParquetFiles();
         } catch (Exception e) {
-            log.error("ingestParquetFiles: Ingest file error", e);
+            log.error("watchParquetFiles: watch file error", e);
             // Continue on any errors. We will retry on the next iteration.
         }
-        log.trace("ingestParquetFiles: END");
+        log.trace("watchParquetFiles: END");
     }
     protected void processParquetFiles() {
         log.trace("processParquetFiles: BEGIN");
@@ -150,8 +150,8 @@ public class ParquetFileIngestService extends DeviceDriver{
 
     @Override
     protected void doStart() {
-        ingestFileTask = executor.scheduleAtFixedRate(
-                this::ingestParquetFiles,
+        watchFileTask = executor.scheduleAtFixedRate(
+                this::watchParquetFiles,
                 0,
                 getIntervalMs(),
                 TimeUnit.MILLISECONDS);
@@ -166,7 +166,7 @@ public class ParquetFileIngestService extends DeviceDriver{
     @Override
     protected void doStop() {
         log.info("doStop: Cancelling ingestion task and process file task");
-        ingestFileTask.cancel(false);
+        watchFileTask.cancel(false);
         processFileTask.cancel(false);
     }
 

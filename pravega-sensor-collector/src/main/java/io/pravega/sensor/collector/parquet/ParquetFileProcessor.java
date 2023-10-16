@@ -96,10 +96,10 @@ public class ParquetFileProcessor {
         return new ParquetFileProcessor(config, state, writer, transactionCoordinator, eventGenerator);
     }
 
-    public void ingestParquetFiles() throws Exception {
-        log.trace("ingestParquetFiles: BEGIN");
+    public void watchParquetFiles() throws Exception {
+        log.trace("watchParquetFiles: BEGIN");
         findAndRecordNewFiles();
-        log.trace("ingestParquetFiles: END");
+        log.trace("watchParquetFiles: END");
     }
     public void processParquetFiles() throws Exception {
         log.trace("processParquetFiles: BEGIN");
@@ -115,7 +115,7 @@ public class ParquetFileProcessor {
         for (;;) {
             final Pair<FileNameWithOffset, Long> nextFile = state.getNextPendingFile();
             if (nextFile == null) {
-                log.trace("processNewFiles: No more files to ingest");
+                log.trace("processNewFiles: No more files to watch");
                 break;
             } else {
                 processFile(nextFile.getLeft(), nextFile.getRight());
