@@ -11,6 +11,7 @@ package io.pravega.sensor.collector.file;
 
 import com.google.common.annotations.VisibleForTesting;
 import io.pravega.sensor.collector.util.AutoRollback;
+import io.pravega.sensor.collector.util.FileNameWithOffset;
 import io.pravega.sensor.collector.util.TransactionCoordinator;
 import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.apache.commons.lang3.tuple.Pair;
