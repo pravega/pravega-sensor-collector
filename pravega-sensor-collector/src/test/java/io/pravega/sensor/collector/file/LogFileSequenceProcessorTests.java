@@ -10,13 +10,19 @@
 package io.pravega.sensor.collector.file;
 
 import com.google.common.collect.ImmutableList;
-import org.junit.Assert;
-import org.junit.Test;
+//import org.junit.Assert;
+//import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.List;
+
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 public class LogFileSequenceProcessorTests {
     private static final Logger log = LoggerFactory.getLogger(LogFileSequenceProcessorTests.class);
@@ -34,7 +40,7 @@ public class LogFileSequenceProcessorTests {
                 new FileNameWithOffset("file3", 0),
                 new FileNameWithOffset("file4", 0));
         final List<FileNameWithOffset> actual = LogFileSequenceProcessor.getNewFiles(directoryListing, completedFiles);
-        Assert.assertEquals(expected, actual);
+        Assertions.assertEquals(expected, actual);
     }
 
     @Test
@@ -43,4 +49,28 @@ public class LogFileSequenceProcessorTests {
                 "../log-file-sample-data/","csv");
         log.info("actual={}", actual);
     }
+
+    /*    Perform a test to verify the existence of files in a non-existent directory.     */
+    @Test
+    public void getDirectoryListingTestWithWrongPath() {
+        Assertions.assertThrows(IOException.class, () ->
+                LogFileSequenceProcessor.getDirectoryListing(
+                        "../log-file-sample-data1/","csv"));
+    }
+
+    /*    Test case to confirm the absence of files in the specified directory path    */
+    @Test
+    public void getDirectoryListingTestWithNoFileInPath() throws IOException {
+        Assertions.assertTrue(
+                LogFileSequenceProcessor.getDirectoryListing("../log-file-sample-data/","abc").isEmpty(), "List is not empty");
+    }
+
+   /* @Test
+    public void getDirectoryListingTestWithNoFileInPath1() throws IOException {
+        LogFileSequenceProcessor logProcessor = mock(LogFileSequenceProcessor.class);
+       when(logProcessor.getDirectoryListing(anyString(),anyString())).thenReturn(ImmutableList.of(new FileNameWithOffset("file3", 0)));
+        Assertions.assertEquals(
+                LogFileSequenceProcessor.getDirectoryListing("../log-file-sample-data/","csv1").get(0).offset, 0);
+    }*/
+
 }

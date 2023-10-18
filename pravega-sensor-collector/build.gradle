@@ -18,6 +18,10 @@ mainClassName = "io.pravega.sensor.collector.PravegaSensorCollectorApp"
 sourceCompatibility = 11
 targetCompatibility = 11
 
+test {
+    useJUnitPlatform()
+}
+
 dependencies {
     compile "org.slf4j:slf4j-api:${slf4jApiVersion}"
     compile "ch.qos.logback:logback-classic:${qosLogbackVersion}"
@@ -44,7 +48,14 @@ dependencies {
     compile "org.apache.parquet:parquet-hadoop:${parquetVersion}"
     compile "org.apache.hadoop:hadoop-client:${hadoopVersion}"
 
-    testCompile "junit:junit:${junitVersion}"
+    //testCompile "junit:junit:${junitVersion}"
+    testImplementation "org.junit.jupiter:junit-jupiter-api:${junitVersion}"
+    testImplementation "org.junit.vintage:junit-vintage-engine:${junitVersion}"
+    testRuntimeOnly "org.junit.jupiter:junit-jupiter-engine:${junitVersion}"
+    testImplementation "org.junit.platform:junit-platform-launcher"
+   // testRuntimeOnly "org.junit.platform:junit-platform-runner:${junitVersion}"
+
+    testCompile "org.mockito:mockito-core:${mockitoVersion}"
 
     testCompile "org.glassfish.jersey.containers:jersey-container-grizzly2-http:${grizzlyVersion}"
     testCompile "jakarta.xml.bind:jakarta.xml.bind-api:${jakartaBindVersion}"
