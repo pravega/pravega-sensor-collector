@@ -9,6 +9,7 @@
  */
 package io.pravega.sensor.collector.util;
 
+import com.google.common.base.Preconditions;
 import io.pravega.client.stream.Transaction;
 import io.pravega.client.stream.TransactionalEventStreamWriter;
 import io.pravega.client.stream.TxnFailedException;
@@ -17,6 +18,7 @@ import org.slf4j.LoggerFactory;
 
 import java.util.Optional;
 import java.util.UUID;
+import java.util.concurrent.CompletableFuture;
 
 public class TransactionalEventWriter<T> implements EventWriter<T> {
     private static final Logger log = LoggerFactory.getLogger(TransactionalEventWriter.class);
@@ -65,10 +67,19 @@ public class TransactionalEventWriter<T> implements EventWriter<T> {
             currentTxn = null;
         }
     }
+    private boolean canCommitTransaction(UUID txnId){
+        Transaction.Status transactionStatus = writer.getTxn(txnId).checkStatus();
+        log.info("canCommitTransaction: Status of Transaction id {} is {}", txnId, transactionStatus);
+        return transactionStatus == Transaction.Status.OPEN;
+    }
 
     public void commit(UUID txnId) throws TxnFailedException {
-        log.info("commit: committing transaction {}", txnId);
-        writer.getTxn(txnId).commit();
+        /*Check the transaction status before committing transaction
+        Only transactions which rea in open status can be committed */
+        if(canCommitTransaction(txnId)){
+            log.info("commit: committing transaction {}", txnId);
+            writer.getTxn(txnId).commit();
+        }
     }
 
     public void abort() {
@@ -78,6 +89,17 @@ public class TransactionalEventWriter<T> implements EventWriter<T> {
             currentTxn = null;
         }
     }
+
+        public Transaction.Status getTransactionStatus() {
+        if (currentTxn != null){
+            return currentTxn.checkStatus();
+        }
+        return null;
+    }
+    public Transaction.Status getTransactionStatus(UUID txnId) {
+        return writer.getTxn(txnId).checkStatus();
+    }
+
 
     public void close() {
         try {

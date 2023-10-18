@@ -40,7 +40,7 @@ public class LogFileSequenceProcessorTests {
     @Test
     public void getDirectoryListingTest() throws IOException {
         final List<FileNameWithOffset> actual = LogFileSequenceProcessor.getDirectoryListing(
-                "../log-file-sample-data/*.csv");
+                "../log-file-sample-data/","csv");
         log.info("actual={}", actual);
     }
 }

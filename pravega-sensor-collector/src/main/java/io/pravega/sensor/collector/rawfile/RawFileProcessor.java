@@ -14,11 +14,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.channels.FileChannel;
 import java.nio.channels.FileLock;
-import java.nio.file.DirectoryStream;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.nio.file.StandardOpenOption;
+import java.nio.file.*;
 import java.sql.Connection;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -28,9 +24,12 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import com.google.common.io.CountingInputStream;
 
+import io.pravega.client.stream.Transaction;
 import org.apache.commons.lang3.tuple.Pair;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -94,22 +93,26 @@ public class RawFileProcessor {
         return new RawFileProcessor(config, state, writer, transactionCoordinator, eventGenerator);
     }
 
-    public void ingestRawFiles() throws Exception {
-        log.trace("ingestRawFiles: BEGIN");
+    public void watchRawFiles() throws Exception {
+        log.trace("watchRawFiles: BEGIN");
+        findAndRecordNewFiles();
+        log.trace("watchRawFiles: END");
+    }
+    public void processRawFiles() throws Exception {
+        log.trace("processRawFiles: BEGIN");
         // delete leftover completed files
         if (config.enableDeleteCompletedFiles) {
             deleteCompletedFiles();
         }
-        findAndRecordNewFiles();
         processNewFiles();
-        log.trace("ingestRawFiles: END");
+        log.trace("processRawFiles: END");
     }
 
     public void processNewFiles() throws Exception {
         for (;;) {
             final Pair<FileNameWithOffset, Long> nextFile = state.getNextPendingFile();
             if (nextFile == null) {
-                log.trace("No more files to ingest");
+                log.trace("processNewFiles: No more files to ingest");
                 break;
             } else {
                 processFile(nextFile.getLeft(), nextFile.getRight());
@@ -131,6 +134,36 @@ public class RawFileProcessor {
         log.trace("getDirectoryListing: fileSpec={}", config.fileSpec);
         final List<FileNameWithOffset> directoryListing = FileUtils.getDirectoryListing(config.fileSpec, config.fileExtension);
         log.trace("getDirectoryListing: directoryListing={}", directoryListing);
+        return directoryListing;
+    }
+
+    /**
+     * @return list of file name and file size in bytes
+     */
+    static protected List<FileNameWithOffset> getDirectoryListing(String fileSpec, String fileExtension) throws IOException {
+        final Path pathSpec = Paths.get(fileSpec);
+
+        List<FileNameWithOffset> directoryListing = new ArrayList<>();
+        try(DirectoryStream<Path> dirStream=Files.newDirectoryStream(pathSpec)){
+            for(Path path: dirStream){
+                if(Files.isDirectory(path))         //traverse subdirectories
+                    directoryListing.addAll(getDirectoryListing(path.toString(), fileExtension));
+                else {
+                    FileNameWithOffset fileEntry = new FileNameWithOffset(path.toAbsolutePath().toString(), path.toFile().length());
+                    if(isValidFile(fileEntry, fileExtension)){
+                        directoryListing.add(fileEntry);
+                    }
+                }
+            }
+        }catch(Exception ex){
+            if(ex instanceof IOException){
+                log.error("getDirectoryListing: Directory does not exist or spec is not valid : {}", pathSpec.toAbsolutePath());
+                throw new IOException("Directory does not exist or spec is not valid");
+            }else{
+                log.error("getDirectoryListing: Exception while listing files: {}", pathSpec.toAbsolutePath());
+                throw new IOException(ex);
+            }
+        }
         return directoryListing;
     }
 
@@ -164,7 +197,10 @@ public class RawFileProcessor {
         // In case a previous iteration encountered an error, we need to ensure that
         // previous flushed transactions are committed and any unflushed transactions as aborted.
         transactionCoordinator.performRecovery();
-        writer.abort();
+        log.debug("processFile: Transaction status {} ", writer.getTransactionStatus());
+        if(writer.getTransactionStatus() == Transaction.Status.OPEN){
+            writer.abort();
+        }
 
         try (final InputStream inputStream = new FileInputStream(fileNameWithBeginOffset.fileName)) {
             try(final CountingInputStream countingInputStream = new CountingInputStream(inputStream)) {
@@ -177,24 +213,37 @@ public class RawFileProcessor {
                                 numofbytes.addAndGet(e.bytes.length);
 
                             } catch (TxnFailedException ex) {
+                                log.error("processFile: Write event to transaction failed with exception {} while processing file: {}, event: {}", ex, fileNameWithBeginOffset.fileName, e);
                                 throw new RuntimeException(ex);
                             }
                         });
                 final Optional<UUID> txnId = writer.flush();
                 final long nextSequenceNumber = result.getLeft();
                 final long endOffset = result.getRight();
+                log.debug("processFile: Adding completed file: {}",  fileNameWithBeginOffset.fileName);
                 state.addCompletedFile(fileNameWithBeginOffset.fileName, fileNameWithBeginOffset.offset, endOffset, nextSequenceNumber, txnId);
                 // injectCommitFailure();
-                writer.commit();
-                state.deleteTransactionToCommit(txnId);
-            
+                try {
+                    // commit fails only if Transaction is not in open state.
+                    log.info("processFile: Commit transaction for Id: {}; file: {}", txnId.orElse(null), fileNameWithBeginOffset.fileName);
+                    writer.commit();
+                } catch (TxnFailedException ex) {
+                    log.error("processFile: Commit transaction for id: {}, file : {}, failed with exception: {}", txnId, fileNameWithBeginOffset.fileName, ex);
+                    throw new RuntimeException(ex);
+                }
+                // Add to completed file list only if commit is successfull else it will be taken care as part of recovery
+                if(txnId.isPresent()){
+                    Transaction.Status status = writer.getTransactionStatus(txnId.get());
+                    if(status == Transaction.Status.COMMITTED || status == Transaction.Status.ABORTED)
+                        state.deleteTransactionToCommit(txnId);
+                }
+
                 double elapsedSec = (System.nanoTime() - timestamp) / 1_000_000_000.0;
                 double megabyteCount = numofbytes.getAndSet(0) / 1_000_000.0;
                 double megabytesPerSec = megabyteCount / elapsedSec;
                 log.info("processFile: Finished ingesting file {}; endOffset={}, nextSequenceNumber={}",
                         fileNameWithBeginOffset.fileName, endOffset, nextSequenceNumber);
-                log.info("Sent {} MB in {} sec", megabyteCount, elapsedSec );
-                log.info("Transfer rate: {} MB/sec", megabytesPerSec);            
+                log.info("Sent {} MB in {} sec. Transfer rate: {} MB/sec ", megabyteCount, elapsedSec, megabytesPerSec );
             }
         }
 
@@ -228,6 +277,25 @@ public class RawFileProcessor {
                 // We can continue on this error. Deletion will be retried on the next iteration.
             }
         });
+    }
+
+    /*
+    Check for below file validation
+        1. Is File empty
+        2. If extension is null or extension is valid ingest all file
+     */
+    public static boolean isValidFile(FileNameWithOffset fileEntry, String fileExtension ){
+
+        if(fileEntry.offset<=0){
+            log.warn("isValidFile: Empty file {} can not be processed",fileEntry.fileName);
+        }
+        // If extension is null, ingest all files
+        else if(fileExtension.isEmpty() || fileExtension.equals(fileEntry.fileName.substring(fileEntry.fileName.lastIndexOf(".")+1)))
+            return true;
+        else
+            log.warn("isValidFile: File format {} is not supported ", fileEntry.fileName);
+
+        return false;
     }
 
     /**

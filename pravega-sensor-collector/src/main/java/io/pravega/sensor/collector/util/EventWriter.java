@@ -12,6 +12,7 @@ package io.pravega.sensor.collector.util;
 import io.pravega.client.EventStreamClientFactory;
 import io.pravega.client.stream.EventWriterConfig;
 import io.pravega.client.stream.Serializer;
+import io.pravega.client.stream.Transaction;
 import io.pravega.client.stream.TxnFailedException;
 
 import java.util.Optional;
@@ -71,5 +72,13 @@ public interface EventWriter<T> extends AutoCloseable {
      */
     void abort();
 
+    /**
+     * This should called be prior to aborting any transactions to make sure it is not open.
+     */
+    public Transaction.Status getTransactionStatus(UUID txnId);
+
+    public Transaction.Status getTransactionStatus();
+
     void close();
+
 }
