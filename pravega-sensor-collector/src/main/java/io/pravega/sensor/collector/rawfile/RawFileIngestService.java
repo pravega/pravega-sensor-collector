@@ -45,7 +45,8 @@ public class RawFileIngestService extends DeviceDriver{
 
     private final RawFileProcessor processor;
     private final ScheduledExecutorService executor;
-    private ScheduledFuture<?> task;
+    private ScheduledFuture<?> watchFileTask;
+    private ScheduledFuture<?> processFileTask;
 
     public RawFileIngestService(DeviceDriverConfig config){
         super(config);
@@ -119,30 +120,47 @@ public class RawFileIngestService extends DeviceDriver{
         return Double.parseDouble(getProperty(TRANSACTION_TIMEOUT_MINUTES_KEY, Double.toString(18.0 * 60.0)));
     }
 
-    protected void ingestRawFiles() {
-        log.trace("ingestRawFiles: BEGIN");
+    protected void watchRawFiles() {
+        log.trace("watchRawFiles: BEGIN");
         try {
-            processor.ingestRawFiles();
+            processor.watchRawFiles();
         } catch (Exception e) {
-            log.error("Error", e);
+            log.error("watchRawFiles: ingest file error", e);
             // Continue on any errors. We will retry on the next iteration.
         }
-        log.trace("ingestRawFiles: END");
+        log.trace("watchRawFiles: END");
+    }
+    protected void processRawFiles() {
+        log.trace("processRawFiles: BEGIN");
+        try {
+            processor.processRawFiles();
+        } catch (Exception e) {
+            log.error("processRawFiles: Process file error", e);
+            // Continue on any errors. We will retry on the next iteration.
+        }
+        log.trace("processRawFiles: END");
     }
 
     @Override
     protected void doStart() {
-        task = executor.scheduleAtFixedRate(
-                this::ingestRawFiles,
+        watchFileTask = executor.scheduleAtFixedRate(
+                this::watchRawFiles,
                 0,
                 getIntervalMs(),
+                TimeUnit.MILLISECONDS);
+        processFileTask = executor.scheduleWithFixedDelay(
+                this::processRawFiles,
+                0,
+                0,
                 TimeUnit.MILLISECONDS);
         notifyStarted();        
     }
 
     @Override
     protected void doStop() {
-        task.cancel(false);        
+        log.info("doStop: Cancelling ingestion task and process file task");
+        watchFileTask.cancel(false);
+        processFileTask.cancel(false);
     }
 
 }

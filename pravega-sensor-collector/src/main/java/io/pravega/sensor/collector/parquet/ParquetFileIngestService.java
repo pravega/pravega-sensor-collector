@@ -47,7 +47,8 @@ public class ParquetFileIngestService extends DeviceDriver{
 
     private final ParquetFileProcessor processor;
     private final ScheduledExecutorService executor;
-    private ScheduledFuture<?> task;
+    private ScheduledFuture<?> watchFileTask;
+    private ScheduledFuture<?> processFileTask;
 
     public ParquetFileIngestService(DeviceDriverConfig config){
         super(config);
@@ -126,30 +127,47 @@ public class ParquetFileIngestService extends DeviceDriver{
         return Double.parseDouble(getProperty(TRANSACTION_TIMEOUT_MINUTES_KEY, Double.toString(18.0 * 60.0)));
     }
 
-    protected void ingestParquetFiles() {
-        log.trace("ingestParquetFiles: BEGIN");
+    protected void watchParquetFiles() {
+        log.trace("watchParquetFiles: BEGIN");
         try {
-            processor.ingestParquetFiles();
+            processor.watchParquetFiles();
         } catch (Exception e) {
-            log.error("Error", e);
+            log.error("watchParquetFiles: watch file error", e);
             // Continue on any errors. We will retry on the next iteration.
         }
-        log.trace("ingestParquetFiles: END");
+        log.trace("watchParquetFiles: END");
+    }
+    protected void processParquetFiles() {
+        log.trace("processParquetFiles: BEGIN");
+        try {
+            processor.processParquetFiles();
+        } catch (Exception e) {
+            log.error("processParquetFiles: Process file error", e);
+            // Continue on any errors. We will retry on the next iteration.
+        }
+        log.trace("processParquetFiles: END");
     }
 
     @Override
     protected void doStart() {
-        task = executor.scheduleAtFixedRate(
-                this::ingestParquetFiles,
+        watchFileTask = executor.scheduleAtFixedRate(
+                this::watchParquetFiles,
                 0,
                 getIntervalMs(),
+                TimeUnit.MILLISECONDS);
+        processFileTask = executor.scheduleWithFixedDelay(
+                this::processParquetFiles,
+                0,
+                0,
                 TimeUnit.MILLISECONDS);
         notifyStarted();        
     }
 
     @Override
     protected void doStop() {
-        task.cancel(false);        
+        log.info("doStop: Cancelling ingestion task and process file task");
+        watchFileTask.cancel(false);
+        processFileTask.cancel(false);
     }
 
 }
