@@ -12,12 +12,12 @@ package io.pravega.sensor.collector.rawfile;
 /**
  * Event generated from file and its sequence number
  */
-public class RawFileWriterEvent {
+public class PravegaWriterEvent {
     public final String routingKey;
     public final long sequenceNumber;
     public final byte[] bytes;
 
-    public RawFileWriterEvent(String routingKey, long sequenceNumber, byte[] bytes) {
+    public PravegaWriterEvent(String routingKey, long sequenceNumber, byte[] bytes) {
         this.routingKey = routingKey;
         this.sequenceNumber = sequenceNumber;
         this.bytes = bytes;
