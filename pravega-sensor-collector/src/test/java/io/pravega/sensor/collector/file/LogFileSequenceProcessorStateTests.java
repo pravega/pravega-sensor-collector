@@ -30,7 +30,7 @@ public class LogFileSequenceProcessorStateTests {
     @Test
     public void pendingFilesTest() throws SQLException {
         final String stateDatabaseFileName = ":memory:";
-        final TransactionStateSQLiteImpl state = TransactionStateInMemoryImpl.create(stateDatabaseFileName);
+        final TransactionStateInMemoryImpl state = TransactionStateInMemoryImpl.create(stateDatabaseFileName);
         Assertions.assertNull(state.getNextPendingFile());
         state.addPendingFiles(ImmutableList.of(new FileNameWithOffset("file1.csv", 0L)));
         Assertions.assertEquals(new ImmutablePair<>(new FileNameWithOffset("file1.csv", 0L), 0L), state.getNextPendingFile());
@@ -43,7 +43,7 @@ public class LogFileSequenceProcessorStateTests {
     @Test
     public void completedFilesTest() throws SQLException {
         final String stateDatabaseFileName = ":memory:";
-        final TransactionStateSQLiteImpl state = TransactionStateInMemoryImpl.create(stateDatabaseFileName);
+        final TransactionStateInMemoryImpl state = TransactionStateInMemoryImpl.create(stateDatabaseFileName);
         Assertions.assertNull(state.getNextPendingFile());
         state.addPendingFiles(ImmutableList.of(new FileNameWithOffset("file1.csv", 0L)));
         Assertions.assertEquals(new ImmutablePair<>(new FileNameWithOffset("file1.csv", 0L), 0L), state.getNextPendingFile());
@@ -61,7 +61,7 @@ public class LogFileSequenceProcessorStateTests {
     @Test
     public void processFilesTest() throws SQLException {
         final String stateDatabaseFileName = ":memory:";
-        final TransactionStateSQLiteImpl state = TransactionStateInMemoryImpl.create(stateDatabaseFileName);
+        final TransactionStateInMemoryImpl state = TransactionStateInMemoryImpl.create(stateDatabaseFileName);
         Assertions.assertNull(state.getNextPendingFile());
         // Find 3 new files.
         state.addPendingFiles(ImmutableList.of(new FileNameWithOffset("file2.csv", 0L)));
