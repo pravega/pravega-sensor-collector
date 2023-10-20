@@ -18,9 +18,7 @@ import io.pravega.client.stream.StreamConfiguration;
 import io.pravega.client.stream.Transaction;
 import io.pravega.client.stream.TxnFailedException;
 import io.pravega.client.stream.impl.ByteArraySerializer;
-import io.pravega.sensor.collector.util.EventWriter;
-import io.pravega.sensor.collector.util.PersistentId;
-import io.pravega.sensor.collector.util.TransactionCoordinator;
+import io.pravega.sensor.collector.util.*;
 import org.apache.commons.lang3.tuple.Pair;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -40,15 +38,15 @@ import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 
 public class LogFileSequenceProcessor {
-    private static final Logger log = LoggerFactory.getLogger(LogFileSequenceProcessorState.class);
+    private static final Logger log = LoggerFactory.getLogger(LogFileSequenceProcessor.class);
 
     private final LogFileSequenceConfig config;
-    private final LogFileSequenceProcessorState state;
+    private final TransactionStateSQLiteImpl state;
     private final EventWriter<byte[]> writer;
     private final TransactionCoordinator transactionCoordinator;
     private final EventGenerator eventGenerator;
 
-    public LogFileSequenceProcessor(LogFileSequenceConfig config, LogFileSequenceProcessorState state, EventWriter<byte[]> writer, TransactionCoordinator transactionCoordinator, EventGenerator eventGenerator) {
+    public LogFileSequenceProcessor(LogFileSequenceConfig config, TransactionStateSQLiteImpl state, EventWriter<byte[]> writer, TransactionCoordinator transactionCoordinator, EventGenerator eventGenerator) {
         this.config = config;
         this.state = state;
         this.writer = writer;
@@ -59,7 +57,7 @@ public class LogFileSequenceProcessor {
     public static LogFileSequenceProcessor create(
             LogFileSequenceConfig config, EventStreamClientFactory clientFactory){
 
-        final Connection connection = LogFileSequenceProcessorState.createDatabase(config.stateDatabaseFileName);
+        final Connection connection = SQliteDBUtility.createDatabase(config.stateDatabaseFileName);
 
         final String writerId = new PersistentId(connection).getPersistentId().toString();
         log.info("Writer ID: {}", writerId);
@@ -83,7 +81,7 @@ public class LogFileSequenceProcessor {
                 config.maxRecordsPerEvent,
                 config.eventTemplateStr,
                 writerId);
-        final LogFileSequenceProcessorState state = new LogFileSequenceProcessorState(connection, transactionCoordinator);
+        final TransactionStateSQLiteImpl state = new TransactionStateSQLiteImpl(connection, transactionCoordinator);
         return new LogFileSequenceProcessor(config, state, writer, transactionCoordinator, eventGenerator);
     }
 

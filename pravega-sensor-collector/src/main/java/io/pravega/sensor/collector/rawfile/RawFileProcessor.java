@@ -27,9 +27,12 @@ import java.util.concurrent.atomic.AtomicLong;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import io.pravega.sensor.collector.util.*;
+
 import com.google.common.io.CountingInputStream;
 
 import io.pravega.client.stream.Transaction;
+import io.pravega.sensor.collector.util.TransactionStateSQLiteImpl;
 import org.apache.commons.lang3.tuple.Pair;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -38,9 +41,6 @@ import io.pravega.client.EventStreamClientFactory;
 import io.pravega.client.stream.EventWriterConfig;
 import io.pravega.client.stream.TxnFailedException;
 import io.pravega.client.stream.impl.ByteArraySerializer;
-import io.pravega.sensor.collector.util.EventWriter;
-import io.pravega.sensor.collector.util.PersistentId;
-import io.pravega.sensor.collector.util.TransactionCoordinator;
 
 /**
  * Get list of files obtained from config. Process each file for ingestion.
@@ -50,12 +50,12 @@ public class RawFileProcessor {
     private static final Logger log = LoggerFactory.getLogger(RawFileIngestService.class);
     
     private final RawFileConfig config;
-    private final RawFileState state;
+    private final TransactionStateSQLiteImpl state;
     private final EventWriter<byte[]> writer;
     private final TransactionCoordinator transactionCoordinator;
     private final EventGenerator eventGenerator;
 
-    public RawFileProcessor(RawFileConfig config, RawFileState state, EventWriter<byte[]> writer, TransactionCoordinator transactionCoordinator, EventGenerator eventGenerator) {
+    public RawFileProcessor(RawFileConfig config, TransactionStateSQLiteImpl state, EventWriter<byte[]> writer, TransactionCoordinator transactionCoordinator, EventGenerator eventGenerator) {
         this.config = config;
         this.state = state;
         this.writer = writer;
@@ -64,7 +64,7 @@ public class RawFileProcessor {
     }
 
     public static RawFileProcessor create(RawFileConfig config, EventStreamClientFactory clientFactory){
-        final Connection connection = RawFileState.createDatabase(config.stateDatabaseFileName);
+        final Connection connection = SQliteDBUtility.createDatabase(config.stateDatabaseFileName);
 
         final String writerId = new PersistentId(connection).getPersistentId().toString();
         log.info("Writer ID: {}", writerId);
@@ -87,7 +87,7 @@ public class RawFileProcessor {
                 config.routingKey,
                 config.eventTemplateStr,
                 writerId);
-        final RawFileState state = new RawFileState(connection, transactionCoordinator);
+        final TransactionStateSQLiteImpl state = new TransactionStateSQLiteImpl(connection, transactionCoordinator);
         return new RawFileProcessor(config, state, writer, transactionCoordinator, eventGenerator);
     }
 

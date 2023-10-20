@@ -11,6 +11,9 @@ package io.pravega.sensor.collector.file;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
+import io.pravega.sensor.collector.util.FileNameWithOffset;
+import io.pravega.sensor.collector.util.TransactionStateInMemoryImpl;
+import io.pravega.sensor.collector.util.TransactionStateSQLiteImpl;
 import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
@@ -27,7 +30,7 @@ public class LogFileSequenceProcessorStateTests {
     @Test
     public void pendingFilesTest() throws SQLException {
         final String stateDatabaseFileName = ":memory:";
-        final LogFileSequenceProcessorState state = LogFileSequenceProcessorState.create(stateDatabaseFileName);
+        final TransactionStateSQLiteImpl state = TransactionStateInMemoryImpl.create(stateDatabaseFileName);
         Assertions.assertNull(state.getNextPendingFile());
         state.addPendingFiles(ImmutableList.of(new FileNameWithOffset("file1.csv", 0L)));
         Assertions.assertEquals(new ImmutablePair<>(new FileNameWithOffset("file1.csv", 0L), 0L), state.getNextPendingFile());
@@ -40,7 +43,7 @@ public class LogFileSequenceProcessorStateTests {
     @Test
     public void completedFilesTest() throws SQLException {
         final String stateDatabaseFileName = ":memory:";
-        final LogFileSequenceProcessorState state = LogFileSequenceProcessorState.create(stateDatabaseFileName);
+        final TransactionStateSQLiteImpl state = TransactionStateInMemoryImpl.create(stateDatabaseFileName);
         Assertions.assertNull(state.getNextPendingFile());
         state.addPendingFiles(ImmutableList.of(new FileNameWithOffset("file1.csv", 0L)));
         Assertions.assertEquals(new ImmutablePair<>(new FileNameWithOffset("file1.csv", 0L), 0L), state.getNextPendingFile());
@@ -58,7 +61,7 @@ public class LogFileSequenceProcessorStateTests {
     @Test
     public void processFilesTest() throws SQLException {
         final String stateDatabaseFileName = ":memory:";
-        final LogFileSequenceProcessorState state = LogFileSequenceProcessorState.create(stateDatabaseFileName);
+        final TransactionStateSQLiteImpl state = TransactionStateInMemoryImpl.create(stateDatabaseFileName);
         Assertions.assertNull(state.getNextPendingFile());
         // Find 3 new files.
         state.addPendingFiles(ImmutableList.of(new FileNameWithOffset("file2.csv", 0L)));
