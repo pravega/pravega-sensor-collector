@@ -26,9 +26,7 @@ import java.util.UUID;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-
 import io.pravega.sensor.collector.util.*;
-
 import com.google.common.io.CountingInputStream;
 
 import io.pravega.client.stream.Transaction;
