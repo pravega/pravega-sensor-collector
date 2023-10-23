@@ -10,11 +10,8 @@
 package io.pravega.sensor.collector.file;
 
 import com.google.common.io.CountingInputStream;
-import io.pravega.client.ClientConfig;
 import io.pravega.client.EventStreamClientFactory;
-import io.pravega.client.admin.StreamManager;
 import io.pravega.client.stream.EventWriterConfig;
-import io.pravega.client.stream.StreamConfiguration;
 import io.pravega.client.stream.Transaction;
 import io.pravega.client.stream.TxnFailedException;
 import io.pravega.client.stream.impl.ByteArraySerializer;
@@ -36,10 +33,6 @@ import java.nio.file.*;
 import java.sql.Connection;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicLong;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
-import java.util.stream.Collectors;
-import java.util.stream.StreamSupport;
 
 public class LogFileSequenceProcessor {
     private static final Logger log = LoggerFactory.getLogger(LogFileSequenceProcessorState.class);
