@@ -155,7 +155,7 @@ public class LogFileIngestService extends DeviceDriver {
         processFileTask = executor.scheduleWithFixedDelay(
                 this::processLogFiles,
                 0,
-                0,
+                1,
                 TimeUnit.MILLISECONDS);
         notifyStarted();
     }

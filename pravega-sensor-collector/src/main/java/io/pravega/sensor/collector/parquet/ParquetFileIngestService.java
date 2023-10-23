@@ -158,7 +158,7 @@ public class ParquetFileIngestService extends DeviceDriver{
         processFileTask = executor.scheduleWithFixedDelay(
                 this::processParquetFiles,
                 0,
-                0,
+                1,
                 TimeUnit.MILLISECONDS);
         notifyStarted();        
     }
