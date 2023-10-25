@@ -67,8 +67,10 @@ public class EventGenerator {
             byte[] byteArray = inputStream.readAllBytes();
             //TODO: Batching
 
-            consumer.accept(new PravegaWriterEvent(routingKey, nextSequenceNumber, byteArray));
-            nextSequenceNumber++;			        
+            if (byteArray.length > 0) {         //non-empty file
+                consumer.accept(new PravegaWriterEvent(routingKey, nextSequenceNumber, byteArray));
+                nextSequenceNumber++;
+            }			        
             final long endOffset = inputStream.getCount();
 
             return new ImmutablePair<>(nextSequenceNumber, endOffset);

@@ -35,7 +35,8 @@ public class RawFileProcessorTests {
     
     @Test
     public void getDirectoryListingTest() throws IOException {
-        final List<FileNameWithOffset> actual = FileUtils.getDirectoryListing("../raw-file-sample-data","parquet");
+        final List<FileNameWithOffset> actual = FileUtils.getDirectoryListing(
+                "../raw-file-sample-data/","parquet");
         log.info("actual={}", actual);
     }
 }

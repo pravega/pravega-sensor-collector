@@ -28,7 +28,7 @@ public class EventGeneratorTests {
         final List<PravegaWriterEvent> events = new ArrayList<>();
         Pair<Long, Long> nextSequenceNumberAndOffset = eventGenerator.generateEventsFromInputStream(inputStream, 100, events::add);
         log.info("events={}", events);
-        Assert.assertEquals(102L, (long) nextSequenceNumberAndOffset.getLeft());
+        Assert.assertEquals(101L, (long) nextSequenceNumberAndOffset.getLeft());
         Assert.assertEquals(rawfileStr.length(), (long) nextSequenceNumberAndOffset.getRight());
     }
 
