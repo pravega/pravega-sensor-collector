@@ -17,7 +17,6 @@ public class FileNameWithOffset implements Comparable<FileNameWithOffset> {
      * In some contexts, this is the size of the file.
      * In the future, this will represent the offset in the file for incrementally ingesting growing log files.
      * This is partially implemented today.
-     * TODO: Clarify usage of offset.
      */
     public final long offset;
 

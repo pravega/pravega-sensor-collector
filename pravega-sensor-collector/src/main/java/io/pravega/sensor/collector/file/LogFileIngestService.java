@@ -22,6 +22,9 @@ import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
 
+/**
+ * Ingestion service for csv files.  
+ */
 public class LogFileIngestService extends DeviceDriver {
     private static final Logger log = LoggerFactory.getLogger(LogFileIngestService.class);
 

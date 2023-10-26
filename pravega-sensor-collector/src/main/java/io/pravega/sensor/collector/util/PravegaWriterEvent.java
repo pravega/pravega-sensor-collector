@@ -7,7 +7,7 @@
  *
  *     http://www.apache.org/licenses/LICENSE-2.0
  */
-package io.pravega.sensor.collector.rawfile;
+package io.pravega.sensor.collector.util;
 
 /**
  * Event generated from file and its sequence number

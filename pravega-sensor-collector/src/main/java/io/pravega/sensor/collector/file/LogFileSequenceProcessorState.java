@@ -31,6 +31,9 @@ import java.util.UUID;
 
 import static java.sql.Connection.TRANSACTION_SERIALIZABLE;
 
+/**
+ * Maintain state of pending and completed files in SQLite database.  
+ */
 public class LogFileSequenceProcessorState implements AutoCloseable {
     private static final Logger log = LoggerFactory.getLogger(LogFileSequenceProcessorState.class);
 

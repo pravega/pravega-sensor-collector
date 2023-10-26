@@ -7,6 +7,8 @@ import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import io.pravega.sensor.collector.util.PravegaWriterEvent;
+
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -43,7 +45,5 @@ public class EventGeneratorTests {
         Assert.assertEquals(100L, (long) nextSequenceNumberAndOffset.getLeft());
         Assert.assertEquals(rawfileStr.length(), (long) nextSequenceNumberAndOffset.getRight());
     }
-
-
 
 }

@@ -34,6 +34,10 @@ import java.sql.Connection;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicLong;
 
+/**
+ * Get list of files obtained from config. Process each file for ingestion.
+ * Keep track of new files and delete ingested files if "DELETE_COMPLETED_FILES"=true. 
+ */
 public class LogFileSequenceProcessor {
     private static final Logger log = LoggerFactory.getLogger(LogFileSequenceProcessorState.class);
 

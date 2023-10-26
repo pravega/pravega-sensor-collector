@@ -22,11 +22,16 @@ import org.apache.commons.lang3.tuple.Pair;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import io.pravega.sensor.collector.util.PravegaWriterEvent;
+
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.Map;
 import java.util.function.Consumer;
 
+/**
+ * Generate Event from file  
+ */
 public class EventGenerator {
     private static final Logger log = LoggerFactory.getLogger(EventGenerator.class);
 
