@@ -44,6 +44,8 @@ import org.apache.parquet.schema.Type;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import io.pravega.sensor.collector.util.PravegaWriterEvent;
+
 /**
  * Generate Event from file  
  */

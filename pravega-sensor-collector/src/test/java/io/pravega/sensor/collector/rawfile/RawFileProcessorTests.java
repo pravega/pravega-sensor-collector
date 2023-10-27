@@ -1,15 +1,10 @@
-/**
- * Copyright (c) Dell Inc., or its subsidiaries. All Rights Reserved.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- */
-package io.pravega.sensor.collector.file;
+package io.pravega.sensor.collector.rawfile;
+
+import java.io.IOException;
+import java.util.List;
 
 import com.google.common.collect.ImmutableList;
+
 import org.junit.Assert;
 import org.junit.Test;
 import org.slf4j.Logger;
@@ -18,12 +13,10 @@ import org.slf4j.LoggerFactory;
 import io.pravega.sensor.collector.util.FileNameWithOffset;
 import io.pravega.sensor.collector.util.FileUtils;
 
-import java.io.IOException;
-import java.util.List;
+public class RawFileProcessorTests {
 
-public class LogFileSequenceProcessorTests {
-    private static final Logger log = LoggerFactory.getLogger(LogFileSequenceProcessorTests.class);
-
+    private static final Logger log = LoggerFactory.getLogger(RawFileProcessorTests.class);
+    
     @Test
     public void getNewFilesTest() {
         final List<FileNameWithOffset> directoryListing = ImmutableList.of(
@@ -36,14 +29,14 @@ public class LogFileSequenceProcessorTests {
         final List<FileNameWithOffset> expected = ImmutableList.of(
                 new FileNameWithOffset("file3", 0),
                 new FileNameWithOffset("file4", 0));
-        final List<FileNameWithOffset> actual = LogFileSequenceProcessor.getNewFiles(directoryListing, completedFiles);
+        final List<FileNameWithOffset> actual = RawFileProcessor.getNewFiles(directoryListing, completedFiles);
         Assert.assertEquals(expected, actual);
     }
-
+    
     @Test
     public void getDirectoryListingTest() throws IOException {
         final List<FileNameWithOffset> actual = FileUtils.getDirectoryListing(
-                "../log-file-sample-data/","csv");
+                "../parquet-file-sample-data/","parquet");
         log.info("actual={}", actual);
     }
 }

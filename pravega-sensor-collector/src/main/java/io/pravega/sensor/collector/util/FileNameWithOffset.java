@@ -7,20 +7,16 @@
  *
  *     http://www.apache.org/licenses/LICENSE-2.0
  */
-package io.pravega.sensor.collector.parquet;
+package io.pravega.sensor.collector.util;
 
 import java.util.Objects;
 
-/**
- * File name and file size
- */
 public class FileNameWithOffset implements Comparable<FileNameWithOffset> {
     public final String fileName;
     /**
      * In some contexts, this is the size of the file.
      * In the future, this will represent the offset in the file for incrementally ingesting growing log files.
      * This is partially implemented today.
-     * TODO: Clarify usage of offset.
      */
     public final long offset;
 

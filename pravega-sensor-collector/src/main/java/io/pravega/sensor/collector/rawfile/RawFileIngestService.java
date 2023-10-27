@@ -151,7 +151,7 @@ public class RawFileIngestService extends DeviceDriver{
         processFileTask = executor.scheduleWithFixedDelay(
                 this::processRawFiles,
                 0,
-                0,
+                1,
                 TimeUnit.MILLISECONDS);
         notifyStarted();        
     }

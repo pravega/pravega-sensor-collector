@@ -22,6 +22,8 @@ import org.apache.commons.lang3.tuple.Pair;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import io.pravega.sensor.collector.util.PravegaWriterEvent;
+
 /**
  * Generate Event from file  
  */
@@ -60,15 +62,17 @@ public class EventGenerator {
      * @param firstSequenceNumber
      * @return next sequence number, end offset
      */
-    protected Pair<Long, Long> generateEventsFromInputStream(CountingInputStream inputStream, long firstSequenceNumber, Consumer<RawFileWriterEvent> consumer) throws IOException {
+    protected Pair<Long, Long> generateEventsFromInputStream(CountingInputStream inputStream, long firstSequenceNumber, Consumer<PravegaWriterEvent> consumer) throws IOException {
         
         long nextSequenceNumber = firstSequenceNumber;
         try{    
             byte[] byteArray = inputStream.readAllBytes();
             //TODO: Batching
 
-            consumer.accept(new RawFileWriterEvent(routingKey, nextSequenceNumber, byteArray));
-            nextSequenceNumber++;			        
+            if (byteArray.length > 0) {         //non-empty file
+                consumer.accept(new PravegaWriterEvent(routingKey, nextSequenceNumber, byteArray));
+                nextSequenceNumber++;
+            }			        
             final long endOffset = inputStream.getCount();
 
             return new ImmutablePair<>(nextSequenceNumber, endOffset);

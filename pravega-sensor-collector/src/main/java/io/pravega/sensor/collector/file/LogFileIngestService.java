@@ -22,6 +22,9 @@ import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
 
+/**
+ * Ingestion service for csv files.  
+ */
 public class LogFileIngestService extends DeviceDriver {
     private static final Logger log = LoggerFactory.getLogger(LogFileIngestService.class);
 
@@ -155,7 +158,7 @@ public class LogFileIngestService extends DeviceDriver {
         processFileTask = executor.scheduleWithFixedDelay(
                 this::processLogFiles,
                 0,
-                0,
+                1,
                 TimeUnit.MILLISECONDS);
         notifyStarted();
     }

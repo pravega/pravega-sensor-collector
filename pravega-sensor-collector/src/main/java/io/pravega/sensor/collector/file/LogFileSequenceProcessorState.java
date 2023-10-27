@@ -11,6 +11,7 @@ package io.pravega.sensor.collector.file;
 
 import com.google.common.annotations.VisibleForTesting;
 import io.pravega.sensor.collector.util.AutoRollback;
+import io.pravega.sensor.collector.util.FileNameWithOffset;
 import io.pravega.sensor.collector.util.TransactionCoordinator;
 import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.apache.commons.lang3.tuple.Pair;
@@ -30,6 +31,9 @@ import java.util.UUID;
 
 import static java.sql.Connection.TRANSACTION_SERIALIZABLE;
 
+/**
+ * Maintain state of pending and completed files in SQLite database.  
+ */
 public class LogFileSequenceProcessorState implements AutoCloseable {
     private static final Logger log = LoggerFactory.getLogger(LogFileSequenceProcessorState.class);
 
