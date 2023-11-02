@@ -28,8 +28,6 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicLong;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 import com.google.common.io.CountingInputStream;
 
@@ -111,7 +109,7 @@ public class ParquetFileProcessor {
 
     public void processNewFiles() throws Exception {
         for (;;) {
-            final Pair<FileNameWithOffset, Long> nextFile = state.getNextPendingFile();
+            final Pair<FileNameWithOffset, Long> nextFile = state.getNextPendingFileRecord();
             if (nextFile == null) {
                 log.trace("processNewFiles: No more files to watch");
                 break;
@@ -123,9 +121,9 @@ public class ParquetFileProcessor {
 
     protected void findAndRecordNewFiles() throws Exception {
         final List<FileNameWithOffset> directoryListing = getDirectoryListing();
-        final List<FileNameWithOffset> completedFiles = state.getCompletedFiles();
+        final List<FileNameWithOffset> completedFiles = state.getCompletedFileRecords();
         final List<FileNameWithOffset> newFiles = getNewFiles(directoryListing, completedFiles);
-        state.addPendingFiles(newFiles);
+        state.addPendingFileRecords(newFiles);
     }
 
     /**
@@ -227,7 +225,7 @@ public class ParquetFileProcessor {
                 final long nextSequenceNumber = result.getLeft();
                 final long endOffset = result.getRight();
                 log.debug("processFile: Adding completed file: {}",  fileNameWithBeginOffset.fileName);
-                state.addCompletedFile(fileNameWithBeginOffset.fileName, fileNameWithBeginOffset.offset, endOffset, nextSequenceNumber, txnId);
+                state.addCompletedFileRecord(fileNameWithBeginOffset.fileName, fileNameWithBeginOffset.offset, endOffset, nextSequenceNumber, txnId);
                 // injectCommitFailure();
                 try {
                     // commit fails only if Transaction is not in open state.
@@ -261,7 +259,7 @@ public class ParquetFileProcessor {
     }
 
     void deleteCompletedFiles() throws Exception {
-        final List<FileNameWithOffset> completedFiles = state.getCompletedFiles();
+        final List<FileNameWithOffset> completedFiles = state.getCompletedFileRecords();
         completedFiles.forEach(file -> {
              //Obtain a lock on file
             try(FileChannel channel = FileChannel.open(Paths.get(file.fileName),StandardOpenOption.WRITE)){
@@ -271,7 +269,7 @@ public class ParquetFileProcessor {
                         log.info("deleteCompletedFiles: Deleted file {}", file.fileName);
                         lock.release();
                         // Only remove from database if we could delete file.
-                        state.deleteCompletedFile(file.fileName);                        
+                        state.deleteCompletedFileRecord(file.fileName);
                     }
                     else{
                         log.warn("Unable to obtain lock on file {}. File is locked by another process.", file.fileName);    

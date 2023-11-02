@@ -10,11 +10,8 @@
 package io.pravega.sensor.collector.file;
 
 import com.google.common.io.CountingInputStream;
-import io.pravega.client.ClientConfig;
 import io.pravega.client.EventStreamClientFactory;
-import io.pravega.client.admin.StreamManager;
 import io.pravega.client.stream.EventWriterConfig;
-import io.pravega.client.stream.StreamConfiguration;
 import io.pravega.client.stream.Transaction;
 import io.pravega.client.stream.TxnFailedException;
 import io.pravega.client.stream.impl.ByteArraySerializer;
@@ -32,10 +29,6 @@ import java.nio.file.*;
 import java.sql.Connection;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicLong;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
-import java.util.stream.Collectors;
-import java.util.stream.StreamSupport;
 
 public class LogFileSequenceProcessor {
     private static final Logger log = LoggerFactory.getLogger(LogFileSequenceProcessor.class);
@@ -101,7 +94,7 @@ public class LogFileSequenceProcessor {
     public void processNewFiles() throws Exception {
         for (;;) {
             // If nextFile is null then check for new files to process is handled as part of scheduleWithDelay
-            final Pair<FileNameWithOffset, Long> nextFile = state.getNextPendingFile();
+            final Pair<FileNameWithOffset, Long> nextFile = state.getNextPendingFileRecord();
             if (nextFile == null) {
                 log.info("processNewFiles: No more files to watch");
                 break;
@@ -113,9 +106,9 @@ public class LogFileSequenceProcessor {
 
     protected void findAndRecordNewFiles() throws Exception {
         final List<FileNameWithOffset> directoryListing = getDirectoryListing();
-        final List<FileNameWithOffset> completedFiles = state.getCompletedFiles();
+        final List<FileNameWithOffset> completedFiles = state.getCompletedFileRecords();
         final List<FileNameWithOffset> newFiles = getNewFiles(directoryListing, completedFiles);
-        state.addPendingFiles(newFiles);
+        state.addPendingFileRecords(newFiles);
     }
 
     /**
@@ -222,7 +215,7 @@ public class LogFileSequenceProcessor {
             final long nextSequenceNumber = result.getLeft();
             final long endOffset = result.getRight();
             log.debug("processFile: Adding completed file: {}",  fileNameWithBeginOffset.fileName);
-            state.addCompletedFile(fileNameWithBeginOffset.fileName, fileNameWithBeginOffset.offset, endOffset, nextSequenceNumber, txnId);
+            state.addCompletedFileRecord(fileNameWithBeginOffset.fileName, fileNameWithBeginOffset.offset, endOffset, nextSequenceNumber, txnId);
             // injectCommitFailure();
             try {
                 // commit fails only if Transaction is not in open state.
@@ -253,7 +246,7 @@ public class LogFileSequenceProcessor {
     }
 
     void deleteCompletedFiles() throws Exception {
-        final List<FileNameWithOffset> completedFiles = state.getCompletedFiles();
+        final List<FileNameWithOffset> completedFiles = state.getCompletedFileRecords();
         completedFiles.forEach(file -> {
             //Obtain a lock on file
             try(FileChannel channel = FileChannel.open(Paths.get(file.fileName), StandardOpenOption.WRITE)){
@@ -263,7 +256,7 @@ public class LogFileSequenceProcessor {
                         log.info("deleteCompletedFiles: Deleted file {}", file.fileName);
                         lock.release();
                         // Only remove from database if we could delete file.
-                        state.deleteCompletedFile(file.fileName);
+                        state.deleteCompletedFileRecord(file.fileName);
                     }
                     else{
                         log.warn("Unable to obtain lock on file {}. File is locked by another process.", file.fileName);

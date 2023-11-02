@@ -48,12 +48,10 @@ dependencies {
     compile "org.apache.parquet:parquet-hadoop:${parquetVersion}"
     compile "org.apache.hadoop:hadoop-client:${hadoopVersion}"
 
-    //testCompile "junit:junit:${junitVersion}"
     testImplementation "org.junit.jupiter:junit-jupiter-api:${junitVersion}"
     testImplementation "org.junit.vintage:junit-vintage-engine:${junitVersion}"
     testRuntimeOnly "org.junit.jupiter:junit-jupiter-engine:${junitVersion}"
     testImplementation "org.junit.platform:junit-platform-launcher"
-   // testRuntimeOnly "org.junit.platform:junit-platform-runner:${junitVersion}"
 
     testCompile "org.mockito:mockito-core:${mockitoVersion}"
 
