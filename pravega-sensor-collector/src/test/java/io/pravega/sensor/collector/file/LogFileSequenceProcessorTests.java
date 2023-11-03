@@ -58,7 +58,7 @@ public class LogFileSequenceProcessorTests {
     @Test
     public void getDirectoryListingTestWithWrongPath() {
         Assertions.assertThrows(IOException.class, () ->
-                LogFileSequenceProcessor.getDirectoryListing(
+                FileUtils.getDirectoryListing(
                         "../log-file-sample-data1/","csv"));
     }
 
@@ -66,7 +66,7 @@ public class LogFileSequenceProcessorTests {
     @Test
     public void getDirectoryListingTestWithNoFileInPath() throws IOException {
         Assertions.assertTrue(
-                LogFileSequenceProcessor.getDirectoryListing("../log-file-sample-data/","abc").isEmpty(), "List is not empty");
+                FileUtils.getDirectoryListing("../log-file-sample-data/","abc").isEmpty(), "List is not empty");
     }
 
    /* @Test
