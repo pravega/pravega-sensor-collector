@@ -7,8 +7,11 @@
  *
  *     http://www.apache.org/licenses/LICENSE-2.0
  */
-package io.pravega.sensor.collector.file;
+package io.pravega.sensor.collector.util;
 
+/**
+ * Event generated from file and its sequence number
+ */
 public class PravegaWriterEvent {
     public final String routingKey;
     public final long sequenceNumber;

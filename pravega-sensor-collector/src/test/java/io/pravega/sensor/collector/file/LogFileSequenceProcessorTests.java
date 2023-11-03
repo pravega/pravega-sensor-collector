@@ -17,6 +17,9 @@ import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import io.pravega.sensor.collector.util.FileNameWithOffset;
+import io.pravega.sensor.collector.util.FileUtils;
+
 import java.io.IOException;
 import java.util.List;
 import io.pravega.sensor.collector.util.FileNameWithOffset;
@@ -46,7 +49,7 @@ public class LogFileSequenceProcessorTests {
 
     @Test
     public void getDirectoryListingTest() throws IOException {
-        final List<FileNameWithOffset> actual = LogFileSequenceProcessor.getDirectoryListing(
+        final List<FileNameWithOffset> actual = FileUtils.getDirectoryListing(
                 "../log-file-sample-data/","csv");
         log.info("actual={}", actual);
     }
