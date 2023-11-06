@@ -30,6 +30,10 @@ import java.sql.Connection;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicLong;
 
+/**
+ * Get list of files obtained from config. Process each file for ingestion.
+ * Keep track of new files and delete ingested files if "DELETE_COMPLETED_FILES"=true. 
+ */
 public class LogFileSequenceProcessor {
     private static final Logger log = LoggerFactory.getLogger(LogFileSequenceProcessor.class);
 
@@ -116,46 +120,8 @@ public class LogFileSequenceProcessor {
      */
     protected List<FileNameWithOffset> getDirectoryListing() throws IOException {
         log.info("getDirectoryListing: fileSpec={}", config.fileSpec);
-        final List<FileNameWithOffset> directoryListing = getDirectoryListing(config.fileSpec, config.fileExtension);
+        final List<FileNameWithOffset> directoryListing = FileUtils.getDirectoryListing(config.fileSpec, config.fileExtension);
         log.trace("getDirectoryListing: directoryListing={}", directoryListing);
-        return directoryListing;
-    }
-
-    /**
-     * @return list of file name and file size in bytes
-     * Handle the below cases
-     *  1. If given file path does not exist then log the message and continue
-     *  2. If directory does not exist and no file with given extn like .csv then log the message and continue
-     *  3. check for empty file, log the message and continue with valid files
-     *
-     */
-    static protected List<FileNameWithOffset> getDirectoryListing(String fileSpec, String fileExtension) throws IOException {
-        final Path pathSpec = Paths.get(fileSpec);
-        if (!Files.isDirectory(pathSpec.toAbsolutePath())) {
-            log.error("getDirectoryListing: Directory does not exist or spec is not valid : {}", pathSpec.toAbsolutePath());
-            throw new IOException("Directory does not exist or spec is not valid");
-        }
-        List<FileNameWithOffset> directoryListing = new ArrayList<>();
-        try (DirectoryStream<Path> dirStream = Files.newDirectoryStream(pathSpec)) {
-            for (Path path : dirStream) {
-                if (Files.isDirectory(path))         //traverse subdirectories
-                    directoryListing.addAll(getDirectoryListing(path.toString(), fileExtension));
-                else {
-                    FileNameWithOffset fileEntry = new FileNameWithOffset(path.toAbsolutePath().toString(), path.toFile().length());
-                    if (isValidFile(fileEntry, fileExtension)) {
-                        directoryListing.add(fileEntry);
-                    }
-                }
-            }
-        }catch(Exception ex){
-            if(ex instanceof IOException){
-                log.error("getDirectoryListing: Directory does not exist or spec is not valid : {}", pathSpec.toAbsolutePath());
-                throw new IOException("Directory does not exist or spec is not valid");
-            }else{
-                log.error("getDirectoryListing: Exception while listing files: {}", pathSpec.toAbsolutePath());
-                throw new IOException(ex);
-            }
-        }
         return directoryListing;
     }
 
@@ -269,25 +235,6 @@ public class LogFileSequenceProcessor {
                 // We can continue on this error. Deletion will be retried on the next iteration.
             }
         });
-    }
-
-    /*
-    Check for below file validation
-        1. Is File empty
-        2. If extension is null or extension is valid ingest all file
-     */
-    public static boolean isValidFile(FileNameWithOffset fileEntry, String fileExtension ){
-
-        if(fileEntry.offset<=0){
-            log.warn("isValidFile: Empty file {} can not be processed ",fileEntry.fileName);
-        }
-        // If extension is null, ingest all files
-        else if(fileExtension.isEmpty() || fileExtension.equals(fileEntry.fileName.substring(fileEntry.fileName.lastIndexOf(".")+1)))
-            return true;
-        else
-            log.warn("isValidFile: File format {} is not supported ", fileEntry.fileName);
-
-        return false;
     }
 
     /**
