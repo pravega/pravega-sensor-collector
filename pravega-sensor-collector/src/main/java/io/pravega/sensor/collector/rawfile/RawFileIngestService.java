@@ -148,6 +148,11 @@ public class RawFileIngestService extends DeviceDriver{
                 0,
                 getIntervalMs(),
                 TimeUnit.MILLISECONDS);
+        /*
+        Submits a periodic action that becomes enabled immediately  for the first time,
+        and subsequently with the delay of 1 milliseconds between the termination of one execution and the commencement of the next
+        ie immediately after completion of first action.
+        */
         processFileTask = executor.scheduleWithFixedDelay(
                 this::processRawFiles,
                 0,

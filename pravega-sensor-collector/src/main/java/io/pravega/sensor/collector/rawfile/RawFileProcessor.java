@@ -25,9 +25,11 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicLong;
 
+import io.pravega.sensor.collector.util.*;
 import com.google.common.io.CountingInputStream;
 
 import io.pravega.client.stream.Transaction;
+import io.pravega.sensor.collector.util.TransactionStateSQLiteImpl;
 import org.apache.commons.lang3.tuple.Pair;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -50,12 +52,12 @@ public class RawFileProcessor {
     private static final Logger log = LoggerFactory.getLogger(RawFileIngestService.class);
     
     private final RawFileConfig config;
-    private final RawFileState state;
+    private final TransactionStateSQLiteImpl state;
     private final EventWriter<byte[]> writer;
     private final TransactionCoordinator transactionCoordinator;
     private final EventGenerator eventGenerator;
 
-    public RawFileProcessor(RawFileConfig config, RawFileState state, EventWriter<byte[]> writer, TransactionCoordinator transactionCoordinator, EventGenerator eventGenerator) {
+    public RawFileProcessor(RawFileConfig config, TransactionStateSQLiteImpl state, EventWriter<byte[]> writer, TransactionCoordinator transactionCoordinator, EventGenerator eventGenerator) {
         this.config = config;
         this.state = state;
         this.writer = writer;
@@ -64,7 +66,7 @@ public class RawFileProcessor {
     }
 
     public static RawFileProcessor create(RawFileConfig config, EventStreamClientFactory clientFactory){
-        final Connection connection = RawFileState.createDatabase(config.stateDatabaseFileName);
+        final Connection connection = SQliteDBUtility.createDatabase(config.stateDatabaseFileName);
 
         final String writerId = new PersistentId(connection).getPersistentId().toString();
         log.info("Writer ID: {}", writerId);
@@ -87,7 +89,7 @@ public class RawFileProcessor {
                 config.routingKey,
                 config.eventTemplateStr,
                 writerId);
-        final RawFileState state = new RawFileState(connection, transactionCoordinator);
+        final TransactionStateSQLiteImpl state = new TransactionStateSQLiteImpl(connection, transactionCoordinator);
         return new RawFileProcessor(config, state, writer, transactionCoordinator, eventGenerator);
     }
 
@@ -108,7 +110,7 @@ public class RawFileProcessor {
 
     public void processNewFiles() throws Exception {
         for (;;) {
-            final Pair<FileNameWithOffset, Long> nextFile = state.getNextPendingFile();
+            final Pair<FileNameWithOffset, Long> nextFile = state.getNextPendingFileRecord();
             if (nextFile == null) {
                 log.trace("processNewFiles: No more files to ingest");
                 break;
@@ -120,9 +122,9 @@ public class RawFileProcessor {
 
     protected void findAndRecordNewFiles() throws Exception {
         final List<FileNameWithOffset> directoryListing = getDirectoryListing();
-        final List<FileNameWithOffset> completedFiles = state.getCompletedFiles();
+        final List<FileNameWithOffset> completedFiles = state.getCompletedFileRecords();
         final List<FileNameWithOffset> newFiles = getNewFiles(directoryListing, completedFiles);
-        state.addPendingFiles(newFiles);
+        state.addPendingFileRecords(newFiles);
     }
 
     /**
@@ -189,7 +191,7 @@ public class RawFileProcessor {
                 final long nextSequenceNumber = result.getLeft();
                 final long endOffset = result.getRight();
                 log.debug("processFile: Adding completed file: {}",  fileNameWithBeginOffset.fileName);
-                state.addCompletedFile(fileNameWithBeginOffset.fileName, fileNameWithBeginOffset.offset, endOffset, nextSequenceNumber, txnId);
+                state.addCompletedFileRecord(fileNameWithBeginOffset.fileName, fileNameWithBeginOffset.offset, endOffset, nextSequenceNumber, txnId);
                 // injectCommitFailure();
                 try {
                     // commit fails only if Transaction is not in open state.
@@ -222,7 +224,7 @@ public class RawFileProcessor {
     }
 
     void deleteCompletedFiles() throws Exception {
-        final List<FileNameWithOffset> completedFiles = state.getCompletedFiles();
+        final List<FileNameWithOffset> completedFiles = state.getCompletedFileRecords();
         completedFiles.forEach(file -> {
             //Obtain a lock on file
             try(FileChannel channel = FileChannel.open(Paths.get(file.fileName),StandardOpenOption.WRITE)){
@@ -232,7 +234,7 @@ public class RawFileProcessor {
                         log.info("deleteCompletedFiles: Deleted file {}", file.fileName);
                         lock.release();
                         // Only remove from database if we could delete file.
-                        state.deleteCompletedFile(file.fileName);                        
+                        state.deleteCompletedFileRecord(file.fileName);
                     }
                     else{
                         log.warn("Unable to obtain lock on file {}. File is locked by another process.", file.fileName);    

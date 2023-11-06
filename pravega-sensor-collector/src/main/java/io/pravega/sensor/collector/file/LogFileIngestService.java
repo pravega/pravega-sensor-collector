@@ -152,7 +152,7 @@ public class LogFileIngestService extends DeviceDriver {
                 TimeUnit.MILLISECONDS);
         /*
         Submits a periodic action that becomes enabled immediately  for the first time,
-        and subsequently with the delay of 0 milliseconds between the termination of one execution and the commencement of the next
+        and subsequently with the delay of 1 milliseconds between the termination of one execution and the commencement of the next
         ie immediately after completion of first action.
          */
         processFileTask = executor.scheduleWithFixedDelay(

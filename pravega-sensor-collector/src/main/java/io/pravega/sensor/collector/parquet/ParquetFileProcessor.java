@@ -30,6 +30,7 @@ import java.util.concurrent.atomic.AtomicLong;
 import com.google.common.io.CountingInputStream;
 
 import io.pravega.client.stream.Transaction;
+import io.pravega.sensor.collector.util.*;
 import org.apache.commons.lang3.tuple.Pair;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -52,12 +53,12 @@ public class ParquetFileProcessor {
     private static final Logger log = LoggerFactory.getLogger(ParquetFileIngestService.class);
     
     private final ParquetFileConfig config;
-    private final ParquetFileState state;
+    private final TransactionStateSQLiteImpl state;
     private final EventWriter<byte[]> writer;
     private final TransactionCoordinator transactionCoordinator;
     private final EventGenerator eventGenerator;
 
-    public ParquetFileProcessor(ParquetFileConfig config, ParquetFileState state, EventWriter<byte[]> writer, TransactionCoordinator transactionCoordinator, EventGenerator eventGenerator) {
+    public ParquetFileProcessor(ParquetFileConfig config, TransactionStateSQLiteImpl state, EventWriter<byte[]> writer, TransactionCoordinator transactionCoordinator, EventGenerator eventGenerator) {
         this.config = config;
         this.state = state;
         this.writer = writer;
@@ -66,7 +67,7 @@ public class ParquetFileProcessor {
     }
 
     public static ParquetFileProcessor create(ParquetFileConfig config, EventStreamClientFactory clientFactory){
-        final Connection connection = ParquetFileState.createDatabase(config.stateDatabaseFileName);
+        final Connection connection = SQliteDBUtility.createDatabase(config.stateDatabaseFileName);
 
         final String writerId = new PersistentId(connection).getPersistentId().toString();
         log.info("Writer ID: {}", writerId);
@@ -90,7 +91,7 @@ public class ParquetFileProcessor {
                 config.maxRecordsPerEvent,
                 config.eventTemplateStr,
                 writerId);
-        final ParquetFileState state = new ParquetFileState(connection, transactionCoordinator);
+        final TransactionStateSQLiteImpl state = new TransactionStateSQLiteImpl(connection, transactionCoordinator);
         return new ParquetFileProcessor(config, state, writer, transactionCoordinator, eventGenerator);
     }
 
@@ -111,7 +112,7 @@ public class ParquetFileProcessor {
 
     public void processNewFiles() throws Exception {
         for (;;) {
-            final Pair<FileNameWithOffset, Long> nextFile = state.getNextPendingFile();
+            final Pair<FileNameWithOffset, Long> nextFile = state.getNextPendingFileRecord();
             if (nextFile == null) {
                 log.trace("processNewFiles: No more files to watch");
                 break;
@@ -123,9 +124,9 @@ public class ParquetFileProcessor {
 
     protected void findAndRecordNewFiles() throws Exception {
         final List<FileNameWithOffset> directoryListing = getDirectoryListing();
-        final List<FileNameWithOffset> completedFiles = state.getCompletedFiles();
+        final List<FileNameWithOffset> completedFiles = state.getCompletedFileRecords();
         final List<FileNameWithOffset> newFiles = getNewFiles(directoryListing, completedFiles);
-        state.addPendingFiles(newFiles);
+        state.addPendingFileRecords(newFiles);
     }
 
     /**
@@ -194,7 +195,7 @@ public class ParquetFileProcessor {
                 final long nextSequenceNumber = result.getLeft();
                 final long endOffset = result.getRight();
                 log.debug("processFile: Adding completed file: {}",  fileNameWithBeginOffset.fileName);
-                state.addCompletedFile(fileNameWithBeginOffset.fileName, fileNameWithBeginOffset.offset, endOffset, nextSequenceNumber, txnId);
+                state.addCompletedFileRecord(fileNameWithBeginOffset.fileName, fileNameWithBeginOffset.offset, endOffset, nextSequenceNumber, txnId);
                 // injectCommitFailure();
                 try {
                     // commit fails only if Transaction is not in open state.
@@ -228,7 +229,7 @@ public class ParquetFileProcessor {
     }
 
     void deleteCompletedFiles() throws Exception {
-        final List<FileNameWithOffset> completedFiles = state.getCompletedFiles();
+        final List<FileNameWithOffset> completedFiles = state.getCompletedFileRecords();
         completedFiles.forEach(file -> {
              //Obtain a lock on file
             try(FileChannel channel = FileChannel.open(Paths.get(file.fileName),StandardOpenOption.WRITE)){
@@ -238,7 +239,7 @@ public class ParquetFileProcessor {
                         log.info("deleteCompletedFiles: Deleted file {}", file.fileName);
                         lock.release();
                         // Only remove from database if we could delete file.
-                        state.deleteCompletedFile(file.fileName);                        
+                        state.deleteCompletedFileRecord(file.fileName);
                     }
                     else{
                         log.warn("Unable to obtain lock on file {}. File is locked by another process.", file.fileName);    

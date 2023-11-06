@@ -15,11 +15,7 @@ import io.pravega.client.stream.EventWriterConfig;
 import io.pravega.client.stream.Transaction;
 import io.pravega.client.stream.TxnFailedException;
 import io.pravega.client.stream.impl.ByteArraySerializer;
-import io.pravega.sensor.collector.util.EventWriter;
-import io.pravega.sensor.collector.util.FileUtils;
-import io.pravega.sensor.collector.util.FileNameWithOffset;
-import io.pravega.sensor.collector.util.PersistentId;
-import io.pravega.sensor.collector.util.TransactionCoordinator;
+import io.pravega.sensor.collector.util.*;
 import org.apache.commons.lang3.tuple.Pair;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -39,15 +35,15 @@ import java.util.concurrent.atomic.AtomicLong;
  * Keep track of new files and delete ingested files if "DELETE_COMPLETED_FILES"=true. 
  */
 public class LogFileSequenceProcessor {
-    private static final Logger log = LoggerFactory.getLogger(LogFileSequenceProcessorState.class);
+    private static final Logger log = LoggerFactory.getLogger(LogFileSequenceProcessor.class);
 
     private final LogFileSequenceConfig config;
-    private final LogFileSequenceProcessorState state;
+    private final TransactionStateSQLiteImpl state;
     private final EventWriter<byte[]> writer;
     private final TransactionCoordinator transactionCoordinator;
     private final EventGenerator eventGenerator;
 
-    public LogFileSequenceProcessor(LogFileSequenceConfig config, LogFileSequenceProcessorState state, EventWriter<byte[]> writer, TransactionCoordinator transactionCoordinator, EventGenerator eventGenerator) {
+    public LogFileSequenceProcessor(LogFileSequenceConfig config, TransactionStateSQLiteImpl state, EventWriter<byte[]> writer, TransactionCoordinator transactionCoordinator, EventGenerator eventGenerator) {
         this.config = config;
         this.state = state;
         this.writer = writer;
@@ -58,7 +54,7 @@ public class LogFileSequenceProcessor {
     public static LogFileSequenceProcessor create(
             LogFileSequenceConfig config, EventStreamClientFactory clientFactory){
 
-        final Connection connection = LogFileSequenceProcessorState.createDatabase(config.stateDatabaseFileName);
+        final Connection connection = SQliteDBUtility.createDatabase(config.stateDatabaseFileName);
 
         final String writerId = new PersistentId(connection).getPersistentId().toString();
         log.info("Writer ID: {}", writerId);
@@ -82,7 +78,7 @@ public class LogFileSequenceProcessor {
                 config.maxRecordsPerEvent,
                 config.eventTemplateStr,
                 writerId);
-        final LogFileSequenceProcessorState state = new LogFileSequenceProcessorState(connection, transactionCoordinator);
+        final TransactionStateSQLiteImpl state = new TransactionStateSQLiteImpl(connection, transactionCoordinator);
         return new LogFileSequenceProcessor(config, state, writer, transactionCoordinator, eventGenerator);
     }
 
@@ -102,7 +98,7 @@ public class LogFileSequenceProcessor {
     public void processNewFiles() throws Exception {
         for (;;) {
             // If nextFile is null then check for new files to process is handled as part of scheduleWithDelay
-            final Pair<FileNameWithOffset, Long> nextFile = state.getNextPendingFile();
+            final Pair<FileNameWithOffset, Long> nextFile = state.getNextPendingFileRecord();
             if (nextFile == null) {
                 log.info("processNewFiles: No more files to watch");
                 break;
@@ -114,9 +110,9 @@ public class LogFileSequenceProcessor {
 
     protected void findAndRecordNewFiles() throws Exception {
         final List<FileNameWithOffset> directoryListing = getDirectoryListing();
-        final List<FileNameWithOffset> completedFiles = state.getCompletedFiles();
+        final List<FileNameWithOffset> completedFiles = state.getCompletedFileRecords();
         final List<FileNameWithOffset> newFiles = getNewFiles(directoryListing, completedFiles);
-        state.addPendingFiles(newFiles);
+        state.addPendingFileRecords(newFiles);
     }
 
     /**
@@ -185,7 +181,7 @@ public class LogFileSequenceProcessor {
             final long nextSequenceNumber = result.getLeft();
             final long endOffset = result.getRight();
             log.debug("processFile: Adding completed file: {}",  fileNameWithBeginOffset.fileName);
-            state.addCompletedFile(fileNameWithBeginOffset.fileName, fileNameWithBeginOffset.offset, endOffset, nextSequenceNumber, txnId);
+            state.addCompletedFileRecord(fileNameWithBeginOffset.fileName, fileNameWithBeginOffset.offset, endOffset, nextSequenceNumber, txnId);
             // injectCommitFailure();
             try {
                 // commit fails only if Transaction is not in open state.
@@ -216,7 +212,7 @@ public class LogFileSequenceProcessor {
     }
 
     void deleteCompletedFiles() throws Exception {
-        final List<FileNameWithOffset> completedFiles = state.getCompletedFiles();
+        final List<FileNameWithOffset> completedFiles = state.getCompletedFileRecords();
         completedFiles.forEach(file -> {
             //Obtain a lock on file
             try(FileChannel channel = FileChannel.open(Paths.get(file.fileName), StandardOpenOption.WRITE)){
@@ -226,7 +222,7 @@ public class LogFileSequenceProcessor {
                         log.info("deleteCompletedFiles: Deleted file {}", file.fileName);
                         lock.release();
                         // Only remove from database if we could delete file.
-                        state.deleteCompletedFile(file.fileName);
+                        state.deleteCompletedFileRecord(file.fileName);
                     }
                     else{
                         log.warn("Unable to obtain lock on file {}. File is locked by another process.", file.fileName);

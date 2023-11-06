@@ -11,8 +11,8 @@ package io.pravega.sensor.collector.file;
 
 import com.google.common.io.CountingInputStream;
 import org.apache.commons.lang3.tuple.Pair;
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -39,8 +39,8 @@ public class EventGeneratorTests {
         final List<PravegaWriterEvent> events = new ArrayList<>();
         Pair<Long, Long> nextSequenceNumberAndOffset = eventGenerator.generateEventsFromInputStream(inputStream, 100, events::add);
         log.info("events={}", events);
-        Assert.assertEquals(102L, (long) nextSequenceNumberAndOffset.getLeft());
-        Assert.assertEquals(csvStr.length(), (long) nextSequenceNumberAndOffset.getRight());
+        Assertions.assertEquals(102L, (long) nextSequenceNumberAndOffset.getLeft());
+        Assertions.assertEquals(csvStr.length(), (long) nextSequenceNumberAndOffset.getRight());
     }
 
     @Test
@@ -55,8 +55,8 @@ public class EventGeneratorTests {
         final List<PravegaWriterEvent> events = new ArrayList<>();
         Pair<Long, Long> nextSequenceNumberAndOffset = eventGenerator.generateEventsFromInputStream(inputStream, 100, events::add);
         log.info("events={}", events);
-        Assert.assertEquals(101L, (long) nextSequenceNumberAndOffset.getLeft());
-        Assert.assertEquals(csvStr.length(), (long) nextSequenceNumberAndOffset.getRight());
+        Assertions.assertEquals(101L, (long) nextSequenceNumberAndOffset.getLeft());
+        Assertions.assertEquals(csvStr.length(), (long) nextSequenceNumberAndOffset.getRight());
     }
 
     @Test
@@ -69,8 +69,8 @@ public class EventGeneratorTests {
         final List<PravegaWriterEvent> events = new ArrayList<>();
         Pair<Long, Long> nextSequenceNumberAndOffset = eventGenerator.generateEventsFromInputStream(inputStream, 100, events::add);
         log.info("events={}", events);
-        Assert.assertEquals(101L, (long) nextSequenceNumberAndOffset.getLeft());
-        Assert.assertEquals(csvStr.length(), (long) nextSequenceNumberAndOffset.getRight());
+        Assertions.assertEquals(101L, (long) nextSequenceNumberAndOffset.getLeft());
+        Assertions.assertEquals(csvStr.length(), (long) nextSequenceNumberAndOffset.getRight());
     }
 
     @Test
@@ -82,8 +82,8 @@ public class EventGeneratorTests {
         final List<PravegaWriterEvent> events = new ArrayList<>();
         Pair<Long, Long> nextSequenceNumberAndOffset = eventGenerator.generateEventsFromInputStream(inputStream, 100, events::add);
         log.info("events={}", events);
-        Assert.assertEquals(100L, (long) nextSequenceNumberAndOffset.getLeft());
-        Assert.assertEquals(csvStr.length(), (long) nextSequenceNumberAndOffset.getRight());
+        Assertions.assertEquals(100L, (long) nextSequenceNumberAndOffset.getLeft());
+        Assertions.assertEquals(csvStr.length(), (long) nextSequenceNumberAndOffset.getRight());
     }
 
     @Test
@@ -94,8 +94,8 @@ public class EventGeneratorTests {
         final List<PravegaWriterEvent> events = new ArrayList<>();
         Pair<Long, Long> nextSequenceNumberAndOffset = eventGenerator.generateEventsFromInputStream(inputStream, 100, events::add);
         log.info("events={}", events);
-        Assert.assertEquals(100L, (long) nextSequenceNumberAndOffset.getLeft());
-        Assert.assertEquals(csvStr.length(), (long) nextSequenceNumberAndOffset.getRight());
+        Assertions.assertEquals(100L, (long) nextSequenceNumberAndOffset.getLeft());
+        Assertions.assertEquals(csvStr.length(), (long) nextSequenceNumberAndOffset.getRight());
     }
 
     @Test
@@ -114,7 +114,7 @@ public class EventGeneratorTests {
         final List<PravegaWriterEvent> events = new ArrayList<>();
         Pair<Long, Long> nextSequenceNumberAndOffset = eventGenerator.generateEventsFromInputStream(inputStream, 100, events::add);
         log.info("events={}", events);
-        Assert.assertEquals(103L, (long) nextSequenceNumberAndOffset.getLeft());
-        Assert.assertEquals(csvStr.length(), (long) nextSequenceNumberAndOffset.getRight());
+        Assertions.assertEquals(103L, (long) nextSequenceNumberAndOffset.getLeft());
+        Assertions.assertEquals(csvStr.length(), (long) nextSequenceNumberAndOffset.getRight());
     }
 }

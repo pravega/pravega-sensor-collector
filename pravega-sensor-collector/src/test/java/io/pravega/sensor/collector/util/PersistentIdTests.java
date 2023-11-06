@@ -9,8 +9,8 @@
  */
 package io.pravega.sensor.collector.util;
 
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -39,7 +39,7 @@ public class PersistentIdTests {
                 writerId2 = new PersistentId(connection).getPersistentId().toString();
                 log.info("writerId2={}", writerId2);
             }
-            Assert.assertEquals(writerId1, writerId2);
+            Assertions.assertEquals(writerId1, writerId2);
         } finally {
             new File(fileName).delete();
         }
