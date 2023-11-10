@@ -8,50 +8,49 @@
  *
  *     http://www.apache.org/licenses/LICENSE-2.0
  */
-package io.pravega.sensor.collector.rawfile;
-
-import java.io.IOException;
-import java.util.function.Consumer;
+package io.pravega.sensor.collector.file.rawfile;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.io.CountingInputStream;
-
+import io.pravega.sensor.collector.file.EventGenerator;
+import io.pravega.sensor.collector.util.PravegaWriterEvent;
 import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.apache.commons.lang3.tuple.Pair;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import io.pravega.sensor.collector.util.PravegaWriterEvent;
+import java.io.IOException;
+import java.util.function.Consumer;
 
 /**
  * Generate Event from file  
  */
-public class EventGenerator {
-    private static final Logger log = LoggerFactory.getLogger(EventGenerator.class);
+public class RawEventGenerator implements EventGenerator {
+    private static final Logger log = LoggerFactory.getLogger(RawEventGenerator.class);
 
     private final String routingKey;
     private final ObjectNode eventTemplate;
     private final ObjectMapper mapper;
 
-    public EventGenerator(String routingKey, ObjectNode eventTemplate, ObjectMapper mapper) {
+    public RawEventGenerator(String routingKey, ObjectNode eventTemplate, ObjectMapper mapper) {
         this.routingKey = routingKey;
         this.eventTemplate = eventTemplate;
         this.mapper = mapper;
     }
 
-    public static EventGenerator create(String routingKey, String eventTemplateStr, String writerId) {
+    public static RawEventGenerator create(String routingKey, String eventTemplateStr, String writerId) {
         try {
             final ObjectMapper mapper = new ObjectMapper();
             final ObjectNode eventTemplate = (ObjectNode) mapper.readTree(eventTemplateStr);
             eventTemplate.put("WriterId", writerId);
-            return new EventGenerator(routingKey, eventTemplate, mapper);
+            return new RawEventGenerator(routingKey, eventTemplate, mapper);
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
     }
 
-    public static EventGenerator create(String routingKey) throws IOException {
+    public static RawEventGenerator create(String routingKey) throws IOException {
         return create(routingKey, "{}", "MyWriterId");
     }
 
@@ -62,7 +61,7 @@ public class EventGenerator {
      * @param firstSequenceNumber
      * @return next sequence number, end offset
      */
-    protected Pair<Long, Long> generateEventsFromInputStream(CountingInputStream inputStream, long firstSequenceNumber, Consumer<PravegaWriterEvent> consumer) throws IOException {
+    public Pair<Long, Long> generateEventsFromInputStream(CountingInputStream inputStream, long firstSequenceNumber, Consumer<PravegaWriterEvent> consumer) throws IOException {
         
         long nextSequenceNumber = firstSequenceNumber;
         try{    
