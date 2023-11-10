@@ -30,8 +30,9 @@ public class RawFileProcessor extends FileProcessor {
         this.writerId = writerId;
     }
 
-    /**
-     * @return
+    /** Event generator for Raw file
+     * @param config configurations parameters
+     * @return eventGenerator
      */
     @Override
     public EventGenerator getEventGenerator(FileConfig config) {

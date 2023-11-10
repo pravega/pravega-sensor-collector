@@ -21,10 +21,13 @@ import java.util.function.Consumer;
  */
 public interface EventGenerator{
 
+   /*
+    * Generate events from Input stream.
+    * Depending on file type event generation logic defers
+    * @param inputStream
+    * @param firstSequenceNumber
+    * @return next sequence number, end offset
+    * */
     Pair<Long, Long> generateEventsFromInputStream(CountingInputStream inputStream, long firstSequenceNumber, Consumer<PravegaWriterEvent> consumer) throws IOException;
-    /*JsonNode stringValueToJsonNode(String s);
-    void addValueToArray(ObjectNode objectNode, String key, String value);*/
-
-
 
 }

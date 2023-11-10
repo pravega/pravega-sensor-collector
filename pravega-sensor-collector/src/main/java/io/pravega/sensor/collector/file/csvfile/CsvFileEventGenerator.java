@@ -30,7 +30,7 @@ import java.util.Map;
 import java.util.function.Consumer;
 
 /**
- * Generate Event from file  
+ * Generate Event from CSV file
  */
 public class CsvFileEventGenerator implements EventGenerator {
     private static final Logger log = LoggerFactory.getLogger(CsvFileEventGenerator.class);
@@ -62,7 +62,7 @@ public class CsvFileEventGenerator implements EventGenerator {
         return create(routingKey, maxRecordsPerEvent, "{}", "MyWriterId");
     }
 
-    /**
+    /** Generate event from input stream. number of records in one event is defined in input config file
      * @param inputStream
      * @param firstSequenceNumber
      * @return next sequence number, end offset

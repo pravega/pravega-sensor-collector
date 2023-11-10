@@ -78,6 +78,11 @@ public abstract class FileProcessor {
 
     }
 
+    /* The abstract method serves as an Event Generator responsible for generating events.
+     * This logic is tailored to specific file types, and as such, it will be implemented in their respective classes.
+     * @param config configurations parameters
+     * @return eventGenerator
+     */
     public abstract EventGenerator getEventGenerator(FileConfig config);
     public void watchFiles() throws Exception {
         findAndRecordNewFiles();

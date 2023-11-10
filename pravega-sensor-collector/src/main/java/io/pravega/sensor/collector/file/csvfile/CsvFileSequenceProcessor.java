@@ -31,7 +31,9 @@ public class CsvFileSequenceProcessor extends FileProcessor {
     }
 
     /**
-     * @return
+     * Event generator for CSV file
+     * @param config configurations parameters
+     * @return eventGenerator
      */
     @Override
     public EventGenerator getEventGenerator(FileConfig config) {

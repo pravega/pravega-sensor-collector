@@ -9,6 +9,9 @@
  */
 package io.pravega.sensor.collector.file;
 
+/*
+ * Configuration file.
+ */
 public class FileConfig {
     public final String stateDatabaseFileName;
     public final String fileSpec;

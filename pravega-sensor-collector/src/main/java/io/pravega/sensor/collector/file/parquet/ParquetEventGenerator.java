@@ -46,7 +46,7 @@ import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
 /**
- * Generate Event from file  
+ * Generate Event from Parquet file
  */
 public class ParquetEventGenerator implements EventGenerator {
     private static final Logger log = LoggerFactory.getLogger(ParquetEventGenerator.class);
@@ -80,7 +80,9 @@ public class ParquetEventGenerator implements EventGenerator {
 
 
     /**
-     * Convert Parquet to Json
+     * Generate event from input stream. number of records in one event is defined in input config file
+     * Convert Parquet to Json.
+     *
      * @param inputStream
      * @param firstSequenceNumber
      * @return next sequence number, end offset

@@ -24,7 +24,7 @@ import java.io.IOException;
 import java.util.function.Consumer;
 
 /**
- * Generate Event from file  
+ * Generate Event from RAW file
  */
 public class RawEventGenerator implements EventGenerator {
     private static final Logger log = LoggerFactory.getLogger(RawEventGenerator.class);

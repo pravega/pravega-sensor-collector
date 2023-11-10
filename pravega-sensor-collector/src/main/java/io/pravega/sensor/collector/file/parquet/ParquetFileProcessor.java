@@ -29,8 +29,9 @@ public class ParquetFileProcessor extends FileProcessor {
         this.writerId = writerId;
     }
 
-    /**
-     * @return
+    /** Event generator for Parquet file
+     * @param config configurations parameters
+     * @return eventGenerator
      */
     @Override
     public EventGenerator getEventGenerator(FileConfig config) {
