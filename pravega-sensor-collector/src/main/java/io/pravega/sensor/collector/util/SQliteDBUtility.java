@@ -30,6 +30,10 @@ public class SQliteDBUtility {
                                 "nextSequenceNumber bigint not null)");
                 statement.execute(
                         "insert or ignore into SequenceNumber (id, nextSequenceNumber) values (0, 0)");
+                statement.execute(
+                        "create table if not exists FailedFiles (" +
+                                "fileName string primary key not null, " +
+                                "offset bigint not null)");
             }
             connection.setAutoCommit(false);
             connection.setTransactionIsolation(TRANSACTION_SERIALIZABLE);

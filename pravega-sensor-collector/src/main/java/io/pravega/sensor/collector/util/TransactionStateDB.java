@@ -74,6 +74,15 @@ public interface TransactionStateDB {
      */
     public void deleteCompletedFileRecord(String fileName) throws SQLException;
 
+    /**
+     * Update below details
+     *      1. Add entry into FailedFiles table for given file name and offset
+     *      2. Delete all entry from PendingFiles for given file 
+     * @param fileName               file name of processed file
+     * @param beginOffset            begin offset from where file read starts
+     *
+     */
+    public void addFailedFileRecord(String fileName, long beginOffset) throws SQLException;
 
 
 }

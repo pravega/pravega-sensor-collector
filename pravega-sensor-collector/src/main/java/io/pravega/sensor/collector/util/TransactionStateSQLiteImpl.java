@@ -192,4 +192,32 @@ public class TransactionStateSQLiteImpl  implements AutoCloseable, TransactionSt
                 autoRollback.commit();
             }
         }
+
+        /**
+         * Update below details
+         *      1. Add entry into FailedFiles table for given file name and offset
+         *      2. Delete all entry from PendingFiles for given file
+         *
+         * @param fileName               file name of processed file
+         * @param beginOffset            begin offset from where file read starts
+         *
+         */
+        @Override
+        public void addFailedFileRecord(String fileName, long beginOffset) throws SQLException {
+            try (final PreparedStatement insertFailedFileStatement = connection.prepareStatement(
+                         "insert or ignore into FailedFiles (fileName, offset) values (?, ?)");
+                 final PreparedStatement deletePendingFileStatement = connection.prepareStatement(
+                         "delete from PendingFiles where fileName = ? and offset <= ?");
+                 final AutoRollback autoRollback = new AutoRollback(connection)) {
+                // Add failed file.
+                insertFailedFileStatement.setString(1, fileName);
+                insertFailedFileStatement.setLong(2, beginOffset);
+                insertFailedFileStatement.execute();
+                // Remove from pending file.
+                deletePendingFileStatement.setString(1, fileName);
+                deletePendingFileStatement.setLong(2, beginOffset);
+                deletePendingFileStatement.execute();
+                autoRollback.commit();
+            }
+        }
 }

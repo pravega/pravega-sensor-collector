@@ -122,7 +122,7 @@ public abstract class FileProcessor {
      */
     protected List<FileNameWithOffset> getDirectoryListing() throws IOException {
         log.debug("getDirectoryListing: fileSpec={}", config.fileSpec);
-        final List<FileNameWithOffset> directoryListing = FileUtils.getDirectoryListing(config.fileSpec, config.fileExtension);
+        final List<FileNameWithOffset> directoryListing = FileUtils.getDirectoryListing(config.fileSpec, config.fileExtension, state);
         log.debug("getDirectoryListing: directoryListing={}", directoryListing);
         return directoryListing;
     }
