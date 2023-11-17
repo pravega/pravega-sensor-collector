@@ -5,14 +5,16 @@ import io.pravega.sensor.collector.file.parquet.ParquetFileProcessor;
 import io.pravega.sensor.collector.file.rawfile.RawFileProcessor;
 import io.pravega.sensor.collector.util.EventWriter;
 import io.pravega.sensor.collector.util.TransactionCoordinator;
+import io.pravega.sensor.collector.util.TransactionStateDB;
 import io.pravega.sensor.collector.util.TransactionStateSQLiteImpl;
 
 /*
+ * The FileProcessorFactory class is responsible for creating instances of file processors based on the type of the input file.
  *
  */
 public class FileProcessorFactory {
 
-    public static FileProcessor createFileSequenceProcessor(final FileConfig config, TransactionStateSQLiteImpl state,
+    public static FileProcessor createFileSequenceProcessor(final FileConfig config, TransactionStateDB state,
                                                                     EventWriter<byte[]> writer,
                                                                     TransactionCoordinator transactionCoordinator,
                                                                     String writerId){
@@ -30,18 +32,8 @@ public class FileProcessorFactory {
                     return new RawFileProcessor(config, state, writer, transactionCoordinator, writerId);
 
                 default :
-                    throw new RuntimeException("Unsupported className "+ "test");
+                    throw new RuntimeException("Unsupported className: "+ className);
             }
-        /*try{
-            // Class<?> clazz = Class.forName(config.fileType);
-            //className = clazz.getSimpleName();
-            // System.out.println(" className  is "+className);
-
-        }catch (ClassNotFoundException ex){
-            throw new RuntimeException(ex);
-        }*/
-
-
 
     }
 }
