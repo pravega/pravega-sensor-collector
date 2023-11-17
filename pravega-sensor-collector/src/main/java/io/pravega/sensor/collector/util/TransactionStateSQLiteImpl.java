@@ -220,4 +220,24 @@ public class TransactionStateSQLiteImpl  implements AutoCloseable, TransactionSt
                 autoRollback.commit();
             }
         }
+        
+        /**
+         * Get a list of files from FailedFiles table
+         *
+         * @return list of file name and end offset (file size)
+         */
+        @Override
+        public List<FileNameWithOffset> getFailedFileRecords() throws SQLException {
+            try (final Statement statement = connection.createStatement();
+                final ResultSet rs = statement.executeQuery("select fileName, offset from FailedFiles")) {
+                    final List<FileNameWithOffset> files = new ArrayList<>();
+                    while (rs.next()) {
+                        final FileNameWithOffset fileNameWithOffset = new FileNameWithOffset(rs.getString("fileName"), rs.getLong("offset"));
+                        files.add(fileNameWithOffset);
+                    }
+                    return files;
+                } finally {
+                    connection.commit();
+                }
+        }
 }

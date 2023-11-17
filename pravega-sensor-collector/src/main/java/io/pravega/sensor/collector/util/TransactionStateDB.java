@@ -84,5 +84,12 @@ public interface TransactionStateDB {
      */
     public void addFailedFileRecord(String fileName, long beginOffset) throws SQLException;
 
+    /**
+     * Get a list of files from FailedFiles table
+     *
+     * @return list of file name and end offset (file size)
+     */
+    public List<FileNameWithOffset> getFailedFileRecords() throws SQLException;
+
 
 }

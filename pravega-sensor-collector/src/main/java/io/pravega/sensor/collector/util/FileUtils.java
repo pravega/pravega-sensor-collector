@@ -48,9 +48,12 @@ public class FileUtils {
                 if(Files.isDirectory(path))         //traverse subdirectories
                     getDirectoryFiles(path, fileExtension, directoryListing, state);
                 else {
-                    FileNameWithOffset fileEntry = new FileNameWithOffset(path.toAbsolutePath().toString(), path.toFile().length());
-                    if(isValidFile(fileEntry, fileExtension, state))
-                        directoryListing.add(fileEntry);        
+                    FileNameWithOffset fileEntry = new FileNameWithOffset(path.toAbsolutePath().toString(), path.toFile().length());                    
+                    //Check if file not in FailedFiles & not in CompletedFiles
+                    if(!state.getCompletedFileRecords().contains(fileEntry) && !state.getFailedFileRecords().contains(fileEntry) ){
+                        if(isValidFile(fileEntry, fileExtension, state))
+                            directoryListing.add(fileEntry);       
+                    }
                 }
             }
         } catch(Exception ex){
