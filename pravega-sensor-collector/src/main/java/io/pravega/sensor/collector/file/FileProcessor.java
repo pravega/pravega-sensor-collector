@@ -157,7 +157,6 @@ public abstract class FileProcessor {
         /* Check if transactions can be aborted.
          * Will fail with {@link TxnFailedException} if the transaction has already been committed or aborted.
          */
-        System.out.println("processFile: Transaction status {} "+writer.getTransactionStatus());
         log.debug("processFile: Transaction status {} ", writer.getTransactionStatus());
         if(writer.getTransactionStatus() == Transaction.Status.OPEN){
             writer.abort();
@@ -184,7 +183,6 @@ public abstract class FileProcessor {
             final Optional<UUID> txnId = writer.flush();
             final long nextSequenceNumber = result.getLeft();
             final long endOffset = result.getRight();
-            System.out.println("processFile: Adding completed file: {}"+  fileNameWithBeginOffset.fileName +" "+ txnId);
             log.debug("processFile: Adding completed file: {}",  fileNameWithBeginOffset.fileName);
             state.addCompletedFileRecord(fileNameWithBeginOffset.fileName, fileNameWithBeginOffset.offset, endOffset, nextSequenceNumber, txnId);
             // injectCommitFailure();
