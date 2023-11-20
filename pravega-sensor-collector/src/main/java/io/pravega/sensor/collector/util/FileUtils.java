@@ -1,11 +1,14 @@
 package io.pravega.sensor.collector.util;
 
 import java.io.IOException;
+import java.nio.channels.FileChannel;
+import java.nio.channels.FileLock;
 import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.sql.SQLException;
+import java.nio.file.StandardCopyOption;
+import java.nio.file.StandardOpenOption;
 import java.util.List;
 import java.util.ArrayList;
 
@@ -25,7 +28,7 @@ public class FileUtils {
      *  3. check for empty file, log the message and continue with valid files
      *
      */
-    static public List<FileNameWithOffset> getDirectoryListing(String fileSpec, String fileExtension, TransactionStateSQLiteImpl state) throws IOException {
+    static public List<FileNameWithOffset> getDirectoryListing(String fileSpec, String fileExtension, TransactionStateSQLiteImpl state, String databaseFileName) throws IOException {
         String[] directories= fileSpec.split(separator);
         List<FileNameWithOffset> directoryListing = new ArrayList<>();
         for (String directory : directories) {
@@ -34,7 +37,9 @@ public class FileUtils {
                 log.error("getDirectoryListing: Directory does not exist or spec is not valid : {}", pathSpec.toAbsolutePath());
                 throw new IOException("Directory does not exist or spec is not valid");
             }
-            getDirectoryFiles(pathSpec, fileExtension, directoryListing, state);        
+            //Failed files will be moved to a separate folder next to the database file
+            String failedFilesDirectory = databaseFileName.substring(0, databaseFileName.lastIndexOf('/'));
+            getDirectoryFiles(pathSpec, fileExtension, directoryListing, state, failedFilesDirectory);        
         }
         return directoryListing;
     }
@@ -42,18 +47,15 @@ public class FileUtils {
     /**
      * @return get all files in directory(including subdirectories) and their respective file size in bytes
      */
-    static protected void getDirectoryFiles(Path pathSpec, String fileExtension, List<FileNameWithOffset> directoryListing, TransactionStateSQLiteImpl state) throws IOException{        
+    static protected void getDirectoryFiles(Path pathSpec, String fileExtension, List<FileNameWithOffset> directoryListing, TransactionStateSQLiteImpl state, String failedFilesDirectory) throws IOException{        
         try(DirectoryStream<Path> dirStream=Files.newDirectoryStream(pathSpec)){
             for(Path path: dirStream){
                 if(Files.isDirectory(path))         //traverse subdirectories
-                    getDirectoryFiles(path, fileExtension, directoryListing, state);
+                    getDirectoryFiles(path, fileExtension, directoryListing, state, failedFilesDirectory);
                 else {
                     FileNameWithOffset fileEntry = new FileNameWithOffset(path.toAbsolutePath().toString(), path.toFile().length());                    
-                    //Check if file not in FailedFiles & not in CompletedFiles
-                    if(!state.getCompletedFileRecords().contains(fileEntry) && !state.getFailedFileRecords().contains(fileEntry) ){
-                        if(isValidFile(fileEntry, fileExtension, state))
-                            directoryListing.add(fileEntry);       
-                    }
+                    if(isValidFile(fileEntry, fileExtension, state, failedFilesDirectory))
+                        directoryListing.add(fileEntry);                    
                 }
             }
         } catch(Exception ex){
@@ -73,7 +75,7 @@ public class FileUtils {
         1. Is File empty
         2. If extension is null or extension is valid ingest all file
      */
-    public static boolean isValidFile(FileNameWithOffset fileEntry, String fileExtension, TransactionStateSQLiteImpl state){
+    public static boolean isValidFile(FileNameWithOffset fileEntry, String fileExtension, TransactionStateSQLiteImpl state, String failedFilesDirectory) throws Exception{
 
         if(fileEntry.offset<=0){
             log.warn("isValidFile: Empty file {} can not be processed",fileEntry.fileName);
@@ -84,12 +86,36 @@ public class FileUtils {
         else
             log.warn("isValidFile: File format {} is not supported ", fileEntry.fileName);
         
-        try {
-            state.addFailedFileRecord(fileEntry.fileName, fileEntry.offset);
-        } catch (SQLException e) {
-            log.error("Error adding failed file record for file {}: {}", fileEntry.fileName, e.getMessage());
-        }
+        //move failed file to different folder
+        moveFailedFile(fileEntry, state, failedFilesDirectory);
+        
         return false;
     }
-    
+
+    /*
+    Move failed files to different directory
+     */
+    static void moveFailedFile(FileNameWithOffset fileEntry, TransactionStateSQLiteImpl state, String failedFilesDirectory) throws IOException {
+        Path targetPath = Paths.get(failedFilesDirectory).resolve("Failed_Files");
+        Files.createDirectories(targetPath);
+        //Obtain a lock on file before moving
+        try(FileChannel channel = FileChannel.open(Paths.get(fileEntry.fileName), StandardOpenOption.WRITE)) {
+            try(FileLock lock = channel.tryLock()) {
+                if(lock!=null){
+                    Path failedFile = targetPath.resolve(Paths.get(fileEntry.fileName).getFileName());
+                    Files.move(Paths.get(fileEntry.fileName), failedFile, StandardCopyOption.REPLACE_EXISTING);
+                    log.info("moveFailedFiles: Moved file to {}", failedFile);
+                    lock.release();
+                }
+                else{
+                    log.warn("Unable to obtain lock on file {} for moving. File is locked by another process.", fileEntry.fileName);
+                    throw new Exception();
+                }
+            }                
+        } catch (Exception e) {
+            log.warn("Unable to move failed file {}", e.getMessage());
+            log.warn("Failed file will be moved on the next iteration.");
+            // We can continue on this error. Moving will be retried on the next iteration.
+        }
+    }    
 }
