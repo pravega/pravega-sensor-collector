@@ -7,19 +7,19 @@
  *
  *     http://www.apache.org/licenses/LICENSE-2.0
  */
-package io.pravega.sensor.collector.parquet;
+package io.pravega.sensor.collector.file;
 
-/**
- * Config passed to Pravega Sensor Collector
+/*
+ * Configuration file.
  */
-public class ParquetFileConfig {
+public class FileConfig {
     public final String stateDatabaseFileName;
     public final String fileSpec;
     public final String fileExtension;
     public final String routingKey;
     public final String streamName;
     public final String eventTemplateStr;
-
+    public final String fileType;
     /**
      * Also known as samplesPerEvent.
      */
@@ -29,7 +29,7 @@ public class ParquetFileConfig {
     public final boolean exactlyOnce;
     public final double transactionTimeoutMinutes;
 
-    public ParquetFileConfig(String stateDatabaseFileName, String fileSpec, String fileExtension, String routingKey, String streamName, String eventTemplateStr, int maxRecordsPerEvent, boolean enableDeleteCompletedFiles, boolean exactlyOnce, double transactionTimeoutMinutes) {
+    public FileConfig(String stateDatabaseFileName, String fileSpec, String fileExtension, String routingKey, String streamName, String eventTemplateStr, int maxRecordsPerEvent, boolean enableDeleteCompletedFiles, boolean exactlyOnce, double transactionTimeoutMinutes, String fileType) {
         this.stateDatabaseFileName = stateDatabaseFileName;
         this.fileSpec = fileSpec;
         this.fileExtension = fileExtension;
@@ -40,14 +40,16 @@ public class ParquetFileConfig {
         this.enableDeleteCompletedFiles = enableDeleteCompletedFiles;
         this.exactlyOnce = exactlyOnce;
         this.transactionTimeoutMinutes = transactionTimeoutMinutes;
+        this.fileType = fileType;
     }
 
     @Override
     public String toString() {
-        return "ParquetFileConfig{" +
+        return "FileConfig{" +
                 "stateDatabaseFileName='" + stateDatabaseFileName + '\'' +
                 ", fileSpec='" + fileSpec + '\'' +
                 ", fileExtension='" + fileExtension + '\'' +
+                ", fileType='" + fileType + '\'' +
                 ", routingKey='" + routingKey + '\'' +
                 ", streamName='" + streamName + '\'' +
                 ", eventTemplateStr='" + eventTemplateStr + '\'' +
@@ -57,6 +59,4 @@ public class ParquetFileConfig {
                 ", transactionTimeoutMinutes=" + transactionTimeoutMinutes +
                 '}';
     }
-
-
 }

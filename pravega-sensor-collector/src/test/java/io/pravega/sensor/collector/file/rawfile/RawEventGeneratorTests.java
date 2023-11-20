@@ -1,6 +1,7 @@
-package io.pravega.sensor.collector.rawfile;
+package io.pravega.sensor.collector.file.rawfile;
 
 import com.google.common.io.CountingInputStream;
+import io.pravega.sensor.collector.file.EventGenerator;
 import org.apache.commons.lang3.tuple.Pair;
 import org.junit.Assert;
 import org.junit.Test;
@@ -15,12 +16,12 @@ import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 
-public class EventGeneratorTests {
-    private static final Logger log = LoggerFactory.getLogger(EventGeneratorTests.class);
+public class RawEventGeneratorTests {
+    private static final Logger log = LoggerFactory.getLogger(RawEventGeneratorTests.class);
 
     @Test
     public void TestFile() throws IOException {
-        final EventGenerator eventGenerator = EventGenerator.create("routingKey1");
+        final EventGenerator eventGenerator = RawEventGenerator.create("routingKey1");
         final String rawfileStr =
                 "\"Time\",\"X\",\"Y\",\"Z\",\"IN_PROGRESS\"\n" +
                 "\"2020-07-15 23:59:50.352\",\"0.305966\",\"0.0\",\"9.331963\",\"0\"\n" +
@@ -36,7 +37,7 @@ public class EventGeneratorTests {
 
     @Test
     public void TestEmptyFile() throws IOException {
-        final EventGenerator eventGenerator = EventGenerator.create("routingKey1");
+        final EventGenerator eventGenerator = RawEventGenerator.create("routingKey1");
         final String rawfileStr = "";
         final CountingInputStream inputStream = new CountingInputStream(new ByteArrayInputStream(rawfileStr.getBytes(StandardCharsets.UTF_8)));
         final List<PravegaWriterEvent> events = new ArrayList<>();

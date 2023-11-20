@@ -1,6 +1,7 @@
-package io.pravega.sensor.collector.parquet;
+package io.pravega.sensor.collector.file.parquet;
 
 import com.google.common.io.CountingInputStream;
+import io.pravega.sensor.collector.file.EventGenerator;
 import org.apache.commons.lang3.tuple.Pair;
 import org.junit.Assert;
 import org.junit.Test;
@@ -17,12 +18,12 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
-public class EventGeneratorTests {
-    private static final Logger log = LoggerFactory.getLogger(EventGeneratorTests.class);
+public class ParquetEventGeneratorTests {
+    private static final Logger log = LoggerFactory.getLogger(ParquetEventGeneratorTests.class);
     
     @Test
     public void TestFile() throws IOException {
-        final EventGenerator eventGenerator = EventGenerator.create("routingKey1",100);
+        final EventGenerator eventGenerator = ParquetEventGenerator.create("routingKey1",100);
         final List<FileNameWithOffset> files = FileUtils.getDirectoryListing("../parquet-file-sample-data","parquet");
         File parquetData= new File(files.get(0).fileName);
 

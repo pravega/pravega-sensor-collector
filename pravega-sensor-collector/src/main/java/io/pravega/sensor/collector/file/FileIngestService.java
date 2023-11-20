@@ -23,10 +23,10 @@ import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
 
 /**
- * Ingestion service for csv files.  
+ * Ingestion service with common implementation logic for all files.
  */
-public class LogFileIngestService extends DeviceDriver {
-    private static final Logger log = LoggerFactory.getLogger(LogFileIngestService.class);
+public abstract class FileIngestService extends DeviceDriver {
+    private static final Logger log = LoggerFactory.getLogger(FileIngestService.class);
 
     private static final String FILE_SPEC_KEY = "FILE_SPEC";
     private static final String FILE_EXT= "FILE_EXTENSION";
@@ -42,15 +42,15 @@ public class LogFileIngestService extends DeviceDriver {
     private static final String EXACTLY_ONCE_KEY = "EXACTLY_ONCE";
     private static final String TRANSACTION_TIMEOUT_MINUTES_KEY = "TRANSACTION_TIMEOUT_MINUTES";
 
-    private final LogFileSequenceProcessor processor;
+    private final FileProcessor processor;
     private final ScheduledExecutorService executor;
 
     private ScheduledFuture<?> watchFiletask;
     private ScheduledFuture<?> processFileTask;
 
-    public LogFileIngestService(DeviceDriverConfig config) {
+    public FileIngestService(DeviceDriverConfig config) {
         super(config);
-        final LogFileSequenceConfig logFileSequenceConfig = new LogFileSequenceConfig(
+        final FileConfig fileSequenceConfig = new FileConfig(
                 getDatabaseFileName(),
                 getFileSpec(),
                 getFileExtension(),
@@ -60,15 +60,16 @@ public class LogFileIngestService extends DeviceDriver {
                 getSamplesPerEvent(),
                 getDeleteCompletedFiles(),
                 getExactlyOnce(),
-                getTransactionTimeoutMinutes());
-        log.info("Log File Ingest Config: {}", logFileSequenceConfig);
+                getTransactionTimeoutMinutes(),
+                config.getClassName());
+        log.info("File Ingest Config: {}", fileSequenceConfig);
         final String scopeName = getScopeName();
         log.info("Scope: {}", scopeName);
         createStream(scopeName, getStreamName());
         final EventStreamClientFactory clientFactory = getEventStreamClientFactory(scopeName);
-        processor = LogFileSequenceProcessor.create(logFileSequenceConfig, clientFactory);
+        processor =FileProcessor.create(fileSequenceConfig, clientFactory);
         ThreadFactory namedThreadFactory = new ThreadFactoryBuilder().setNameFormat(
-                LogFileIngestService.class.getSimpleName() + "-" + config.getInstanceName() + "-%d").build();
+                FileIngestService.class.getSimpleName() + "-" + config.getInstanceName() + "-%d").build();
         executor = Executors.newScheduledThreadPool(1, namedThreadFactory);
     }
 
@@ -122,31 +123,31 @@ public class LogFileIngestService extends DeviceDriver {
         return Double.parseDouble(getProperty(TRANSACTION_TIMEOUT_MINUTES_KEY, Double.toString(18.0 * 60.0)));
     }
 
-    protected void watchLogFiles() {
-        log.info("watchLogFiles: BEGIN");
+    protected void watchFiles() {
+        log.info("watchFiles: BEGIN");
         try {
-            processor.watchLogFiles();
+            processor.watchFiles();
         } catch (Exception e) {
-            log.error("watchLogFiles: watch file error", e);
+            log.error("watchFiles: watch file error", e);
             // Continue on any errors. We will retry on the next iteration.
         }
-        log.info("watchLogFiles: END");
+        log.info("watchFiles: END");
     }
-    protected void processLogFiles() {
-        log.trace("processLogFiles: BEGIN");
+    protected void processFiles() {
+        log.trace("processFiles: BEGIN");
         try {
-            processor.processLogFiles();
+            processor.processFiles();
         } catch (Exception e) {
-            log.error("processLogFiles: Process file error", e);
+            log.error("processFiles: Process file error", e);
             // Continue on any errors. We will retry on the next iteration.
         }
-        log.trace("processLogFiles: END");
+        log.trace("processFiles: END");
     }
 
     @Override
     protected void doStart() {
         watchFiletask = executor.scheduleAtFixedRate(
-                this::watchLogFiles,
+                this::watchFiles,
                 0,
                 getIntervalMs(),
                 TimeUnit.MILLISECONDS);
@@ -156,7 +157,7 @@ public class LogFileIngestService extends DeviceDriver {
         ie immediately after completion of first action.
          */
         processFileTask = executor.scheduleWithFixedDelay(
-                this::processLogFiles,
+                this::processFiles,
                 0,
                 1,
                 TimeUnit.MILLISECONDS);
