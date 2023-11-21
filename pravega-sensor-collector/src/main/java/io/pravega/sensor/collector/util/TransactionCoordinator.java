@@ -142,9 +142,9 @@ public class TransactionCoordinator {
         if (transactionsToCommit.isEmpty()) {
             log.info("performRecovery: No transactions to be recovered");
         } else {
-            log.warn("Transaction recovery needed on {} transactions", transactionsToCommit.size());
+            log.warn("performRecovery: Transaction recovery needed on {} transactions", transactionsToCommit.size());
             transactionsToCommit.forEach((txnId) -> {
-                log.info("Committing transaction {} from a previous process", txnId);
+                log.info("performRecovery: Committing transaction {} from a previous process", txnId);
                 try {
                     writer.commit(txnId);
                 } catch (TxnFailedException e) {
@@ -167,6 +167,7 @@ public class TransactionCoordinator {
                         throw e;
                     }
                 }
+                log.info("performRecovery: deleting committed transaction {} from TransactionsToCommit table",txnId);
                 deleteTransactionToCommit(Optional.of(txnId));
             });
             log.info("Transaction recovery completed");
