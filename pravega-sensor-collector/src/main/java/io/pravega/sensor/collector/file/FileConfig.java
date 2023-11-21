@@ -45,7 +45,7 @@ public class FileConfig {
 
     @Override
     public String toString() {
-        return "LogFileSequenceConfig{" +
+        return "FileConfig{" +
                 "stateDatabaseFileName='" + stateDatabaseFileName + '\'' +
                 ", fileSpec='" + fileSpec + '\'' +
                 ", fileExtension='" + fileExtension + '\'' +

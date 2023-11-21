@@ -12,19 +12,20 @@ package io.pravega.sensor.collector.file.csvfile;
 import io.pravega.sensor.collector.file.EventGenerator;
 import io.pravega.sensor.collector.file.FileConfig;
 import io.pravega.sensor.collector.file.FileProcessor;
-import io.pravega.sensor.collector.file.parquet.ParquetEventGenerator;
-import io.pravega.sensor.collector.util.*;
+import io.pravega.sensor.collector.util.TransactionStateDB;
+import io.pravega.sensor.collector.util.EventWriter;
+import io.pravega.sensor.collector.util.TransactionCoordinator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public class CsvFileSequenceProcessor extends FileProcessor {
     private static final Logger log = LoggerFactory.getLogger(CsvFileSequenceProcessor.class);
-    //private final EventGenerator eventGenerator;
     private final FileConfig config;
     private final String writerId;
 
 
-    public CsvFileSequenceProcessor(FileConfig config, TransactionStateSQLiteImpl state, EventWriter<byte[]> writer, TransactionCoordinator transactionCoordinator, String writerId) {
+
+    public CsvFileSequenceProcessor(FileConfig config, TransactionStateDB state, EventWriter<byte[]> writer, TransactionCoordinator transactionCoordinator, String writerId) {
         super(config, state, writer, transactionCoordinator);
         this.config =config;
         this.writerId = writerId;

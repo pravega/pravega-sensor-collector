@@ -38,12 +38,13 @@ public abstract class FileProcessor {
     private static final Logger log = LoggerFactory.getLogger(FileProcessor.class);
 
     private final FileConfig config;
-    private final TransactionStateSQLiteImpl state;
+    private final TransactionStateDB state;
     private final EventWriter<byte[]> writer;
     private final TransactionCoordinator transactionCoordinator;
     private final EventGenerator eventGenerator;
 
-    public FileProcessor(FileConfig config, TransactionStateSQLiteImpl state, EventWriter<byte[]> writer, TransactionCoordinator transactionCoordinator) {
+
+    public FileProcessor(FileConfig config, TransactionStateDB state, EventWriter<byte[]> writer, TransactionCoordinator transactionCoordinator) {
         this.config = config;
         this.state = state;
         this.writer = writer;
@@ -73,7 +74,8 @@ public abstract class FileProcessor {
         final TransactionCoordinator transactionCoordinator = new TransactionCoordinator(connection, writer);
         transactionCoordinator.performRecovery();
 
-        final TransactionStateSQLiteImpl state = new TransactionStateSQLiteImpl(connection, transactionCoordinator);
+
+        final TransactionStateDB state = new TransactionStateSQLiteImpl(connection, transactionCoordinator);
         return FileProcessorFactory.createFileSequenceProcessor(config, state, writer, transactionCoordinator,writerId);
 
     }
@@ -88,13 +90,13 @@ public abstract class FileProcessor {
         findAndRecordNewFiles();
     }
     public void processFiles() throws Exception {
-        log.info("processFiles: BEGIN");
+        log.debug("processFiles: BEGIN");
         if (config.enableDeleteCompletedFiles) {
             log.debug("processFiles: Deleting completed files");
             deleteCompletedFiles();
         }
         processNewFiles();
-        log.info("processFiles: END");
+        log.debug("processFiles: END");
     }
 
     public void processNewFiles() throws Exception {
@@ -122,7 +124,7 @@ public abstract class FileProcessor {
      */
     protected List<FileNameWithOffset> getDirectoryListing() throws IOException {
         log.debug("getDirectoryListing: fileSpec={}", config.fileSpec);
-        final List<FileNameWithOffset> directoryListing = FileUtils.getDirectoryListing(config.fileSpec, config.fileExtension, state, config.stateDatabaseFileName);
+        final List<FileNameWithOffset> directoryListing = FileUtils.getDirectoryListing(config.fileSpec, config.fileExtension);
         log.debug("getDirectoryListing: directoryListing={}", directoryListing);
         return directoryListing;
     }
@@ -169,14 +171,13 @@ public abstract class FileProcessor {
                     e -> {
                         log.trace("processFile: event={}", e);
                         try {
-                            writer.writeEvent(e.routingKey, e.bytes);
+                             writer.writeEvent(e.routingKey, e.bytes);
                             numofbytes.addAndGet(e.bytes.length);
                         } catch (TxnFailedException ex) {
                             log.error("processFile: Write event to transaction failed with exception {} while processing file: {}, event: {}", ex, fileNameWithBeginOffset.fileName, e);
-                            /*
-                            TODO while writing event if we get Transaction failed exception then should we abort the trasaction and process again?
-                            This will occur only if Transaction state is not open
-                             */
+
+                           /* TODO while writing event if we get Transaction failed exception then should we abort the trasaction and process again?
+                            This will occur only if Transaction state is not open*/
                             throw new RuntimeException(ex);
                         }
                     });
