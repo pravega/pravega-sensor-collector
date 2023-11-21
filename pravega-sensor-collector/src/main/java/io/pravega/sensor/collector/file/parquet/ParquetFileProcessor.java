@@ -25,7 +25,6 @@ public class ParquetFileProcessor extends FileProcessor {
     private final FileConfig config;
     private final String writerId;
 
-
     public ParquetFileProcessor(FileConfig config, TransactionStateDB state, EventWriter<byte[]> writer, TransactionCoordinator transactionCoordinator, String writerId) {
        super(config,state,writer,transactionCoordinator);
         this.config =config;

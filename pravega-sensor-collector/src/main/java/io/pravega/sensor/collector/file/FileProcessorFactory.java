@@ -13,6 +13,7 @@ import io.pravega.sensor.collector.util.TransactionStateSQLiteImpl;
  *
  */
 public class FileProcessorFactory {
+
     public static FileProcessor createFileSequenceProcessor(final FileConfig config, TransactionStateDB state,
                                                                     EventWriter<byte[]> writer,
                                                                     TransactionCoordinator transactionCoordinator,
@@ -33,5 +34,6 @@ public class FileProcessorFactory {
                 default :
                     throw new RuntimeException("Unsupported className: "+ className);
             }
+            
     }
 }

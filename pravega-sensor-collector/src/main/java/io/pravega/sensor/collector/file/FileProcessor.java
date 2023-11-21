@@ -43,7 +43,6 @@ public abstract class FileProcessor {
     private final TransactionCoordinator transactionCoordinator;
     private final EventGenerator eventGenerator;
 
-
     public FileProcessor(FileConfig config, TransactionStateDB state, EventWriter<byte[]> writer, TransactionCoordinator transactionCoordinator) {
         this.config = config;
         this.state = state;
@@ -73,7 +72,6 @@ public abstract class FileProcessor {
 
         final TransactionCoordinator transactionCoordinator = new TransactionCoordinator(connection, writer);
         transactionCoordinator.performRecovery();
-
 
         final TransactionStateDB state = new TransactionStateSQLiteImpl(connection, transactionCoordinator);
         return FileProcessorFactory.createFileSequenceProcessor(config, state, writer, transactionCoordinator,writerId);
@@ -124,7 +122,7 @@ public abstract class FileProcessor {
      */
     protected List<FileNameWithOffset> getDirectoryListing() throws IOException {
         log.debug("getDirectoryListing: fileSpec={}", config.fileSpec);
-        final List<FileNameWithOffset> directoryListing = FileUtils.getDirectoryListing(config.fileSpec, config.fileExtension);
+        final List<FileNameWithOffset> directoryListing = FileUtils.getDirectoryListing(config.fileSpec, config.fileExtension, config.stateDatabaseFileName);
         log.debug("getDirectoryListing: directoryListing={}", directoryListing);
         return directoryListing;
     }
@@ -178,6 +176,7 @@ public abstract class FileProcessor {
 
                            /* TODO while writing event if we get Transaction failed exception then should we abort the trasaction and process again?
                             This will occur only if Transaction state is not open*/
+                            
                             throw new RuntimeException(ex);
                         }
                     });

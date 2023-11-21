@@ -28,7 +28,7 @@ public class FileUtils {
      *  3. check for empty file, log the message and continue with valid files
      *
      */
-    static public List<FileNameWithOffset> getDirectoryListing(String fileSpec, String fileExtension, TransactionStateSQLiteImpl state, String databaseFileName) throws IOException {
+    static public List<FileNameWithOffset> getDirectoryListing(String fileSpec, String fileExtension, String databaseFileName) throws IOException {
         String[] directories= fileSpec.split(separator);
         List<FileNameWithOffset> directoryListing = new ArrayList<>();
         for (String directory : directories) {
@@ -39,7 +39,7 @@ public class FileUtils {
             }
             //Failed files will be moved to a separate folder next to the database file
             String failedFilesDirectory = databaseFileName.substring(0, databaseFileName.lastIndexOf('/'));
-            getDirectoryFiles(pathSpec, fileExtension, directoryListing, state, failedFilesDirectory);        
+            getDirectoryFiles(pathSpec, fileExtension, directoryListing, failedFilesDirectory);        
         }
         return directoryListing;
     }
@@ -47,14 +47,14 @@ public class FileUtils {
     /**
      * @return get all files in directory(including subdirectories) and their respective file size in bytes
      */
-    static protected void getDirectoryFiles(Path pathSpec, String fileExtension, List<FileNameWithOffset> directoryListing, TransactionStateSQLiteImpl state, String failedFilesDirectory) throws IOException{        
+    static protected void getDirectoryFiles(Path pathSpec, String fileExtension, List<FileNameWithOffset> directoryListing, String failedFilesDirectory) throws IOException{        
         try(DirectoryStream<Path> dirStream=Files.newDirectoryStream(pathSpec)){
             for(Path path: dirStream){
                 if(Files.isDirectory(path))         //traverse subdirectories
-                    getDirectoryFiles(path, fileExtension, directoryListing, state, failedFilesDirectory);
+                    getDirectoryFiles(path, fileExtension, directoryListing, failedFilesDirectory);
                 else {
                     FileNameWithOffset fileEntry = new FileNameWithOffset(path.toAbsolutePath().toString(), path.toFile().length());                    
-                    if(isValidFile(fileEntry, fileExtension, state, failedFilesDirectory))
+                    if(isValidFile(fileEntry, fileExtension, failedFilesDirectory))
                         directoryListing.add(fileEntry);                    
                 }
             }
@@ -75,7 +75,7 @@ public class FileUtils {
         1. Is File empty
         2. If extension is null or extension is valid ingest all file
      */
-    public static boolean isValidFile(FileNameWithOffset fileEntry, String fileExtension, TransactionStateSQLiteImpl state, String failedFilesDirectory) throws Exception{
+    public static boolean isValidFile(FileNameWithOffset fileEntry, String fileExtension, String failedFilesDirectory) throws Exception{
 
         if(fileEntry.offset<=0){
             log.warn("isValidFile: Empty file {} can not be processed",fileEntry.fileName);
@@ -87,7 +87,7 @@ public class FileUtils {
             log.warn("isValidFile: File format {} is not supported ", fileEntry.fileName);
         
         //move failed file to different folder
-        moveFailedFile(fileEntry, state, failedFilesDirectory);
+        moveFailedFile(fileEntry, failedFilesDirectory);
         
         return false;
     }
@@ -95,7 +95,7 @@ public class FileUtils {
     /*
     Move failed files to different directory
      */
-    static void moveFailedFile(FileNameWithOffset fileEntry, TransactionStateSQLiteImpl state, String failedFilesDirectory) throws IOException {
+    static void moveFailedFile(FileNameWithOffset fileEntry, String failedFilesDirectory) throws IOException {
         Path targetPath = Paths.get(failedFilesDirectory).resolve("Failed_Files");
         Files.createDirectories(targetPath);
         //Obtain a lock on file before moving

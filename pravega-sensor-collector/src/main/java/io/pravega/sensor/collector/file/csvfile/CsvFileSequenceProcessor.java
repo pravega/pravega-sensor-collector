@@ -24,7 +24,6 @@ public class CsvFileSequenceProcessor extends FileProcessor {
     private final String writerId;
 
 
-
     public CsvFileSequenceProcessor(FileConfig config, TransactionStateDB state, EventWriter<byte[]> writer, TransactionCoordinator transactionCoordinator, String writerId) {
         super(config, state, writer, transactionCoordinator);
         this.config =config;

@@ -188,5 +188,4 @@ public class TransactionStateSQLiteImpl  implements AutoCloseable, TransactionSt
                 autoRollback.commit();
             }
         }
-
 }
