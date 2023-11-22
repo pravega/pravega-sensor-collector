@@ -122,7 +122,9 @@ public abstract class FileProcessor {
      */
     protected List<FileNameWithOffset> getDirectoryListing() throws IOException {
         log.debug("getDirectoryListing: fileSpec={}", config.fileSpec);
-        final List<FileNameWithOffset> directoryListing = FileUtils.getDirectoryListing(config.fileSpec, config.fileExtension, config.stateDatabaseFileName);
+        //Invalid files will be moved to a separate folder Failed_Files next to the database file
+        String failedFilesDirectory = config.stateDatabaseFileName.substring(0, config.stateDatabaseFileName.lastIndexOf('/'));
+        final List<FileNameWithOffset> directoryListing = FileUtils.getDirectoryListing(config.fileSpec, config.fileExtension, failedFilesDirectory);
         log.debug("getDirectoryListing: directoryListing={}", directoryListing);
         return directoryListing;
     }
@@ -176,7 +178,7 @@ public abstract class FileProcessor {
 
                            /* TODO while writing event if we get Transaction failed exception then should we abort the trasaction and process again?
                             This will occur only if Transaction state is not open*/
-                            
+
                             throw new RuntimeException(ex);
                         }
                     });

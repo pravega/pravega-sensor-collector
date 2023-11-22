@@ -28,7 +28,7 @@ public class FileUtils {
      *  3. check for empty file, log the message and continue with valid files
      *
      */
-    static public List<FileNameWithOffset> getDirectoryListing(String fileSpec, String fileExtension, String databaseFileName) throws IOException {
+    static public List<FileNameWithOffset> getDirectoryListing(String fileSpec, String fileExtension, String failedFilesDirectory) throws IOException {
         String[] directories= fileSpec.split(separator);
         List<FileNameWithOffset> directoryListing = new ArrayList<>();
         for (String directory : directories) {
@@ -37,8 +37,6 @@ public class FileUtils {
                 log.error("getDirectoryListing: Directory does not exist or spec is not valid : {}", pathSpec.toAbsolutePath());
                 throw new IOException("Directory does not exist or spec is not valid");
             }
-            //Failed files will be moved to a separate folder next to the database file
-            String failedFilesDirectory = databaseFileName.substring(0, databaseFileName.lastIndexOf('/'));
             getDirectoryFiles(pathSpec, fileExtension, directoryListing, failedFilesDirectory);        
         }
         return directoryListing;
