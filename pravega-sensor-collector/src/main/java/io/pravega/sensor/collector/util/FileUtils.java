@@ -55,7 +55,9 @@ public class FileUtils {
                 else {
                     FileNameWithOffset fileEntry = new FileNameWithOffset(path.toAbsolutePath().toString(), path.toFile().length());                    
                     if(isValidFile(fileEntry, fileExtension, failedFilesDirectory))
-                        directoryListing.add(fileEntry);                    
+                        directoryListing.add(fileEntry);    
+                    else                            //move failed file to different folder
+                        moveFailedFile(fileEntry, failedFilesDirectory);                
                 }
             }
         } catch(Exception ex){
@@ -85,9 +87,6 @@ public class FileUtils {
             return true;
         else
             log.warn("isValidFile: File format {} is not supported ", fileEntry.fileName);
-        
-        //move failed file to different folder
-        moveFailedFile(fileEntry, failedFilesDirectory);
         
         return false;
     }
