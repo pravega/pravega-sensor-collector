@@ -54,7 +54,7 @@ public class FileUtils {
                     getDirectoryFiles(path, fileExtension, directoryListing, failedFilesDirectory);
                 else {
                     FileNameWithOffset fileEntry = new FileNameWithOffset(path.toAbsolutePath().toString(), path.toFile().length());                    
-                    if(isValidFile(fileEntry, fileExtension, failedFilesDirectory))
+                    if(isValidFile(fileEntry, fileExtension))
                         directoryListing.add(fileEntry);    
                     else                            //move failed file to different folder
                         moveFailedFile(fileEntry, failedFilesDirectory);                
@@ -77,7 +77,7 @@ public class FileUtils {
         1. Is File empty
         2. If extension is null or extension is valid ingest all file
      */
-    public static boolean isValidFile(FileNameWithOffset fileEntry, String fileExtension, String failedFilesDirectory) throws Exception{
+    public static boolean isValidFile(FileNameWithOffset fileEntry, String fileExtension) throws Exception{
 
         if(fileEntry.offset<=0){
             log.warn("isValidFile: Empty file {} can not be processed",fileEntry.fileName);
@@ -87,7 +87,7 @@ public class FileUtils {
             return true;
         else
             log.warn("isValidFile: File format {} is not supported ", fileEntry.fileName);
-        
+
         return false;
     }
 
