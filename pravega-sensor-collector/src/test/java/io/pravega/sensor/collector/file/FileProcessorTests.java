@@ -78,7 +78,7 @@ public class FileProcessorTests {
     @Test
     public void getDirectoryListingTest() throws IOException {
         final List<FileNameWithOffset> actual = FileUtils.getDirectoryListing(
-                "../log-file-sample-data/","csv");
+                "../log-file-sample-data/","csv","");
         log.info("actual={}", actual);
     }
 

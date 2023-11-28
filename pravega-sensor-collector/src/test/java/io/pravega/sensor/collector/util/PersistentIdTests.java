@@ -25,7 +25,7 @@ public class PersistentIdTests {
 
     @Test
     public void persistentIdTest() throws SQLException {
-        final String fileName = "/tmp/persistent-id-test-" + UUID.randomUUID() + ".db";
+        final String fileName = "persistent-id-test-" + UUID.randomUUID() + ".db";
         log.info("fileName={}", fileName);
 
         try {
