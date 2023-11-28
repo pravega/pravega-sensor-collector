@@ -44,6 +44,7 @@ public class FileProcessorTests {
 
     @Mock
     protected TransactionalEventWriter transactionalEventWriter;
+
     @Mock
     protected TransactionCoordinator transactionCoordinator;
     @Mock
@@ -95,7 +96,6 @@ public class FileProcessorTests {
        FileProcessor fileProcessor = FileProcessor.create(config, clientFactory);
         fileProcessor.processFiles();
     }
-
 
     /*
      * Process the single file for Raw file processor.
