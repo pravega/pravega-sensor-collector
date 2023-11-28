@@ -148,3 +148,4 @@ checkstyle {
         checkstyle "com.puppycrawl.tools:checkstyle:${checkstyleVersion}"
     }
 }
+
