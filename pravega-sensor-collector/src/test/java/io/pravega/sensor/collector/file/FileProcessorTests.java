@@ -35,17 +35,17 @@ import static org.mockito.Mockito.*;
 public class FileProcessorTests {
     private static final Logger log = LoggerFactory.getLogger(FileProcessorTests.class);
 
-    private FileConfig config;
+    protected FileConfig config;
     @Mock
-    private TransactionStateSQLiteImpl state;
+    protected TransactionStateSQLiteImpl state;
 
     @Mock
     private EventWriter writer;
 
     @Mock
-    TransactionalEventWriter transactionalEventWriter;
+    protected TransactionalEventWriter transactionalEventWriter;
     @Mock
-    private TransactionCoordinator transactionCoordinator;
+    protected TransactionCoordinator transactionCoordinator;
     @Mock
     private EventGenerator eventGenerator;
     @Mock
