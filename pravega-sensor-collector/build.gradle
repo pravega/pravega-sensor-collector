@@ -7,8 +7,22 @@
  *
  *     http://www.apache.org/licenses/LICENSE-2.0
  */
+
+buildscript {
+    repositories {
+        maven {
+            url = uri("https://plugins.gradle.org/m2/")
+        }
+    }
+    dependencies {
+        classpath("com.github.spotbugs.snom:spotbugs-gradle-plugin:${spotbugsPluginVersion}")
+    }
+}
+
 apply plugin: "java"
-apply plugin: "maven"
+apply plugin: "maven-publish"
+apply plugin: "com.github.spotbugs"
+apply plugin: 'checkstyle'
 apply plugin: "application"
 
 group = "io.pravega"
@@ -23,30 +37,30 @@ test {
 }
 
 dependencies {
-    compile "org.slf4j:slf4j-api:${slf4jApiVersion}"
-    compile "ch.qos.logback:logback-classic:${qosLogbackVersion}"
-    compile "ch.qos.logback:logback-core:${qosLogbackVersion}"
+    implementation "org.slf4j:slf4j-api:${slf4jApiVersion}"
+    implementation "ch.qos.logback:logback-classic:${qosLogbackVersion}"
+    implementation "ch.qos.logback:logback-core:${qosLogbackVersion}"
 
-    compile "io.pravega:pravega-client:${pravegaVersion}",
+    implementation "io.pravega:pravega-client:${pravegaVersion}",
             "io.pravega:pravega-common:${pravegaVersion}",
             "commons-cli:commons-cli:${commonsCLIVersion}"
 
     if (includePravegaCredentials.toBoolean()) {
-        compile "io.pravega:pravega-keycloak-client:${pravegaCredentialsVersion}"
+        implementation "io.pravega:pravega-keycloak-client:${pravegaCredentialsVersion}"
     }
 
-    compile "com.fasterxml.jackson.core:jackson-databind:${jacksonVersion}"
-    compile "org.xerial:sqlite-jdbc:${sqliteVersion}"
-    compile "org.apache.commons:commons-math3:${commonsMath3Version}"
-    compile "org.apache.commons:commons-csv:${commonsCSVVersion}"
-    compile "commons-codec:commons-codec:${commonsCodecVersion}"
-    compile "com.github.vladimir-bukhtoyarov:bucket4j-core:${bucket4jVersion}"
-    compile "org.eclipse.milo:sdk-client:${miloVersion}"
-    compile "com.google.code.gson:gson:${gsonVersion}"
+    implementation "com.fasterxml.jackson.core:jackson-databind:${jacksonVersion}"
+    implementation "org.xerial:sqlite-jdbc:${sqliteVersion}"
+    implementation "org.apache.commons:commons-math3:${commonsMath3Version}"
+    implementation "org.apache.commons:commons-csv:${commonsCSVVersion}"
+    implementation "commons-codec:commons-codec:${commonsCodecVersion}"
+    implementation "com.github.vladimir-bukhtoyarov:bucket4j-core:${bucket4jVersion}"
+    implementation "org.eclipse.milo:sdk-client:${miloVersion}"
+    implementation "com.google.code.gson:gson:${gsonVersion}"
 
-    compile "org.apache.parquet:parquet-avro:${parquetVersion}"
-    compile "org.apache.parquet:parquet-hadoop:${parquetVersion}"
-    compile "org.apache.hadoop:hadoop-client:${hadoopVersion}"
+    implementation "org.apache.parquet:parquet-avro:${parquetVersion}"
+    implementation "org.apache.parquet:parquet-hadoop:${parquetVersion}"
+    implementation "org.apache.hadoop:hadoop-client:${hadoopVersion}"
 
     testImplementation "org.junit.jupiter:junit-jupiter-api:${junitVersion}"
     testImplementation "org.junit.vintage:junit-vintage-engine:${junitVersion}"
@@ -55,20 +69,21 @@ dependencies {
 
     testImplementation "org.mockito:mockito-core:${mockitoVersion}"
 
-    testCompile "org.glassfish.jersey.containers:jersey-container-grizzly2-http:${grizzlyVersion}"
-    testCompile "jakarta.xml.bind:jakarta.xml.bind-api:${jakartaBindVersion}"
-    testCompile "org.glassfish.jaxb:jaxb-runtime:${jaxbVersion}"
-    testCompile "javax.servlet:javax.servlet-api:${javaxServletApiVersion}"
+    testImplementation "org.glassfish.jersey.containers:jersey-container-grizzly2-http:${grizzlyVersion}"
+    testImplementation "jakarta.xml.bind:jakarta.xml.bind-api:${jakartaBindVersion}"
+    testImplementation "org.glassfish.jaxb:jaxb-runtime:${jaxbVersion}"
+    testImplementation "javax.servlet:javax.servlet-api:${javaxServletApiVersion}"
 
+    spotbugsPlugins 'com.h3xstream.findsecbugs:findsecbugs-plugin:1.12.0'
 }
 
-tasks.withType(JavaCompile) {
+tasks.withType(JavaCompile).configureEach {
     options.encoding = "UTF-8"
 }
 
 distributions {
     main {
-        baseName = archivesBaseName
+        distributionBaseName = archivesBaseName
     }
 }
 
@@ -86,9 +101,51 @@ startScripts {
     }
 }
 
-task runLeapAPIMockServer(type: JavaExec) {
+tasks.register('runLeapAPIMockServer', JavaExec) {
     group = "Execution"
     description = "Run the mock Leap server"
     classpath = sourceSets.test.runtimeClasspath
     main = "io.pravega.sensor.collector.leap.LeapAPIMock"
 }
+
+tasks.withType(com.github.spotbugs.snom.SpotBugsTask) {
+    reports {
+        xml {
+            required.set(false)
+        }
+        html {
+            required.set(true)
+        }
+    }
+}
+
+spotbugs {
+    toolVersion = spotbugsVersion
+    ignoreFailures = true
+    showProgress = true
+    effort = 'max'
+    reportLevel = 'default'
+    includeFilter = file("$rootDir/config/spotbugs-include.xml")
+    excludeFilter = file("$rootDir/config/spotbugs-exclude.xml")
+    //baselineFile = file("baseline.xml")
+}
+checkstyle {
+    toolVersion = checkstyleVersion
+    configFile = file("$rootDir/config/checkstyle.xml")
+    ignoreFailures = true
+    configProperties = [importControlFile: "$rootDir/config/import-control.xml",
+                        suppressionsFile: "$rootDir/config/suppressions.xml"]
+    checkstyleMain {
+        source = sourceSets.main.allSource
+    }
+    configurations {
+        checkstyle
+    }
+
+    dependencies{
+        assert project.hasProperty("checkstyleVersion")
+
+        checkstyle "com.puppycrawl.tools:checkstyle:${checkstyleVersion}"
+    }
+}
+
