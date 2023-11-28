@@ -146,7 +146,6 @@ public abstract class FileIngestService extends DeviceDriver {
 
     @Override
     protected void doStart() {
-        System.out.println("do start");
         watchFiletask = executor.scheduleAtFixedRate(
                 this::watchFiles,
                 0,
