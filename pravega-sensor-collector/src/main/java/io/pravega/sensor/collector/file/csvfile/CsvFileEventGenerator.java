@@ -9,9 +9,7 @@
  */
 package io.pravega.sensor.collector.file.csvfile;
 
-import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.io.CountingInputStream;
 import io.pravega.sensor.collector.file.EventGenerator;
@@ -25,8 +23,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
 import java.nio.charset.StandardCharsets;
-import java.util.Map;
 import java.util.function.Consumer;
 
 /**
@@ -72,48 +72,39 @@ public class CsvFileEventGenerator implements EventGenerator {
         final CSVParser parser = CSVParser.parse(inputStream, StandardCharsets.UTF_8, format);
         long nextSequenceNumber = firstSequenceNumber;
         int numRecordsInEvent = 0;
-        ObjectNode jsonEvent = null;
-        for (CSVRecord record: parser) {
+        List<HashMap<String,Object>> eventBatch = new ArrayList<>();
+        for (CSVRecord record : parser) {
+            HashMap<String,Object> recordDataMap = new HashMap<String,Object>();
+            for(int i=0; i<record.size();i++)
+            {
+                recordDataMap.put(parser.getHeaderNames().get(i), convertValue(record.get(i)));
+            }
+            eventBatch.add(recordDataMap);
+            numRecordsInEvent++;
             if (numRecordsInEvent >= maxRecordsPerEvent) {
-                consumer.accept(new PravegaWriterEvent(routingKey, nextSequenceNumber, mapper.writeValueAsBytes(jsonEvent)));
+                consumer.accept(new PravegaWriterEvent(routingKey, nextSequenceNumber, mapper.writeValueAsBytes(eventBatch)));
                 nextSequenceNumber++;
-                jsonEvent = null;
+                eventBatch.clear();
                 numRecordsInEvent = 0;
             }
-            if (jsonEvent == null) {
-                jsonEvent = eventTemplate.deepCopy();
-            }
-            for (Map.Entry<String,String> entry: record.toMap().entrySet()) {
-                addValueToArray(jsonEvent, entry.getKey(), entry.getValue());
-            }
-            numRecordsInEvent++;
         }
-        if (jsonEvent != null) {
-            consumer.accept(new PravegaWriterEvent(routingKey, nextSequenceNumber, mapper.writeValueAsBytes(jsonEvent)));
+        if (!eventBatch.isEmpty()) {
+            consumer.accept(new PravegaWriterEvent(routingKey, nextSequenceNumber, mapper.writeValueAsBytes(eventBatch)));
             nextSequenceNumber++;
+            eventBatch.clear();
         }
         final long endOffset = inputStream.getCount();
         return new ImmutablePair<>(nextSequenceNumber, endOffset);
     }
 
-    public JsonNode stringValueToJsonNode(String s) {
+    public Object convertValue(String s) {
         // TODO: convert timestamp
         try {
-            return mapper.getNodeFactory().numberNode(Long.parseLong(s));
+            return Long.parseLong(s);
         } catch (NumberFormatException ignored) {}
         try {
-            return mapper.getNodeFactory().numberNode(Double.parseDouble(s));
+            return Double.parseDouble(s);
         } catch (NumberFormatException ignored) {}
-        return mapper.getNodeFactory().textNode(s);
-    }
-
-    public void addValueToArray(ObjectNode objectNode, String key, String value) {
-        final JsonNode node = objectNode.get(key);
-        final JsonNode valueNode = stringValueToJsonNode(value);
-        if (node instanceof ArrayNode ) {
-            ((ArrayNode) node).add(valueNode);
-        } else {
-            objectNode.putArray(key).add(valueNode);
-        }
+        return s;
     }
 }
