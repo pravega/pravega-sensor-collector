@@ -41,7 +41,6 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.Map;
 import java.util.List;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
@@ -56,7 +55,6 @@ public class ParquetEventGenerator implements EventGenerator {
     private final int maxRecordsPerEvent;
     private final ObjectNode eventTemplate;
     private final ObjectMapper mapper;
-    private Map<MessageType, Schema> parquetSchemas = new HashMap<>();
 
     public ParquetEventGenerator(String routingKey, int maxRecordsPerEvent, ObjectNode eventTemplate, ObjectMapper mapper) {
         this.routingKey = routingKey;
@@ -95,39 +93,24 @@ public class ParquetEventGenerator implements EventGenerator {
         IOUtils.copy(inputStream,outputStream);
         outputStream.close();
         Path tempFilePath = new Path(tempFile.toString());
-
-        long timestamp1 = System.nanoTime();
-
         Configuration conf = new Configuration();
         MessageType schema = ParquetFileReader.readFooter(HadoopInputFile.fromPath(tempFilePath, conf),ParquetMetadataConverter.NO_FILTER).getFileMetaData().getSchema();
-        Schema avroSchema;
+        
+        //Modifying field names in extracted schema (removing special characters) 
+        List<Type> fields = schema.getFields().stream()
+                                .map(field -> new PrimitiveType(field.getRepetition(),  
+                                                PrimitiveType.PrimitiveTypeName.valueOf(((PrimitiveType) field).getPrimitiveTypeName().toString()),
+                                                field.getName()
+                                .replaceAll("[^A-Za-z0-9_]+", "_")))
+                                .collect(Collectors.toList());
+        MessageType modifiedSchema = new MessageType(schema.getName(), fields);
+        Schema avroSchema = new AvroSchemaConverter(conf).convert(modifiedSchema);
 
-        if(!parquetSchemas.containsKey(schema)){
-            //Modifying field names in extracted schema (removing special characters) 
-            List<Type> fields = schema.getFields().stream()
-                                    .map(field -> new PrimitiveType(field.getRepetition(),  
-                                                    PrimitiveType.PrimitiveTypeName.valueOf(((PrimitiveType) field).getPrimitiveTypeName().toString()),
-                                                    field.getName()
-                                    .replaceAll("[^A-Za-z0-9_]+", "_")))
-                                    .collect(Collectors.toList());
-            MessageType modifiedSchema = new MessageType(schema.getName(), fields);
-            avroSchema = new AvroSchemaConverter(conf).convert(modifiedSchema);
-
-            // Add original field names as aliases to avroSchema
-            for (int i = 0; i < modifiedSchema.getFieldCount(); i++) {
-                String originalFieldName = schema.getFields().get(i).getName();
-                avroSchema.getFields().get(i).addAlias(originalFieldName);
-            }
-            
-            parquetSchemas.put(schema, avroSchema);
+        // Add original field names as aliases to avroSchema
+        for (int i = 0; i < modifiedSchema.getFieldCount(); i++) {
+            String originalFieldName = schema.getFields().get(i).getName();
+            avroSchema.getFields().get(i).addAlias(originalFieldName);
         }
-        else{
-            avroSchema = parquetSchemas.get(schema);
-        }
-
-        double elapsedSec1 = (System.nanoTime() - timestamp1) / 1_000_000_000.0;
-        log.info("Time taken to process schema= {} sec ", elapsedSec1);
-        long timestamp2 = System.nanoTime();
 
         final AvroParquetReader.Builder<GenericRecord> builder = AvroParquetReader.<GenericRecord>builder(tempFilePath);
         AvroReadSupport.setAvroReadSchema(conf, avroSchema);        
@@ -141,7 +124,8 @@ public class ParquetEventGenerator implements EventGenerator {
             HashMap<String,Object> dataMap = new HashMap<String,Object>();
             for(Schema.Field field : record.getSchema().getFields()){
                 String key = field.name();
-                Object value = record.get(key);
+                Object value;
+                value = record.get(key);
                 dataMap.put(key,value);
             }
             eventBatch.add(dataMap);
@@ -159,10 +143,7 @@ public class ParquetEventGenerator implements EventGenerator {
             consumer.accept(new PravegaWriterEvent(routingKey, nextSequenceNumber, batchJsonEvent));
             nextSequenceNumber++;
         }
-        double elapsedSec2 = (System.nanoTime() - timestamp2) / 1_000_000_000.0;
-        log.info("Time taken to read records and batch events= {} sec ", elapsedSec2);
         final long endOffset = inputStream.getCount();
-        reader.close();
         tempFile.delete();
         return new ImmutablePair<>(nextSequenceNumber, endOffset);
     }
