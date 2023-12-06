@@ -28,7 +28,7 @@ public class FileUtils {
      *  3. check for empty file, log the message and continue with valid files
      *
      */
-    static public List<FileNameWithOffset> getDirectoryListing(String fileSpec, String fileExtension, String failedFilesDirectory) throws IOException {
+    static public List<FileNameWithOffset> getDirectoryListing(String fileSpec, String fileExtension, Path failedFilesDirectory) throws IOException {
         String[] directories= fileSpec.split(separator);
         List<FileNameWithOffset> directoryListing = new ArrayList<>();
         for (String directory : directories) {
@@ -45,7 +45,7 @@ public class FileUtils {
     /**
      * @return get all files in directory(including subdirectories) and their respective file size in bytes
      */
-    static protected void getDirectoryFiles(Path pathSpec, String fileExtension, List<FileNameWithOffset> directoryListing, String failedFilesDirectory) throws IOException{        
+    static protected void getDirectoryFiles(Path pathSpec, String fileExtension, List<FileNameWithOffset> directoryListing, Path failedFilesDirectory) throws IOException{        
         try(DirectoryStream<Path> dirStream=Files.newDirectoryStream(pathSpec)){
             for(Path path: dirStream){
                 if(Files.isDirectory(path))         //traverse subdirectories
@@ -92,8 +92,8 @@ public class FileUtils {
     /*
     Move failed files to different directory
      */
-    static void moveFailedFile(FileNameWithOffset fileEntry, String failedFilesDirectory) throws IOException {
-        Path targetPath = Paths.get(failedFilesDirectory).resolve("Failed_Files");
+    static void moveFailedFile(FileNameWithOffset fileEntry, Path failedFilesDirectory) throws IOException {
+        Path targetPath = failedFilesDirectory.resolve("Failed_Files");
         Files.createDirectories(targetPath);
         //Obtain a lock on file before moving
         try(FileChannel channel = FileChannel.open(Paths.get(fileEntry.fileName), StandardOpenOption.WRITE)) {
