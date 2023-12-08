@@ -48,7 +48,7 @@ public class FileUtils {
     }
 
     /**
-     * @return get all files in directory(including subdirectories) and their respective file size in bytes
+     * get all files in directory(including subdirectories) and their respective file size in bytes
      */
     static protected void getDirectoryFiles(Path pathSpec, String fileExtension, List<FileNameWithOffset> directoryListing, Path movedFilesDirectory, long minTimeInMillisToUpdateFile) throws IOException{
         DirectoryStream.Filter<Path> lastModifiedTimeFilter = getLastModifiedTimeFilter(minTimeInMillisToUpdateFile);
@@ -73,7 +73,6 @@ public class FileUtils {
                 throw new IOException(ex);
             }
         }
-        return;
     }
 
     /**
@@ -82,15 +81,13 @@ public class FileUtils {
      */
     private static DirectoryStream.Filter<Path> getLastModifiedTimeFilter(long minTimeInMillisToUpdateFile) {
         log.debug("getLastModifiedTimeFilter: minTimeInMillisToUpdateFile: {}", minTimeInMillisToUpdateFile);
-        return new DirectoryStream.Filter<Path> () {
-            public boolean accept(Path entry) throws IOException {
-                BasicFileAttributes attr = Files.readAttributes(entry, BasicFileAttributes.class);
-                if(attr.isDirectory()) {
-                    return true;
-                }
-                FileTime fileTime = attr.lastModifiedTime();
-                return (fileTime.toMillis() <= (System.currentTimeMillis() - minTimeInMillisToUpdateFile));
+        return entry -> {
+            BasicFileAttributes attr = Files.readAttributes(entry, BasicFileAttributes.class);
+            if(attr.isDirectory()) {
+                return true;
             }
+            FileTime fileTime = attr.lastModifiedTime();
+            return (fileTime.toMillis() <= (System.currentTimeMillis() - minTimeInMillisToUpdateFile));
         };
     }
 
@@ -99,7 +96,7 @@ public class FileUtils {
         1. Is File empty
         2. If extension is null or extension is valid ingest all file
      */
-    public static boolean isValidFile(FileNameWithOffset fileEntry, String fileExtension) throws Exception{
+    public static boolean isValidFile(FileNameWithOffset fileEntry, String fileExtension) {
 
         if(fileEntry.offset<=0){
             log.warn("isValidFile: Empty file {} can not be processed",fileEntry.fileName);
