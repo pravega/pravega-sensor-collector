@@ -41,7 +41,7 @@ public interface TransactionStateDB {
     public void addCompletedFileRecord(String fileName, long beginOffset, long endOffset, long newNextSequenceNumber, Optional<UUID> txnId) throws SQLException;
 
     /**
-     * Delete record from endingFiles table
+     * Delete record from pendingFiles table
      *
      * @param fileName          file name of pending file
      * @param beginOffset       begin offset from where file read starts

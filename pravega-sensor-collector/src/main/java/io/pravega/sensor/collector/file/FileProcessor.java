@@ -168,7 +168,7 @@ public abstract class FileProcessor {
 
         File pendingFile = new File(fileNameWithBeginOffset.fileName);
         if(!pendingFile.exists()){
-            log.debug("File {} does not exist ", fileNameWithBeginOffset.fileName);
+            log.warn("File {} does not exist. It was deleted before processing", fileNameWithBeginOffset.fileName);
             state.deletePendingFile(fileNameWithBeginOffset.fileName, fileNameWithBeginOffset.offset);
             return;
         }
