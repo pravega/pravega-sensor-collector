@@ -22,7 +22,8 @@ public class FileUtils {
 
     private static final Logger log = LoggerFactory.getLogger(FileUtils.class);
     final static String separator = ",";
-    final static String failedFiles = "Failed_Files";
+    public static final String FAILED_FILES = "Failed_Files";
+    public static final String COMPLETED_FILES = "Completed_Files";
 
     /**
      * @return list of file name and file size in bytes
@@ -114,13 +115,13 @@ public class FileUtils {
 
     static void moveFailedFile(FileNameWithOffset fileEntry, Path filesDirectory) throws IOException {
         Path sourcePath = Paths.get(fileEntry.fileName);
-        Path targetPath = filesDirectory.resolve(failedFiles).resolve(sourcePath.getFileName());
+        Path targetPath = filesDirectory.resolve(FAILED_FILES).resolve(sourcePath.getFileName());
         moveFile(sourcePath, targetPath);
     }
 
     public static void moveCompletedFile(FileNameWithOffset fileEntry, Path filesDirectory) throws IOException {
         Path sourcePath = Paths.get(fileEntry.fileName);
-        Path completedFilesPath = filesDirectory.resolve("Completed_Files");
+        Path completedFilesPath = filesDirectory.resolve(COMPLETED_FILES);
         String completedFileName = FileUtils.createCompletedFileName(filesDirectory, fileEntry.fileName);
         Path targetPath = completedFilesPath.resolve(completedFileName);
         moveFile(sourcePath, targetPath);

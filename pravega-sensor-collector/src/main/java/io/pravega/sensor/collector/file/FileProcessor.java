@@ -230,7 +230,7 @@ public abstract class FileProcessor {
         final List<FileNameWithOffset> completedFiles = state.getCompletedFileRecords();
         completedFiles.forEach(file -> {
             //Obtain a lock on file
-            Path completedFilesPath = movedFilesDirectory.resolve("Completed_Files");
+            Path completedFilesPath = movedFilesDirectory.resolve(FileUtils.COMPLETED_FILES);
             String completedFileName = FileUtils.createCompletedFileName(completedFilesPath, file.fileName);
             Path filePath = completedFilesPath.resolve(completedFileName);
             if(Files.notExists(filePath)) {
