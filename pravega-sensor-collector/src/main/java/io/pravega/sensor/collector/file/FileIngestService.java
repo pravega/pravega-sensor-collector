@@ -130,14 +130,14 @@ public abstract class FileIngestService extends DeviceDriver {
     }
 
     protected void watchFiles() {
-        log.info("watchFiles: BEGIN");
+        log.trace("watchFiles: BEGIN");
         try {
             processor.watchFiles();
         } catch (Exception e) {
             log.error("watchFiles: watch file error", e);
             // Continue on any errors. We will retry on the next iteration.
         }
-        log.info("watchFiles: END");
+        log.trace("watchFiles: END");
     }
     protected void processFiles() {
         log.trace("processFiles: BEGIN");

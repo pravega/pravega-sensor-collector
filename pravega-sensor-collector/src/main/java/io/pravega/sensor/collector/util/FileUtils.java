@@ -22,6 +22,7 @@ public class FileUtils {
 
     private static final Logger log = LoggerFactory.getLogger(FileUtils.class);
     final static String separator = ",";
+    final static String failedFiles = "Failed_Files";
 
     /**
      * @return list of file name and file size in bytes
@@ -31,7 +32,7 @@ public class FileUtils {
      *  3. check for empty file, log the message and continue with valid files
      *
      */
-    static public List<FileNameWithOffset> getDirectoryListing(String fileSpec, String fileExtension, String movedFilesDirectory, long minTimeInMillisToUpdateFile) throws IOException {
+    static public List<FileNameWithOffset> getDirectoryListing(String fileSpec, String fileExtension, Path movedFilesDirectory, long minTimeInMillisToUpdateFile) throws IOException {
         String[] directories= fileSpec.split(separator);
         List<FileNameWithOffset> directoryListing = new ArrayList<>();
         for (String directory : directories) {
@@ -48,7 +49,7 @@ public class FileUtils {
     /**
      * @return get all files in directory(including subdirectories) and their respective file size in bytes
      */
-    static protected void getDirectoryFiles(Path pathSpec, String fileExtension, List<FileNameWithOffset> directoryListing, String movedFilesDirectory, long minTimeInMillisToUpdateFile) throws IOException{
+    static protected void getDirectoryFiles(Path pathSpec, String fileExtension, List<FileNameWithOffset> directoryListing, Path movedFilesDirectory, long minTimeInMillisToUpdateFile) throws IOException{
         DirectoryStream.Filter<Path> lastModifiedTimeFilter = getLastModifiedTimeFilter(minTimeInMillisToUpdateFile);
         try(DirectoryStream<Path> dirStream=Files.newDirectoryStream(pathSpec, lastModifiedTimeFilter)){
             for(Path path: dirStream){
@@ -79,7 +80,7 @@ public class FileUtils {
      * This filter helps to eliminate the files that are partially written in to lookup directory by external services.
      */
     private static DirectoryStream.Filter<Path> getLastModifiedTimeFilter(long minTimeInMillisToUpdateFile) {
-        log.info("getLastModifiedTimeFilter: minTimeInMillisToUpdateFile: {}", minTimeInMillisToUpdateFile);
+        log.debug("getLastModifiedTimeFilter: minTimeInMillisToUpdateFile: {}", minTimeInMillisToUpdateFile);
         return new DirectoryStream.Filter<Path> () {
             public boolean accept(Path entry) throws IOException {
                 BasicFileAttributes attr = Files.readAttributes(entry, BasicFileAttributes.class);
@@ -111,26 +112,26 @@ public class FileUtils {
         return false;
     }
 
-    static void moveFailedFile(FileNameWithOffset fileEntry, String filesDirectory) throws IOException {
+    static void moveFailedFile(FileNameWithOffset fileEntry, Path filesDirectory) throws IOException {
         Path sourcePath = Paths.get(fileEntry.fileName);
-        Path targetPath = Paths.get(filesDirectory).resolve("Failed_Files").resolve(sourcePath.getFileName());
+        Path targetPath = filesDirectory.resolve(failedFiles).resolve(sourcePath.getFileName());
         moveFile(sourcePath, targetPath);
     }
 
-    public static void moveCompletedFile(FileNameWithOffset fileEntry, String filesDirectory) throws IOException {
+    public static void moveCompletedFile(FileNameWithOffset fileEntry, Path filesDirectory) throws IOException {
         Path sourcePath = Paths.get(fileEntry.fileName);
-        Path completedFilesPath = Paths.get(filesDirectory).resolve("Completed_Files");
+        Path completedFilesPath = filesDirectory.resolve("Completed_Files");
         String completedFileName = FileUtils.createCompletedFileName(filesDirectory, fileEntry.fileName);
         Path targetPath = completedFilesPath.resolve(completedFileName);
         moveFile(sourcePath, targetPath);
     }
 
-    public static String createCompletedFileName(String completedFilesDir, String fileName) {
-        if(fileName==null || fileName.isEmpty() || completedFilesDir==null || completedFilesDir.isEmpty()) {
+    public static String createCompletedFileName(Path completedFilesDir, String fileName) {
+        if(fileName==null || fileName.isEmpty() || completedFilesDir==null) {
             return fileName;
         }
 
-        int validFileNameLength = 255 - completedFilesDir.length();
+        int validFileNameLength = 255 - completedFilesDir.toString().length();
 
         if(fileName.length() > validFileNameLength) {
             fileName = fileName.substring(fileName.indexOf(File.separator, fileName.length() - validFileNameLength-1));

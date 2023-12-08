@@ -43,7 +43,7 @@ public abstract class FileProcessor {
     private final EventWriter<byte[]> writer;
     private final TransactionCoordinator transactionCoordinator;
     private final EventGenerator eventGenerator;
-    private final String movedFilesDirectory;
+    private final Path movedFilesDirectory;
 
     public FileProcessor(FileConfig config, TransactionStateDB state, EventWriter<byte[]> writer, TransactionCoordinator transactionCoordinator) {
         this.config = config;
@@ -51,7 +51,7 @@ public abstract class FileProcessor {
         this.writer = writer;
         this.transactionCoordinator = transactionCoordinator;
         this.eventGenerator = getEventGenerator(config);
-        this.movedFilesDirectory = Paths.get(config.stateDatabaseFileName).getParent().toString();
+        this.movedFilesDirectory = Paths.get(config.stateDatabaseFileName).getParent();
     }
 
     public static FileProcessor create(
@@ -105,7 +105,7 @@ public abstract class FileProcessor {
             // If nextFile is null then check for new files to process is handled as part of scheduleWithDelay
             final Pair<FileNameWithOffset, Long> nextFile = state.getNextPendingFileRecord();
             if (nextFile == null) {
-                log.info("processNewFiles: No more files to watch");
+                log.debug("processNewFiles: No more files to watch");
                 break;
             } else {
                 processFile(nextFile.getLeft(), nextFile.getRight());
@@ -230,7 +230,7 @@ public abstract class FileProcessor {
         final List<FileNameWithOffset> completedFiles = state.getCompletedFileRecords();
         completedFiles.forEach(file -> {
             //Obtain a lock on file
-            Path completedFilesPath = Paths.get(movedFilesDirectory).resolve("Completed_Files");
+            Path completedFilesPath = movedFilesDirectory.resolve("Completed_Files");
             String completedFileName = FileUtils.createCompletedFileName(completedFilesPath.toString(), file.fileName);
             Path filePath = completedFilesPath.resolve(completedFileName);
             if(Files.notExists(filePath)) {

@@ -2,19 +2,27 @@ package io.pravega.sensor.collector.file;
 
 import com.google.common.collect.ImmutableList;
 import io.pravega.client.EventStreamClientFactory;
+import io.pravega.client.stream.EventWriterConfig;
+import io.pravega.client.stream.impl.ByteArraySerializer;
+import io.pravega.sensor.collector.file.rawfile.RawEventGenerator;
+import io.pravega.sensor.collector.file.rawfile.RawFileProcessor;
 import io.pravega.sensor.collector.util.*;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
+import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.nio.file.Paths;
 import java.util.List;
 
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.when;
 
 public class FileProcessorTests {
     private static final Logger log = LoggerFactory.getLogger(FileProcessorTests.class);
@@ -71,7 +79,7 @@ public class FileProcessorTests {
     @Test
     public void getDirectoryListingTest() throws IOException {
         final List<FileNameWithOffset> actual = FileUtils.getDirectoryListing(
-                "../log-file-sample-data/","csv","", 5000);
+                "../log-file-sample-data/","csv",Paths.get("."), 5000);
         log.info("actual={}", actual);
     }
 
