@@ -231,7 +231,7 @@ public abstract class FileProcessor {
         completedFiles.forEach(file -> {
             //Obtain a lock on file
             Path completedFilesPath = movedFilesDirectory.resolve("Completed_Files");
-            String completedFileName = FileUtils.createCompletedFileName(completedFilesPath.toString(), file.fileName);
+            String completedFileName = FileUtils.createCompletedFileName(completedFilesPath, file.fileName);
             Path filePath = completedFilesPath.resolve(completedFileName);
             if(Files.notExists(filePath)) {
                 try {
