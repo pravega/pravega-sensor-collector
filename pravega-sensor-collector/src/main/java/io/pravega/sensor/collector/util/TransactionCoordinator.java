@@ -142,7 +142,7 @@ public class TransactionCoordinator {
         if (transactionsToCommit.isEmpty()) {
             log.info("performRecovery: No transactions to be recovered");
         } else {
-            log.warn("Transaction recovery needed on {} transactions", transactionsToCommit.size());
+            log.info("Transaction recovery needed on {} transactions", transactionsToCommit.size());
             transactionsToCommit.forEach((txnId) -> {
                 log.info("Committing transaction {} from a previous process", txnId);
                 try {

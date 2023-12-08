@@ -102,7 +102,7 @@ public abstract class FileProcessor {
             // If nextFile is null then check for new files to process is handled as part of scheduleWithDelay
             final Pair<FileNameWithOffset, Long> nextFile = state.getNextPendingFileRecord();
             if (nextFile == null) {
-                log.info("processNewFiles: No more files to watch");
+                log.debug("processNewFiles: No more files to watch");
                 break;
             } else {
                 processFile(nextFile.getLeft(), nextFile.getRight());
@@ -123,7 +123,7 @@ public abstract class FileProcessor {
     protected List<FileNameWithOffset> getDirectoryListing() throws IOException {
         log.debug("getDirectoryListing: fileSpec={}", config.fileSpec);
         //Invalid files will be moved to a separate folder Failed_Files next to the database file
-        String failedFilesDirectory = config.stateDatabaseFileName.substring(0, config.stateDatabaseFileName.lastIndexOf('/'));
+        Path failedFilesDirectory = Paths.get(config.stateDatabaseFileName).getParent();
         final List<FileNameWithOffset> directoryListing = FileUtils.getDirectoryListing(config.fileSpec, config.fileExtension, failedFilesDirectory);
         log.debug("getDirectoryListing: directoryListing={}", directoryListing);
         return directoryListing;
