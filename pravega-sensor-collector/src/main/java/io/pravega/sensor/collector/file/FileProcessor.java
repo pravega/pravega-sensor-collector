@@ -21,6 +21,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.channels.FileChannel;
@@ -162,6 +163,12 @@ public abstract class FileProcessor {
         log.debug("processFile: Transaction status {} ", writer.getTransactionStatus());
         if(writer.getTransactionStatus() == Transaction.Status.OPEN){
             writer.abort();
+        }
+
+        File pendingFile = new File(fileNameWithBeginOffset.fileName);
+        if(pendingFile.exists()){
+            state.deletePendingFile(fileNameWithBeginOffset.fileName, fileNameWithBeginOffset.offset);
+            return;
         }
 
         try (final InputStream inputStream = new FileInputStream(fileNameWithBeginOffset.fileName)) {
