@@ -29,7 +29,9 @@ public class FileConfig {
     public final boolean exactlyOnce;
     public final double transactionTimeoutMinutes;
 
-    public FileConfig(String stateDatabaseFileName, String fileSpec, String fileExtension, String routingKey, String streamName, String eventTemplateStr, int maxRecordsPerEvent, boolean enableDeleteCompletedFiles, boolean exactlyOnce, double transactionTimeoutMinutes, String fileType) {
+    public final long minTimeInMillisToUpdateFile;
+
+    public FileConfig(String stateDatabaseFileName, String fileSpec, String fileExtension, String routingKey, String streamName, String eventTemplateStr, int maxRecordsPerEvent, boolean enableDeleteCompletedFiles, boolean exactlyOnce, double transactionTimeoutMinutes, String fileType, long minTimeInMillisToUpdateFile) {
         this.stateDatabaseFileName = stateDatabaseFileName;
         this.fileSpec = fileSpec;
         this.fileExtension = fileExtension;
@@ -41,6 +43,7 @@ public class FileConfig {
         this.exactlyOnce = exactlyOnce;
         this.transactionTimeoutMinutes = transactionTimeoutMinutes;
         this.fileType = fileType;
+        this.minTimeInMillisToUpdateFile = minTimeInMillisToUpdateFile;
     }
 
     @Override

@@ -41,6 +41,7 @@ public abstract class FileIngestService extends DeviceDriver {
     private static final String ROUTING_KEY_KEY = "ROUTING_KEY";
     private static final String EXACTLY_ONCE_KEY = "EXACTLY_ONCE";
     private static final String TRANSACTION_TIMEOUT_MINUTES_KEY = "TRANSACTION_TIMEOUT_MINUTES";
+    private static final String MIN_TIME_IN_MILLIS_TO_UPDATE_FILE_KEY = "MIN_TIME_IN_MILLIS_TO_UPDATE_FILE";
 
     private final FileProcessor processor;
     private final ScheduledExecutorService executor;
@@ -61,7 +62,8 @@ public abstract class FileIngestService extends DeviceDriver {
                 getDeleteCompletedFiles(),
                 getExactlyOnce(),
                 getTransactionTimeoutMinutes(),
-                config.getClassName());
+                config.getClassName(),
+                getMinTimeInMillisToUpdateFile());
         log.info("File Ingest Config: {}", fileSequenceConfig);
         final String scopeName = getScopeName();
         log.info("Scope: {}", scopeName);
@@ -121,6 +123,10 @@ public abstract class FileIngestService extends DeviceDriver {
      */
     double getTransactionTimeoutMinutes() {
         return Double.parseDouble(getProperty(TRANSACTION_TIMEOUT_MINUTES_KEY, Double.toString(18.0 * 60.0)));
+    }
+
+    long getMinTimeInMillisToUpdateFile() {
+        return Long.parseLong(getProperty(MIN_TIME_IN_MILLIS_TO_UPDATE_FILE_KEY, "5000"));
     }
 
     protected void watchFiles() {

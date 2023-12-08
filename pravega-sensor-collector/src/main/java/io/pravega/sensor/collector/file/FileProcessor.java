@@ -27,6 +27,7 @@ import java.nio.channels.FileChannel;
 import java.nio.channels.FileLock;
 import java.nio.file.*;
 import java.sql.Connection;
+import java.sql.SQLException;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicLong;
 
@@ -42,6 +43,7 @@ public abstract class FileProcessor {
     private final EventWriter<byte[]> writer;
     private final TransactionCoordinator transactionCoordinator;
     private final EventGenerator eventGenerator;
+    private final String movedFilesDirectory;
 
     public FileProcessor(FileConfig config, TransactionStateDB state, EventWriter<byte[]> writer, TransactionCoordinator transactionCoordinator) {
         this.config = config;
@@ -49,6 +51,7 @@ public abstract class FileProcessor {
         this.writer = writer;
         this.transactionCoordinator = transactionCoordinator;
         this.eventGenerator = getEventGenerator(config);
+        this.movedFilesDirectory = Paths.get(config.stateDatabaseFileName).getParent().toString();
     }
 
     public static FileProcessor create(
@@ -123,8 +126,8 @@ public abstract class FileProcessor {
     protected List<FileNameWithOffset> getDirectoryListing() throws IOException {
         log.debug("getDirectoryListing: fileSpec={}", config.fileSpec);
         //Invalid files will be moved to a separate folder Failed_Files next to the database file
-        String failedFilesDirectory = config.stateDatabaseFileName.substring(0, config.stateDatabaseFileName.lastIndexOf('/'));
-        final List<FileNameWithOffset> directoryListing = FileUtils.getDirectoryListing(config.fileSpec, config.fileExtension, failedFilesDirectory);
+        log.info("movedFilesDirectory: {}", movedFilesDirectory);
+        final List<FileNameWithOffset> directoryListing = FileUtils.getDirectoryListing(config.fileSpec, config.fileExtension, movedFilesDirectory, config.minTimeInMillisToUpdateFile);
         log.debug("getDirectoryListing: directoryListing={}", directoryListing);
         return directoryListing;
     }
@@ -186,7 +189,9 @@ public abstract class FileProcessor {
             final long nextSequenceNumber = result.getLeft();
             final long endOffset = result.getRight();
             log.debug("processFile: Adding completed file: {}",  fileNameWithBeginOffset.fileName);
-            state.addCompletedFileRecord(fileNameWithBeginOffset.fileName, fileNameWithBeginOffset.offset, endOffset, nextSequenceNumber, txnId);
+
+            moveCompletedFile(fileNameWithBeginOffset, endOffset, nextSequenceNumber, txnId);
+
             // injectCommitFailure();
             try {
                 // commit fails only if Transaction is not in open state.
@@ -216,14 +221,31 @@ public abstract class FileProcessor {
         }
     }
 
+    void moveCompletedFile(FileNameWithOffset fileNameWithBeginOffset, long endOffset, long nextSequenceNumber, Optional<UUID> txnId) throws SQLException, IOException {
+        FileUtils.moveCompletedFile(fileNameWithBeginOffset, movedFilesDirectory);
+        state.addCompletedFileRecord(fileNameWithBeginOffset.fileName, fileNameWithBeginOffset.offset, endOffset, nextSequenceNumber, txnId);
+    }
+
     void deleteCompletedFiles() throws Exception {
         final List<FileNameWithOffset> completedFiles = state.getCompletedFileRecords();
         completedFiles.forEach(file -> {
             //Obtain a lock on file
-            try(FileChannel channel = FileChannel.open(Paths.get(file.fileName), StandardOpenOption.WRITE)){
+            Path completedFilesPath = Paths.get(movedFilesDirectory).resolve("Completed_Files");
+            String completedFileName = FileUtils.createCompletedFileName(completedFilesPath.toString(), file.fileName);
+            Path filePath = completedFilesPath.resolve(completedFileName);
+            if(Files.notExists(filePath)) {
+                try {
+                    state.deleteCompletedFileRecord(file.fileName);
+                } catch (SQLException e) {
+                    throw new RuntimeException(e);
+                }
+                log.warn("deleteCompletedFiles: File {} does not exist.", filePath);
+                return;
+            }
+            try(FileChannel channel = FileChannel.open(filePath, StandardOpenOption.WRITE)){
                 try(FileLock lock = channel.tryLock()) {
                     if(lock!=null){
-                        Files.deleteIfExists(Paths.get(file.fileName));
+                        Files.deleteIfExists(filePath);
                         log.info("deleteCompletedFiles: Deleted file {}", file.fileName);
                         lock.release();
                         // Only remove from database if we could delete file.
