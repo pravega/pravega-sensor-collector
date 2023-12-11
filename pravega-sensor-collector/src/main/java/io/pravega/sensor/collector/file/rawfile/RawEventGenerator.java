@@ -15,11 +15,14 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.io.CountingInputStream;
 import io.pravega.sensor.collector.file.EventGenerator;
 import io.pravega.sensor.collector.util.PravegaWriterEvent;
+
+import org.apache.commons.compress.utils.IOUtils;
 import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.apache.commons.lang3.tuple.Pair;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.BufferedInputStream;
 import java.io.IOException;
 import java.util.function.Consumer;
 
@@ -62,18 +65,16 @@ public class RawEventGenerator implements EventGenerator {
      * @return next sequence number, end offset
      */
     public Pair<Long, Long> generateEventsFromInputStream(CountingInputStream inputStream, long firstSequenceNumber, Consumer<PravegaWriterEvent> consumer) throws IOException {
-        
         long nextSequenceNumber = firstSequenceNumber;
         try{    
-            byte[] byteArray = inputStream.readAllBytes();
-            //TODO: Batching
+            BufferedInputStream bis = new BufferedInputStream(inputStream);
+            byte[] byteArray = IOUtils.toByteArray(bis);
 
             if (byteArray.length > 0) {         //non-empty file
                 consumer.accept(new PravegaWriterEvent(routingKey, nextSequenceNumber, byteArray));
                 nextSequenceNumber++;
             }			        
             final long endOffset = inputStream.getCount();
-
             return new ImmutablePair<>(nextSequenceNumber, endOffset);
         } catch (Exception e){
             log.error("Exception = {}",e);
