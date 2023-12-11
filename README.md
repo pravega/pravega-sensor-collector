@@ -142,6 +142,39 @@ All environment variables and properties begin with the prefix `PRAVEGA_SENSOR_C
 For a list of commonly-used configuration values, see the
 [sample configuration files](pravega-sensor-collector/src/main/dist/conf).
 
+#### Sample configuration properties
+
+
+|                   Configuration Parameter                   | Value                | Description                                                                            | 
+|:-----------------------------------------------------------:|:---------------------|----------------------------------------------------------------------------------------|
+|                       `CREATE_SCOPE`                        | `true`               | Scope should be created                                                                |
+|                                                             |                      | Default value = false                                                                  |
+|                        `ROUTING_KEY`                        | `routingkey1`        |                                                                                        |
+|                      `ENABLE_PRAVEGA`                       | `Boolean parameter`  | Default value = true                                                                   |
+|                `pravega_client_auth_method`                 | `Bearer`             | Authentication type to connect to Pravega client                                       |
+|              `pravega_client_auth_loadDynamic`              | `Boolean`            | Default value = true                                                                   |
+|               `KEYCLOAK_SERVICE_ACCOUNT_FILE`               | `String path`        | Path for keycloak service account file                                                 |
+|           `PRAVEGA_SENSOR_COLLECTOR_ACCEL2_CLASS`           | `classpath`          | Pravega sensor collector class package                                                 |
+|                                                             |                      | Example:-                                                                              |
+|                                                             |                      | Raw File: io.pravega.sensor.collector.file.rawfile.RawFileIngestService                |
+|                                                             |                      | CSV file: io.pravega.sensor.collector.file.csvfile.CsvFileIngestService                |  
+|                                                             |                      | Parquet file: io.pravega.sensor.collector.file.parquet.ParquetFileIngestService        |  
+|          `PRAVEGA_SENSOR_COLLECTOR_RAW1_FILE_SPEC`          | `file path`          | Directory path from where PSC reads the files to process                               |
+|       `PRAVEGA_SENSOR_COLLECTOR_RAW1_FILE_EXTENSION`        | `file type`          | Types of file Example:-                                                                |
+|                                                             |                      | Raw File: parquet                                                                      |
+|                                                             |                      | CSV file: csv                                                                          |  
+|                                                             |                      | Parquet file: parquet                                                                  | 
+|        `PRAVEGA_SENSOR_COLLECTOR_RAW1_DATABASE_FILE`        | `database file path` | Directory path where database file gets created Example: /opt/database/databasefile.db |
+|   `PRAVEGA_SENSOR_COLLECTOR_RAW1_PRAVEGA_CONTROLLER_URI`    | `Controller URI`     | Pravega controller URI EX: Pravega Controller URI                                      |
+|            `PRAVEGA_SENSOR_COLLECTOR_RAW1_SCOPE`            | `Scope name`         | Scope name for Pravega sensor collector                                                |
+|           `PRAVEGA_SENSOR_COLLECTOR_RAW1_STREAM`            | `Stream name`        | Stream name for Pravega sensor collector                                               |
+|         `PRAVEGA_SENSOR_COLLECTOR_RAW1_ROUTING_KE`          | `routingkey1`        | Routing key for Pravega Sensor collector                                               |
+|   `PRAVEGA_SENSOR_COLLECTOR_RAW1_DELETE_COMPLETED_FILES`    | `false`              | If true, PSC immiediatly delete the file soon after processing                         |
+| `PRAVEGA_SENSOR_COLLECTOR_RAW1_TRANSACTION_TIMEOUT_MINUTES` | `2.0`                | Timeout for each trasaction. Default value is 2 minutes                                |
+|        `PRAVEGA_SENSOR_COLLECTOR_RAW1_CREATE_SCOPE`         | `false`              | Create scope if not created already. Accept Boolean value.                             |
+
+
+
 ### Install the Service
 
 1.  The only prerequisite on the target system is Java 11.

@@ -18,7 +18,7 @@ export pravega_client_auth_loadDynamic=true
 export KEYCLOAK_SERVICE_ACCOUNT_FILE=/opt/pravega-sensor-collector/conf/keycloak.json
 export JAVA_OPTS="-Xmx512m"
 
-export PRAVEGA_SENSOR_COLLECTOR_PARQ2_CLASS=io.pravega.sensor.collector.parquet.ParquetFileIngestService
+export PRAVEGA_SENSOR_COLLECTOR_PARQ2_CLASS=io.pravega.sensor.collector.file.parquet.ParquetFileIngestService
 export PRAVEGA_SENSOR_COLLECTOR_PARQ2_FILE_SPEC="/opt/pravega-sensor-collector/Parquet_Files/A,/opt/pravega-sensor-collector/Parquet_Files/B"
 export PRAVEGA_SENSOR_COLLECTOR_PARQ2_FILE_EXTENSION=parquet
 export PRAVEGA_SENSOR_COLLECTOR_PARQ2_DATABASE_FILE=/opt/pravega-sensor-collector/datafile.db
