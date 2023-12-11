@@ -42,7 +42,7 @@ public class FileProcessorTests {
     @BeforeEach
     public void setup(){
         MockitoAnnotations.initMocks(this);
-        config = new FileConfig("tset.db","/opt/pravega-sensor-collector/Files/A","parquet","key12",
+        config = new FileConfig("./tset.db","/opt/pravega-sensor-collector/Files/A","parquet","key12",
                 "stream1","{}",10, false,
                 true,20.0,"RawFileIngestService", 5000);
         /*writer = EventWriter.create(
@@ -72,7 +72,8 @@ public class FileProcessorTests {
         final List<FileNameWithOffset> expected = ImmutableList.of(
                 new FileNameWithOffset("file3", 0),
                 new FileNameWithOffset("file4", 0));
-        final List<FileNameWithOffset> actual = FileProcessor.getNewFiles(directoryListing, completedFiles);
+        RawFileProcessor fileProcessor = new RawFileProcessor(config,state, writer, transactionCoordinator, "writerId");
+        final List<FileNameWithOffset> actual = fileProcessor.getNewFiles(directoryListing, completedFiles);
         Assertions.assertEquals(expected, actual);
     }
 
