@@ -41,6 +41,14 @@ public interface TransactionStateDB {
     public void addCompletedFileRecord(String fileName, long beginOffset, long endOffset, long newNextSequenceNumber, Optional<UUID> txnId) throws SQLException;
 
     /**
+     * Delete record from pendingFiles table
+     *
+     * @param fileName          file name of pending file
+     * @param beginOffset       begin offset from where file read starts
+     */
+    void deletePendingFile(String fileName, long beginOffset) throws SQLException;
+
+    /**
      * Update below details
      *      1. Update sequence number into SequenceNumber table
      *      2. Add entry into CompletedFiles table for given file name and end offset

@@ -126,7 +126,25 @@ public class TransactionStateSQLiteImpl  implements AutoCloseable, TransactionSt
             }
         }
 
-        /**
+    /**
+     * Delete record from PendingFiles table
+     *
+     * @param  fileName         file name of pending file
+     * @param beginOffset       begin offset from where file read starts
+     */
+    @Override
+    public void deletePendingFile(String fileName, long beginOffset) throws SQLException {
+        try (final PreparedStatement deletePendingFileStatement = connection.prepareStatement(
+                     "delete from PendingFiles where fileName = ? and offset <= ?");) {
+            // Remove pending file.
+            deletePendingFileStatement.setString(1, fileName);
+            deletePendingFileStatement.setLong(2, beginOffset);
+            deletePendingFileStatement.execute();
+        }
+    }
+
+
+    /**
          * Update below details
          *      1. Update sequence number into SequenceNumber table
          *      2. Add entry into CompletedFiles table for given file name and end offset
