@@ -125,8 +125,8 @@ public abstract class FileProcessor {
      */
     protected List<FileNameWithOffset> getDirectoryListing() throws IOException {
         log.debug("getDirectoryListing: fileSpec={}", config.fileSpec);
-        //Invalid files will be moved to a separate folder Failed_Files next to the database file
-        log.info("movedFilesDirectory: {}", movedFilesDirectory);
+        //Invalid files will be moved to a separate folder Failed_Files parallel to the database file
+        log.debug("movedFilesDirectory: {}", movedFilesDirectory);
         final List<FileNameWithOffset> directoryListing = FileUtils.getDirectoryListing(config.fileSpec, config.fileExtension, movedFilesDirectory, config.minTimeInMillisToUpdateFile);
         log.debug("getDirectoryListing: directoryListing={}", directoryListing);
         return directoryListing;
@@ -233,23 +233,24 @@ public abstract class FileProcessor {
             Path completedFilesPath = movedFilesDirectory.resolve(FileUtils.COMPLETED_FILES);
             String completedFileName = FileUtils.createCompletedFileName(completedFilesPath, file.fileName);
             Path filePath = completedFilesPath.resolve(completedFileName);
+            log.debug("deleteCompletedFiles: Deleting File default name:{}, and it's completed file name:{}.", file.fileName, filePath);
             if(Files.notExists(filePath)) {
                 try {
                     state.deleteCompletedFileRecord(file.fileName);
                 } catch (SQLException e) {
                     throw new RuntimeException(e);
                 }
-                log.warn("deleteCompletedFiles: File {} does not exist.", filePath);
+                log.warn("deleteCompletedFiles: File {} does not exist in completed files directory.", filePath);
                 return;
             }
             try(FileChannel channel = FileChannel.open(filePath, StandardOpenOption.WRITE)){
                 try(FileLock lock = channel.tryLock()) {
                     if(lock!=null){
                         Files.deleteIfExists(filePath);
-                        log.info("deleteCompletedFiles: Deleted file {}", file.fileName);
                         lock.release();
                         // Only remove from database if we could delete file.
                         state.deleteCompletedFileRecord(file.fileName);
+                        log.debug("deleteCompletedFiles: Deleted File default name:{}, and it's completed file name:{}.", file.fileName, filePath);
                     }
                     else{
                         log.warn("Unable to obtain lock on file {}. File is locked by another process.", file.fileName);

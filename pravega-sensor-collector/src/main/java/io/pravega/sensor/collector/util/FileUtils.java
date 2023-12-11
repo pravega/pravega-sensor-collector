@@ -76,7 +76,7 @@ public class FileUtils {
     }
 
     /**
-     * The last modified time filer for files older than #{timeBefore} milliseconds from current timestamp.
+     * The last modified time filter for files older than #{timeBefore} milliseconds from current timestamp.
      * This filter helps to eliminate the files that are partially written in to lookup directory by external services.
      */
     private static DirectoryStream.Filter<Path> getLastModifiedTimeFilter(long minTimeInMillisToUpdateFile) {
