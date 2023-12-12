@@ -11,13 +11,12 @@ package io.pravega.sensor.collector.file.csvfile;
 
 import com.google.common.io.CountingInputStream;
 import io.pravega.sensor.collector.file.EventGenerator;
+import io.pravega.sensor.collector.util.PravegaWriterEvent;
 import org.apache.commons.lang3.tuple.Pair;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import io.pravega.sensor.collector.util.PravegaWriterEvent;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;

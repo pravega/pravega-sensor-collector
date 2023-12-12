@@ -2,13 +2,12 @@ package io.pravega.sensor.collector.file.rawfile;
 
 import com.google.common.io.CountingInputStream;
 import io.pravega.sensor.collector.file.EventGenerator;
+import io.pravega.sensor.collector.util.PravegaWriterEvent;
 import org.apache.commons.lang3.tuple.Pair;
 import org.junit.Assert;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import io.pravega.sensor.collector.util.PravegaWriterEvent;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
