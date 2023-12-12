@@ -16,6 +16,7 @@ buildscript {
     }
     dependencies {
         classpath("com.github.spotbugs.snom:spotbugs-gradle-plugin:${spotbugsPluginVersion}")
+        classpath("gradle.plugin.com.github.johnrengelman:shadow:${shadowPluginVersion}")
     }
 }
 
@@ -24,6 +25,7 @@ apply plugin: "maven-publish"
 apply plugin: "com.github.spotbugs"
 apply plugin: 'checkstyle'
 apply plugin: "application"
+apply plugin: "com.github.johnrengelman.shadow"
 
 group = "io.pravega"
 archivesBaseName = "pravega-sensor-collector"
@@ -99,6 +101,10 @@ startScripts {
                 'DEFAULT_JVM_OPTS=""',
                 'DEFAULT_JVM_OPTS=""\n\n# Source configuration file\n[ -f "${CONF_FILE}" ] && . "${CONF_FILE}"')
     }
+}
+
+shadowJar{
+    archiveClassifier = ''
 }
 
 tasks.register('runLeapAPIMockServer', JavaExec) {
