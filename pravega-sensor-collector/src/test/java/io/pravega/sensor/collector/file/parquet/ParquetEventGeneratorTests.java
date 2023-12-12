@@ -16,6 +16,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.nio.file.Paths;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -25,7 +26,7 @@ public class ParquetEventGeneratorTests {
     @Test
     public void TestFile() throws IOException {
         final EventGenerator eventGenerator = ParquetEventGenerator.create("routingKey1",100);
-        final List<FileNameWithOffset> files = FileUtils.getDirectoryListing("../parquet-file-sample-data","parquet",Paths.get("."));
+        final List<FileNameWithOffset> files = FileUtils.getDirectoryListing("../parquet-file-sample-data","parquet", Paths.get("."), 5000);
         File parquetData= new File(files.get(0).fileName);
 
         final CountingInputStream inputStream = new CountingInputStream(new FileInputStream(parquetData));

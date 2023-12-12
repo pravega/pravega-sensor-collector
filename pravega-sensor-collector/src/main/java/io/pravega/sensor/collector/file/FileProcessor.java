@@ -22,13 +22,11 @@ import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
-import java.nio.channels.FileChannel;
-import java.nio.channels.FileLock;
 import java.nio.file.*;
 import java.sql.Connection;
+import java.sql.SQLException;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicLong;
 
@@ -44,6 +42,7 @@ public abstract class FileProcessor {
     private final EventWriter<byte[]> writer;
     private final TransactionCoordinator transactionCoordinator;
     private final EventGenerator eventGenerator;
+    private final Path movedFilesDirectory;
 
     public FileProcessor(FileConfig config, TransactionStateDB state, EventWriter<byte[]> writer, TransactionCoordinator transactionCoordinator) {
         this.config = config;
@@ -51,6 +50,7 @@ public abstract class FileProcessor {
         this.writer = writer;
         this.transactionCoordinator = transactionCoordinator;
         this.eventGenerator = getEventGenerator(config);
+        this.movedFilesDirectory = Paths.get(config.stateDatabaseFileName).getParent();
     }
 
     public static FileProcessor create(
@@ -124,9 +124,9 @@ public abstract class FileProcessor {
      */
     protected List<FileNameWithOffset> getDirectoryListing() throws IOException {
         log.debug("getDirectoryListing: fileSpec={}", config.fileSpec);
-        //Invalid files will be moved to a separate folder Failed_Files next to the database file
-        Path failedFilesDirectory = Paths.get(config.stateDatabaseFileName).getParent();
-        final List<FileNameWithOffset> directoryListing = FileUtils.getDirectoryListing(config.fileSpec, config.fileExtension, failedFilesDirectory);
+        //Invalid files will be moved to a separate folder Failed_Files parallel to the database file
+        log.debug("movedFilesDirectory: {}", movedFilesDirectory);
+        final List<FileNameWithOffset> directoryListing = FileUtils.getDirectoryListing(config.fileSpec, config.fileExtension, movedFilesDirectory, config.minTimeInMillisToUpdateFile);
         log.debug("getDirectoryListing: directoryListing={}", directoryListing);
         return directoryListing;
     }
@@ -134,7 +134,7 @@ public abstract class FileProcessor {
     /**
      * @return sorted list of file name and file size in bytes
      */
-    static protected List<FileNameWithOffset> getNewFiles(List<FileNameWithOffset> directoryListing, List<FileNameWithOffset> completedFiles) {
+    protected List<FileNameWithOffset> getNewFiles(List<FileNameWithOffset> directoryListing, List<FileNameWithOffset> completedFiles) {
         final ArrayList<FileNameWithOffset> sortedDirectoryListing = new ArrayList<>(directoryListing);
         Collections.sort(sortedDirectoryListing);
         final List<FileNameWithOffset> newFiles = new ArrayList<>();
@@ -143,6 +143,13 @@ public abstract class FileProcessor {
         sortedDirectoryListing.forEach(dirFile -> {
             if (!setCompletedFiles.contains(dirFile)) {
                 newFiles.add(new FileNameWithOffset(dirFile.fileName, 0));
+            } else {
+                try {
+                    FileUtils.moveCompletedFile(dirFile, movedFilesDirectory);
+                    log.warn("File: {} already marked as completed, moving now", dirFile.fileName);
+                } catch (IOException e) {
+                    log.error("File: {} already marked as completed, but failed to move, error:{}", dirFile.fileName,e.getMessage());
+                }
             }
         });
         log.info("getNewFiles: new file lists = {}", newFiles);
@@ -153,7 +160,7 @@ public abstract class FileProcessor {
         log.info("processFile: Ingesting file {}; beginOffset={}, firstSequenceNumber={}",
                 fileNameWithBeginOffset.fileName, fileNameWithBeginOffset.offset, firstSequenceNumber);
 
-        AtomicLong numofbytes = new AtomicLong(0);
+        AtomicLong numOfBytes = new AtomicLong(0);
         long timestamp = System.nanoTime();
         // In case a previous iteration encountered an error, we need to ensure that
         // previous flushed transactions are committed and any unflushed transactions as aborted.
@@ -181,7 +188,7 @@ public abstract class FileProcessor {
                         log.trace("processFile: event={}", e);
                         try {
                              writer.writeEvent(e.routingKey, e.bytes);
-                            numofbytes.addAndGet(e.bytes.length);
+                            numOfBytes.addAndGet(e.bytes.length);
                         } catch (TxnFailedException ex) {
                             log.error("processFile: Write event to transaction failed with exception {} while processing file: {}, event: {}", ex, fileNameWithBeginOffset.fileName, e);
 
@@ -195,7 +202,9 @@ public abstract class FileProcessor {
             final long nextSequenceNumber = result.getLeft();
             final long endOffset = result.getRight();
             log.debug("processFile: Adding completed file: {}",  fileNameWithBeginOffset.fileName);
-            state.addCompletedFileRecord(fileNameWithBeginOffset.fileName, fileNameWithBeginOffset.offset, endOffset, nextSequenceNumber, txnId);
+
+            moveCompletedFile(fileNameWithBeginOffset, endOffset, nextSequenceNumber, txnId);
+
             // injectCommitFailure();
             try {
                 // commit fails only if Transaction is not in open state.
@@ -213,7 +222,7 @@ public abstract class FileProcessor {
             }
 
             double elapsedSec = (System.nanoTime() - timestamp) / 1_000_000_000.0;
-            double megabyteCount = numofbytes.getAndSet(0) / 1_000_000.0;
+            double megabyteCount = numOfBytes.getAndSet(0) / 1_000_000.0;
             double megabytesPerSec = megabyteCount / elapsedSec;
             log.info("Sent {} MB in {} sec. Transfer rate: {} MB/sec ", megabyteCount, elapsedSec, megabytesPerSec );
             log.info("processFile: Finished ingesting file {}; endOffset={}, nextSequenceNumber={}",
@@ -225,28 +234,37 @@ public abstract class FileProcessor {
         }
     }
 
+    void moveCompletedFile(FileNameWithOffset fileNameWithBeginOffset, long endOffset, long nextSequenceNumber, Optional<UUID> txnId) throws SQLException, IOException {
+        state.addCompletedFileRecord(fileNameWithBeginOffset.fileName, fileNameWithBeginOffset.offset, endOffset, nextSequenceNumber, txnId);
+        FileUtils.moveCompletedFile(fileNameWithBeginOffset, movedFilesDirectory);
+    }
+
     void deleteCompletedFiles() throws Exception {
         final List<FileNameWithOffset> completedFiles = state.getCompletedFileRecords();
         completedFiles.forEach(file -> {
             //Obtain a lock on file
-            try(FileChannel channel = FileChannel.open(Paths.get(file.fileName), StandardOpenOption.WRITE)){
-                try(FileLock lock = channel.tryLock()) {
-                    if(lock!=null){
-                        Files.deleteIfExists(Paths.get(file.fileName));
-                        log.info("deleteCompletedFiles: Deleted file {}", file.fileName);
-                        lock.release();
-                        // Only remove from database if we could delete file.
-                        state.deleteCompletedFileRecord(file.fileName);
-                    }
-                    else{
-                        log.warn("Unable to obtain lock on file {}. File is locked by another process.", file.fileName);
-                        throw new Exception();
-                    }
+            Path completedFilesPath = movedFilesDirectory.resolve(FileUtils.COMPLETED_FILES);
+            String completedFileName = FileUtils.createCompletedFileName(completedFilesPath, file.fileName);
+            Path filePath = completedFilesPath.resolve(completedFileName);
+            log.debug("deleteCompletedFiles: Deleting File default name:{}, and it's completed file name:{}.", file.fileName, filePath);
+            if(Files.notExists(filePath)) {
+                try {
+                    state.deleteCompletedFileRecord(file.fileName);
+                } catch (SQLException e) {
+                    throw new RuntimeException(e);
                 }
-            } catch (Exception e) {
-                log.warn("Unable to delete ingested file {}", e.getMessage());
-                log.warn("Deletion will be retried on the next iteration.");
-                // We can continue on this error. Deletion will be retried on the next iteration.
+                log.warn("deleteCompletedFiles: File {} does not exist in completed files directory.", filePath);
+            } else {
+                try {
+                    Files.deleteIfExists(filePath);
+                    // Only remove from database if we could delete file.
+                    state.deleteCompletedFileRecord(file.fileName);
+                    log.debug("deleteCompletedFiles: Deleted File default name:{}, and it's completed file name:{}.", file.fileName, filePath);
+                } catch (Exception e) {
+                    log.warn("Unable to delete ingested file default name:{}, and it's completed file name:{}, error: {}.", file.fileName, filePath, e.getMessage());
+                    log.warn("Deletion will be retried on the next iteration.");
+                    // We can continue on this error. Deletion will be retried on the next iteration.
+                }
             }
         });
     }

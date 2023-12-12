@@ -4,7 +4,6 @@ import com.google.common.collect.ImmutableList;
 import io.pravega.client.EventStreamClientFactory;
 import io.pravega.client.stream.EventWriterConfig;
 import io.pravega.client.stream.impl.ByteArraySerializer;
-import io.pravega.sensor.collector.file.rawfile.RawEventGenerator;
 import io.pravega.sensor.collector.file.rawfile.RawFileProcessor;
 import io.pravega.sensor.collector.util.*;
 import org.junit.jupiter.api.Assertions;
@@ -42,9 +41,9 @@ public class FileProcessorTests {
     @BeforeEach
     public void setup(){
         MockitoAnnotations.initMocks(this);
-        config = new FileConfig("tset.db","/opt/pravega-sensor-collector/Files/A","parquet","key12",
+        config = new FileConfig("./tset.db","/opt/pravega-sensor-collector/Files/A","parquet","key12",
                 "stream1","{}",10, false,
-                true,20.0,"RawFileIngestService");
+                true,20.0, 5000,"RawFileIngestService");
         /*writer = EventWriter.create(
                 clientFactory,
                 "writerId",
@@ -72,14 +71,15 @@ public class FileProcessorTests {
         final List<FileNameWithOffset> expected = ImmutableList.of(
                 new FileNameWithOffset("file3", 0),
                 new FileNameWithOffset("file4", 0));
-        final List<FileNameWithOffset> actual = FileProcessor.getNewFiles(directoryListing, completedFiles);
+        RawFileProcessor fileProcessor = new RawFileProcessor(config,state, writer, transactionCoordinator, "writerId");
+        final List<FileNameWithOffset> actual = fileProcessor.getNewFiles(directoryListing, completedFiles);
         Assertions.assertEquals(expected, actual);
     }
 
     @Test
     public void getDirectoryListingTest() throws IOException {
         final List<FileNameWithOffset> actual = FileUtils.getDirectoryListing(
-                "../log-file-sample-data/","csv",Paths.get("."));
+                "../log-file-sample-data/","csv",Paths.get("."), 5000);
         log.info("actual={}", actual);
     }
 
