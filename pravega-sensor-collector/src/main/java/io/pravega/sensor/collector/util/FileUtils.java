@@ -152,7 +152,7 @@ public class FileUtils {
             try(FileLock lock = channel.tryLock()) {
                 if(lock!=null){
                     Files.move(sourcePath, targetPath, StandardCopyOption.REPLACE_EXISTING);
-                    log.info("movedFile: Moved file from {} to {}", sourcePath, targetPath);
+                    log.debug("movedFile: Moved file from {} to {}", sourcePath, targetPath);
                     lock.release();
                 }
                 else{

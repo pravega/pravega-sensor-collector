@@ -2,20 +2,19 @@ package io.pravega.sensor.collector.file.parquet;
 
 import com.google.common.io.CountingInputStream;
 import io.pravega.sensor.collector.file.EventGenerator;
+import io.pravega.sensor.collector.util.FileNameWithOffset;
+import io.pravega.sensor.collector.util.FileUtils;
+import io.pravega.sensor.collector.util.PravegaWriterEvent;
 import org.apache.commons.lang3.tuple.Pair;
 import org.junit.Assert;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import io.pravega.sensor.collector.util.FileNameWithOffset;
-import io.pravega.sensor.collector.util.FileUtils;
-import io.pravega.sensor.collector.util.PravegaWriterEvent;
-
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
-import java.nio.file.Paths;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
@@ -32,8 +31,7 @@ public class ParquetEventGeneratorTests {
         final CountingInputStream inputStream = new CountingInputStream(new FileInputStream(parquetData));
         final List<PravegaWriterEvent> events = new ArrayList<>();
         Pair<Long, Long> nextSequenceNumberAndOffset = eventGenerator.generateEventsFromInputStream(inputStream, 1, events::add);
-        log.info("events={}", events);
-        Assert.assertEquals(501L, (long) nextSequenceNumberAndOffset.getLeft());        
+        Assert.assertEquals(501L, (long) nextSequenceNumberAndOffset.getLeft());
         Assert.assertEquals(parquetData.length(), (long) nextSequenceNumberAndOffset.getRight());
     }
 
