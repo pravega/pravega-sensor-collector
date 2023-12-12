@@ -13,10 +13,10 @@ ROOT_DIR=$(readlink -f $(dirname $0)/..)
 source ${ROOT_DIR}/scripts/env.sh
 pushd ${ROOT_DIR}
 
-./gradlew shadowJar ${GRADLE_OPTIONS}
-ls -lh ${ROOT_DIR}/pravega-sensor-collector/build/libs/pravega-sensor-collector-${APP_VERSION}.jar
-
 GZIP="--rsyncable" ./gradlew distTar ${GRADLE_OPTIONS}
-popd
 
 ls -lh ${ROOT_DIR}/pravega-sensor-collector/build/distributions/pravega-sensor-collector-${APP_VERSION}.tgz
+
+./gradlew shadowJar ${GRADLE_OPTIONS}
+ls -lh ${ROOT_DIR}/pravega-sensor-collector/build/libs/pravega-sensor-collector-${APP_VERSION}.jar
+popd

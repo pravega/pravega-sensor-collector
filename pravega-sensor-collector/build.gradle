@@ -104,6 +104,7 @@ startScripts {
 }
 
 shadowJar{
+    archiveBaseName = 'pravega-sensor-collector'
     archiveClassifier = ''
 }
 
