@@ -4,7 +4,6 @@ import com.google.common.collect.ImmutableList;
 import io.pravega.client.EventStreamClientFactory;
 import io.pravega.client.stream.EventWriterConfig;
 import io.pravega.client.stream.impl.ByteArraySerializer;
-import io.pravega.sensor.collector.file.rawfile.RawEventGenerator;
 import io.pravega.sensor.collector.file.rawfile.RawFileProcessor;
 import io.pravega.sensor.collector.util.*;
 import org.junit.jupiter.api.Assertions;
@@ -44,7 +43,7 @@ public class FileProcessorTests {
         MockitoAnnotations.initMocks(this);
         config = new FileConfig("./tset.db","/opt/pravega-sensor-collector/Files/A","parquet","key12",
                 "stream1","{}",10, false,
-                true,20.0,"RawFileIngestService", 5000);
+                true,20.0, 5000,"RawFileIngestService");
         /*writer = EventWriter.create(
                 clientFactory,
                 "writerId",

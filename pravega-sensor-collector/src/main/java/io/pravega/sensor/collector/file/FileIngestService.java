@@ -62,8 +62,8 @@ public abstract class FileIngestService extends DeviceDriver {
                 getDeleteCompletedFiles(),
                 getExactlyOnce(),
                 getTransactionTimeoutMinutes(),
-                config.getClassName(),
-                getMinTimeInMillisToUpdateFile());
+                getMinTimeInMillisToUpdateFile(),
+                config.getClassName());
         log.info("File Ingest Config: {}", fileSequenceConfig);
         final String scopeName = getScopeName();
         log.info("Scope: {}", scopeName);

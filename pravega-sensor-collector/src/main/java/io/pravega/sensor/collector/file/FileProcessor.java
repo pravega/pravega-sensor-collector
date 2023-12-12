@@ -22,11 +22,8 @@ import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
-import java.nio.channels.FileChannel;
-import java.nio.channels.FileLock;
 import java.nio.file.*;
 import java.sql.Connection;
 import java.sql.SQLException;
@@ -149,7 +146,7 @@ public abstract class FileProcessor {
             } else {
                 try {
                     FileUtils.moveCompletedFile(dirFile, movedFilesDirectory);
-                    log.warn("File: {} already marked as completed, but couldn't move last time, hence moving now", dirFile.fileName);
+                    log.warn("File: {} already marked as completed, moving now", dirFile.fileName);
                 } catch (IOException e) {
                     log.error("File: {} already marked as completed, but failed to move, error:{}", dirFile.fileName,e.getMessage());
                 }
@@ -257,26 +254,17 @@ public abstract class FileProcessor {
                     throw new RuntimeException(e);
                 }
                 log.warn("deleteCompletedFiles: File {} does not exist in completed files directory.", filePath);
-                return;
-            }
-            try(FileChannel channel = FileChannel.open(filePath, StandardOpenOption.WRITE)){
-                try(FileLock lock = channel.tryLock()) {
-                    if(lock!=null){
-                        Files.deleteIfExists(filePath);
-                        lock.release();
-                        // Only remove from database if we could delete file.
-                        state.deleteCompletedFileRecord(file.fileName);
-                        log.debug("deleteCompletedFiles: Deleted File default name:{}, and it's completed file name:{}.", file.fileName, filePath);
-                    }
-                    else{
-                        log.warn("Unable to obtain lock on file {}. File is locked by another process.", file.fileName);
-                        throw new Exception();
-                    }
+            } else {
+                try {
+                    Files.deleteIfExists(filePath);
+                    // Only remove from database if we could delete file.
+                    state.deleteCompletedFileRecord(file.fileName);
+                    log.debug("deleteCompletedFiles: Deleted File default name:{}, and it's completed file name:{}.", file.fileName, filePath);
+                } catch (Exception e) {
+                    log.warn("Unable to delete ingested file default name:{}, and it's completed file name:{}, error: {}.", file.fileName, filePath, e.getMessage());
+                    log.warn("Deletion will be retried on the next iteration.");
+                    // We can continue on this error. Deletion will be retried on the next iteration.
                 }
-            } catch (Exception e) {
-                log.warn("Unable to delete ingested file {}", e.getMessage());
-                log.warn("Deletion will be retried on the next iteration.");
-                // We can continue on this error. Deletion will be retried on the next iteration.
             }
         });
     }

@@ -124,6 +124,11 @@ public class FileUtils {
         moveFile(sourcePath, targetPath);
     }
 
+    /**
+     * To keep same file name of different directories in completed file directory.
+     * Creating completed file name with _ instead of /, so that it includes all subdirectories.
+     * If the full file name is greater than 255 characters, it will be truncated to 255 characters.
+     */
     public static String createCompletedFileName(Path completedFilesDir, String fileName) {
         if(fileName==null || fileName.isEmpty() || completedFilesDir==null) {
             return fileName;
