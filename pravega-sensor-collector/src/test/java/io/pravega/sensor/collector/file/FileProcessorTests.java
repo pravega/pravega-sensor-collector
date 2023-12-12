@@ -56,13 +56,9 @@ public class FileProcessorTests {
     public void setup(){
         MockitoAnnotations.initMocks(this);
         String stateDatabaseFileName = ":memory:";
-        config = new FileConfig("./tset.db","/opt/pravega-sensor-collector/Files/A","parquet","key12",
+        config = new FileConfig("./psc.db","/opt/pravega-sensor-collector/Files/A","parquet","key12",
                 "stream1","{}",10, false,
                 true,20.0, 5000,"RawFileIngestService");
-
-       // state = TransactionStateInMemoryImpl.create(stateDatabaseFileName);
-        //rawFileProcessor = new RawFileProcessor(config,state, writer, transactionCoordinator, "writerId");
-
     }
 
     @Test
@@ -104,10 +100,8 @@ public class FileProcessorTests {
     @Test
     public void processNextFile() throws Exception {
         copyFile();
-       // Mockito.when(state.getNextPendingFileRecord()).thenReturn(new ImmutablePair<>(new FileNameWithOffset("file1.parquet", 0), 1L));
         FileProcessor fileProcessor = new RawFileProcessor(config, state, transactionalEventWriter,transactionCoordinator, "test");
         doNothing().when(transactionalEventWriter).writeEvent(anyString(), any());
-        //fileProcessor.processNewFiles();
         fileProcessor.processFile(new FileNameWithOffset("../../pravega-sensor-collector/parquet-file-sample-data/sub1.parquet", 0), 1L);
         verify(transactionalEventWriter).writeEvent(anyString(), any());
     }
@@ -162,6 +156,10 @@ public class FileProcessorTests {
         Mockito.verify(transactionalEventWriter, Mockito.times(1)).commit();
     }
 
+    /*
+     * Before each test we need to copy the files to parquet file directory so that files are available for processing.
+     * Post process these files are moved to different directory, so it is important to add them back to the current directory path.
+     */
     public void copyFile() throws IOException {
         Path sourcePath = Paths.get("../../pravega-sensor-collector/parquet-file-sample-data/test_file/sub1.parquet");
         Path targetPath = Paths.get("../../pravega-sensor-collector/parquet-file-sample-data/sub1.parquet");
