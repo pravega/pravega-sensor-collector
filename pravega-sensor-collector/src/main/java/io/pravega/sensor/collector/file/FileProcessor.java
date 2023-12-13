@@ -250,24 +250,21 @@ public abstract class FileProcessor {
             String completedFileName = FileUtils.createCompletedFileName(completedFilesPath, file.fileName);
             Path filePath = completedFilesPath.resolve(completedFileName);
             log.debug("deleteCompletedFiles: Deleting File default name:{}, and it's completed file name:{}.", file.fileName, filePath);
-            if(Files.notExists(filePath)) {
-                try {
-                    state.deleteCompletedFileRecord(file.fileName);
-                } catch (SQLException e) {
-                    throw new RuntimeException(e);
-                }
-                log.warn("deleteCompletedFiles: File {} does not exist in completed files directory.", filePath);
-            } else {
-                try {
-                    Files.deleteIfExists(filePath);
-                    // Only remove from database if we could delete file.
+            try {
+                /**
+                 * If file gets deleted from completed files directory, or it does not exist in default ingestion directory
+                 * then only remove the record from DB.
+                 */
+                if(Files.deleteIfExists(filePath) || Files.notExists(Paths.get(file.fileName))) {
                     state.deleteCompletedFileRecord(file.fileName);
                     log.debug("deleteCompletedFiles: Deleted File default name:{}, and it's completed file name:{}.", file.fileName, filePath);
-                } catch (Exception e) {
-                    log.warn("Unable to delete ingested file default name:{}, and it's completed file name:{}, error: {}.", file.fileName, filePath, e.getMessage());
-                    log.warn("Deletion will be retried on the next iteration.");
-                    // We can continue on this error. Deletion will be retried on the next iteration.
+                } else {
+                    log.warn("deleteCompletedFiles: Either file {} doesn't exists in completed files directory or file {} does exist in default ingestion directory.", filePath, file.fileName);
                 }
+            } catch (Exception e) {
+                log.warn("Unable to delete ingested file default name:{}, and it's completed file name:{}, error: {}.", file.fileName, filePath, e.getMessage());
+                log.warn("Deletion will be retried on the next iteration.");
+                // We can continue on this error. Deletion will be retried on the next iteration.
             }
         });
     }
