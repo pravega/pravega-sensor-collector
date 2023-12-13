@@ -201,9 +201,6 @@ public abstract class FileProcessor {
             final Optional<UUID> txnId = writer.flush();
             final long nextSequenceNumber = result.getLeft();
             final long endOffset = result.getRight();
-            log.debug("processFile: Adding completed file: {}",  fileNameWithBeginOffset.fileName);
-
-            moveCompletedFile(fileNameWithBeginOffset, endOffset, nextSequenceNumber, txnId);
 
             // injectCommitFailure();
             try {
@@ -214,6 +211,8 @@ public abstract class FileProcessor {
                 log.error("processFile: Commit transaction for id: {}, file : {}, failed with exception: {}", txnId, fileNameWithBeginOffset.fileName, ex);
                 throw new RuntimeException(ex);
             }
+            log.debug("processFile: Adding completed file: {}",  fileNameWithBeginOffset.fileName);
+            state.addCompletedFileRecord(fileNameWithBeginOffset.fileName, fileNameWithBeginOffset.offset, endOffset, nextSequenceNumber, txnId);
             // Add to completed file list only if commit is successfull else it will be taken care as part of recovery
             if(txnId.isPresent()){
                 Transaction.Status status = writer.getTransactionStatus(txnId.get());
@@ -228,15 +227,11 @@ public abstract class FileProcessor {
             log.info("processFile: Finished ingesting file {}; endOffset={}, nextSequenceNumber={}",
                     fileNameWithBeginOffset.fileName, endOffset, nextSequenceNumber);
         }
+        FileUtils.moveCompletedFile(fileNameWithBeginOffset, movedFilesDirectory);
         // Delete file right after ingesting
         if (config.enableDeleteCompletedFiles) {
             deleteCompletedFiles();
         }
-    }
-
-    void moveCompletedFile(FileNameWithOffset fileNameWithBeginOffset, long endOffset, long nextSequenceNumber, Optional<UUID> txnId) throws SQLException, IOException {
-        state.addCompletedFileRecord(fileNameWithBeginOffset.fileName, fileNameWithBeginOffset.offset, endOffset, nextSequenceNumber, txnId);
-        FileUtils.moveCompletedFile(fileNameWithBeginOffset, movedFilesDirectory);
     }
 
     void deleteCompletedFiles() throws Exception {
