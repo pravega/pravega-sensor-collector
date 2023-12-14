@@ -161,8 +161,8 @@ public class FileUtils {
                 }
             }
         } catch (Exception e) {
-            log.warn("Unable to move failed file {}", e.getMessage());
-            log.warn("Failed file will be moved on the next iteration.");
+            log.warn("Unable to move file {}", e.getMessage());
+            log.warn("File will be moved on the next iteration.");
             // We can continue on this error. Moving will be retried on the next iteration.
         }
     }    

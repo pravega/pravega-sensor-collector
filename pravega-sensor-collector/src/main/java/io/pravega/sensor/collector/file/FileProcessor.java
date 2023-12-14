@@ -209,9 +209,6 @@ public abstract class FileProcessor {
             final Optional<UUID> txnId = writer.flush();
             final long nextSequenceNumber = result.getLeft();
             final long endOffset = result.getRight();
-            log.debug("processFile: Adding completed file: {}",  fileNameWithBeginOffset.fileName);
-
-            moveCompletedFile(fileNameWithBeginOffset, endOffset, nextSequenceNumber, txnId);
 
             // injectCommitFailure();
             try {
@@ -222,6 +219,8 @@ public abstract class FileProcessor {
                 log.error("processFile: Commit transaction for id: {}, file : {}, failed with exception: {}", txnId, fileNameWithBeginOffset.fileName, ex);
                 throw new RuntimeException(ex);
             }
+            log.debug("processFile: Adding completed file: {}",  fileNameWithBeginOffset.fileName);
+            state.addCompletedFileRecord(fileNameWithBeginOffset.fileName, fileNameWithBeginOffset.offset, endOffset, nextSequenceNumber, txnId);
             // Add to completed file list only if commit is successfull else it will be taken care as part of recovery
             if(txnId.isPresent()){
                 Transaction.Status status = writer.getTransactionStatus(txnId.get());
@@ -236,15 +235,11 @@ public abstract class FileProcessor {
             log.info("processFile: Finished ingesting file {}; endOffset={}, nextSequenceNumber={}",
                     fileNameWithBeginOffset.fileName, endOffset, nextSequenceNumber);
         }
+        FileUtils.moveCompletedFile(fileNameWithBeginOffset, movedFilesDirectory);
         // Delete file right after ingesting
         if (config.enableDeleteCompletedFiles) {
             deleteCompletedFiles();
         }
-    }
-
-    void moveCompletedFile(FileNameWithOffset fileNameWithBeginOffset, long endOffset, long nextSequenceNumber, Optional<UUID> txnId) throws SQLException, IOException {
-        state.addCompletedFileRecord(fileNameWithBeginOffset.fileName, fileNameWithBeginOffset.offset, endOffset, nextSequenceNumber, txnId);
-        FileUtils.moveCompletedFile(fileNameWithBeginOffset, movedFilesDirectory);
     }
 
     void deleteCompletedFiles() throws Exception {
@@ -255,24 +250,25 @@ public abstract class FileProcessor {
             String completedFileName = FileUtils.createCompletedFileName(completedFilesPath, file.fileName);
             Path filePath = completedFilesPath.resolve(completedFileName);
             log.debug("deleteCompletedFiles: Deleting File default name:{}, and it's completed file name:{}.", file.fileName, filePath);
-            if(Files.notExists(filePath)) {
-                try {
-                    state.deleteCompletedFileRecord(file.fileName);
-                } catch (SQLException e) {
-                    throw new RuntimeException(e);
-                }
-                log.warn("deleteCompletedFiles: File {} does not exist in completed files directory.", filePath);
-            } else {
-                try {
-                    Files.deleteIfExists(filePath);
-                    // Only remove from database if we could delete file.
+            try {
+                /**
+                 * If file gets deleted from completed files directory, or it does not exist in default ingestion directory
+                 * then only remove the record from DB.
+                 */
+                if(Files.deleteIfExists(filePath) || Files.notExists(Paths.get(file.fileName))) {
                     state.deleteCompletedFileRecord(file.fileName);
                     log.debug("deleteCompletedFiles: Deleted File default name:{}, and it's completed file name:{}.", file.fileName, filePath);
-                } catch (Exception e) {
-                    log.warn("Unable to delete ingested file default name:{}, and it's completed file name:{}, error: {}.", file.fileName, filePath, e.getMessage());
-                    log.warn("Deletion will be retried on the next iteration.");
-                    // We can continue on this error. Deletion will be retried on the next iteration.
+                } else {
+                    /**
+                     * This situation occurs because at first attempt moving file to completed directory fails, but the file still exists in default ingestion directory.
+                     * Moving file from default directory to completed directory will be taken care in next iteration, post which delete will be taken care.
+                     */
+                    log.warn("deleteCompletedFiles: File {} doesn't exists in completed directory but still exist in default ingestion directory.", filePath);
                 }
+            } catch (Exception e) {
+                log.warn("Unable to delete ingested file default name:{}, and it's completed file name:{}, error: {}.", file.fileName, filePath, e.getMessage());
+                log.warn("Deletion will be retried on the next iteration.");
+                // We can continue on this error. Deletion will be retried on the next iteration.
             }
         });
     }
