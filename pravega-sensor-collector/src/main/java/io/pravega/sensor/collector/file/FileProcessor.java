@@ -259,7 +259,11 @@ public abstract class FileProcessor {
                     state.deleteCompletedFileRecord(file.fileName);
                     log.debug("deleteCompletedFiles: Deleted File default name:{}, and it's completed file name:{}.", file.fileName, filePath);
                 } else {
-                    log.warn("deleteCompletedFiles: Either file {} doesn't exists in completed files directory or file {} does exist in default ingestion directory.", filePath, file.fileName);
+                    /**
+                     * This situation occurs because at first attempt moving file to completed directory fails, but the file still exists in default ingestion directory.
+                     * Moving file from default directory to completed directory will be taken care in next iteration, post which delete will be taken care.
+                     */
+                    log.warn("deleteCompletedFiles: File {} doesn't exists in completed directory but still exist in default ingestion directory.", filePath);
                 }
             } catch (Exception e) {
                 log.warn("Unable to delete ingested file default name:{}, and it's completed file name:{}, error: {}.", file.fileName, filePath, e.getMessage());
