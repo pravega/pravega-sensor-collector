@@ -176,9 +176,14 @@ public abstract class FileProcessor {
         /* Check if transactions can be aborted.
          * Will fail with {@link TxnFailedException} if the transaction has already been committed or aborted.
          */
-        log.debug("processFile: Transaction status {} ", writer.getTransactionStatus());
-        if(writer.getTransactionStatus() == Transaction.Status.OPEN){
-            writer.abort();
+        if (config.exactlyOnce)
+        {
+            log.debug("processFile: Transaction status {} ", writer.getTransactionStatus());
+            if(writer.getTransactionStatus() == Transaction.Status.OPEN){
+                writer.abort();
+            }
+        } else {
+            log.debug("processFile: No need to check transaction status for non-transactional write.");
         }
 
         File pendingFile = new File(fileNameWithBeginOffset.fileName);
