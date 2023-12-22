@@ -42,6 +42,7 @@ public abstract class FileIngestService extends DeviceDriver {
     private static final String EXACTLY_ONCE_KEY = "EXACTLY_ONCE";
     private static final String TRANSACTION_TIMEOUT_MINUTES_KEY = "TRANSACTION_TIMEOUT_MINUTES";
     private static final String MIN_TIME_IN_MILLIS_TO_UPDATE_FILE_KEY = "MIN_TIME_IN_MILLIS_TO_UPDATE_FILE";
+    private static final String ENABLE_LARGE_EVENT = "ENABLE_LARGE_EVENT";
 
     private final FileProcessor processor;
     private final ScheduledExecutorService executor;
@@ -63,7 +64,8 @@ public abstract class FileIngestService extends DeviceDriver {
                 getExactlyOnce(),
                 getTransactionTimeoutMinutes(),
                 getMinTimeInMillisToUpdateFile(),
-                config.getClassName());
+                config.getClassName(),
+                getLargeEventEnable());
         log.info("File Ingest Config: {}", fileSequenceConfig);
         final String scopeName = getScopeName();
         log.info("Scope: {}", scopeName);
@@ -127,6 +129,10 @@ public abstract class FileIngestService extends DeviceDriver {
 
     long getMinTimeInMillisToUpdateFile() {
         return Long.parseLong(getProperty(MIN_TIME_IN_MILLIS_TO_UPDATE_FILE_KEY, "5000"));
+    }
+
+    boolean getLargeEventEnable() {
+        return Boolean.parseBoolean(getProperty(ENABLE_LARGE_EVENT, Boolean.toString(false)));
     }
 
     protected void watchFiles() {

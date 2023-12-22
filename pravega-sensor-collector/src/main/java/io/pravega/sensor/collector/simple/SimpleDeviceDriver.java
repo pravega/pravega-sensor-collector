@@ -43,6 +43,7 @@ public abstract class SimpleDeviceDriver<R, S extends Samples> extends DeviceDri
     private static final String DELAY_BETWEEN_WRITE_BATCHES_MS_KEY = "DELAY_BETWEEN_WRITE_BATCHES_MS";
     private static final String EXACTLY_ONCE_KEY = "EXACTLY_ONCE";
     private static final String TRANSACTION_TIMEOUT_MINUTES_KEY = "TRANSACTION_TIMEOUT_MINUTES";
+    private static final String ENABLE_LARGE_EVENT = "ENABLE_LARGE_EVENT";
 
     private final String routingKey;
     private final DataCollectorService<R, S> dataCollectorService;
@@ -101,6 +102,7 @@ public abstract class SimpleDeviceDriver<R, S extends Samples> extends DeviceDri
                     .enableConnectionPooling(true)
                     .retryAttempts(Integer.MAX_VALUE)
                     .transactionTimeoutTime((long) (transactionTimeoutMinutes * 60.0 * 1000.0))
+                    .enableLargeEvents(getLargeEventEnable())
                     .build(),
             exactlyOnce);
 
@@ -153,6 +155,10 @@ public abstract class SimpleDeviceDriver<R, S extends Samples> extends DeviceDri
 
     boolean getExactlyOnce() {
         return Boolean.parseBoolean(getProperty(EXACTLY_ONCE_KEY, Boolean.toString(true)));
+    }
+
+    boolean getLargeEventEnable() {
+        return Boolean.parseBoolean(getProperty(ENABLE_LARGE_EVENT, Boolean.toString(false)));
     }
 
     /**

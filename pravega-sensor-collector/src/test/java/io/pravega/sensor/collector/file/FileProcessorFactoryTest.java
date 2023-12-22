@@ -37,7 +37,7 @@ public class FileProcessorFactoryTest {
         String stateDatabaseFileName = ":memory:";
         config = new FileConfig(stateDatabaseFileName,"/opt/pravega-sensor-collector/Files/A","parquet","key12",
                 "stream1","{}",10, false,
-                true,20.0, 5000l,"RawFileIngestService");
+                true,20.0, 5000l,"RawFileIngestService", true);
         FileProcessor rawFileProcessor = FileProcessorFactory.createFileSequenceProcessor(config,state,writer,transactionCoordinator,"writerId");
 
         Assertions.assertTrue(rawFileProcessor instanceof RawFileProcessor);
@@ -52,7 +52,7 @@ public class FileProcessorFactoryTest {
         String stateDatabaseFileName = ":memory:";
         config = new FileConfig(stateDatabaseFileName,"/opt/pravega-sensor-collector/Files/A","parquet","key12",
                 "stream1","{}",10, false,
-                true,20.0, 5000L,"CsvFileIngestService");
+                true,20.0, 5000L,"CsvFileIngestService", false);
         FileProcessor csvFileProcessor = FileProcessorFactory.createFileSequenceProcessor(config,state,writer,transactionCoordinator,"writerId");
 
         Assertions.assertTrue(csvFileProcessor instanceof CsvFileSequenceProcessor);
@@ -67,7 +67,7 @@ public class FileProcessorFactoryTest {
         String stateDatabaseFileName = ":memory:";
         config = new FileConfig(stateDatabaseFileName,"/opt/pravega-sensor-collector/Files/A","parquet","key12",
                 "stream1","{}",10, false,
-                true,20.0, 5000L,"ParquetFileIngestService");
+                true,20.0, 5000L,"ParquetFileIngestService", false);
         FileProcessor parquetFileProcessor = FileProcessorFactory.createFileSequenceProcessor(config,state,writer,transactionCoordinator,"writerId");
 
         Assertions.assertTrue(parquetFileProcessor instanceof ParquetFileProcessor);

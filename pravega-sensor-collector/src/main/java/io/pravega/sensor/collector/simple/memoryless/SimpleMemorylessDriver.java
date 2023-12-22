@@ -30,6 +30,7 @@ public abstract class SimpleMemorylessDriver<R> extends DeviceDriver {
     private static final String TRANSACTION_TIMEOUT_MINUTES_KEY = "TRANSACTION_TIMEOUT_MINUTES";
     private static final String ROUTING_KEY_KEY = "ROUTING_KEY";
     private static final String SENSOR_POLL_PERIODICITY_MS = "POLL_PERIODICITY_MS";
+    private static final String ENABLE_LARGE_EVENT = "ENABLE_LARGE_EVENT";
 
     private final DataCollectorService<R> dataCollectorService;
     private final EventStreamClientFactory clientFactory;
@@ -58,6 +59,7 @@ public abstract class SimpleMemorylessDriver<R> extends DeviceDriver {
                         .enableConnectionPooling(true)
                         .retryAttempts(Integer.MAX_VALUE)
                         .transactionTimeoutTime((long) (transactionTimeoutMinutes * 60.0 * 1000.0))
+                        .enableLargeEvents(getLargeEventEnable())
                         .build(),
                 exactlyOnce);
         dataCollectorService = new DataCollectorService<>(config.getInstanceName(), this, writer, readPeriodicityMs);
@@ -133,6 +135,11 @@ public abstract class SimpleMemorylessDriver<R> extends DeviceDriver {
     private long getReadPeriodicityMs() {
         return Long.parseLong(getProperty(SENSOR_POLL_PERIODICITY_MS, Integer.toString(10)));
     }
+
+    boolean getLargeEventEnable() {
+        return Boolean.parseBoolean(getProperty(ENABLE_LARGE_EVENT, Boolean.toString(false)));
+    }
+
 
     public String getRoutingKey() {
         return routingKey;

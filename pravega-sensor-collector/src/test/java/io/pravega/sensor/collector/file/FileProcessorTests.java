@@ -58,7 +58,7 @@ public class FileProcessorTests {
         String stateDatabaseFileName = ":memory:";
         config = new FileConfig("./psc.db","/opt/pravega-sensor-collector/Files/A","parquet","key12",
                 "stream1","{}",10, false,
-                true,20.0, 5000,"RawFileIngestService");
+                true,20.0, 5000,"RawFileIngestService", true);
     }
 
     @Test
