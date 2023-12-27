@@ -77,7 +77,7 @@ public abstract class FileProcessor {
                 EventWriterConfig.builder()
                         .enableConnectionPooling(true)
                         .transactionTimeoutTime((long) (config.transactionTimeoutMinutes * 60.0 * 1000.0))
-                        .enableLargeEvents(true)
+                        .enableLargeEvents(config.enableLargeEvent)
                         .build(),
                 config.exactlyOnce);
 
