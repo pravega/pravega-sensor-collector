@@ -9,6 +9,7 @@
  */
 package io.pravega.sensor.collector.util;
 
+import io.pravega.client.stream.Transaction;
 import io.pravega.client.stream.TxnFailedException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -139,9 +140,9 @@ public class TransactionCoordinator {
     public void performRecovery() {
         final List<UUID> transactionsToCommit = getTransactionsToCommit();
         if (transactionsToCommit.isEmpty()) {
-            log.debug("Transaction recovery not needed");
+            log.info("performRecovery: No transactions to be recovered");
         } else {
-            log.warn("Transaction recovery needed on {} transactions", transactionsToCommit.size());
+            log.info("Transaction recovery needed on {} transactions", transactionsToCommit.size());
             transactionsToCommit.forEach((txnId) -> {
                 log.info("Committing transaction {} from a previous process", txnId);
                 try {
@@ -160,6 +161,9 @@ public class TransactionCoordinator {
                                 txnId, e);
                         // Continue recovery and run as normal.
                     } else {
+                        log.error(
+                                "Unable to commit transaction {} from a previous process. Events may have been lost. " +
+                                        "Try increasing the transaction timeout.", txnId, e);
                         throw e;
                     }
                 }

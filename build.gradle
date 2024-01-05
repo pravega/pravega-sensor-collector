@@ -15,7 +15,7 @@
  * user guide available at https://docs.gradle.org/3.4.1/userguide/tutorial_java_projects.html
  */
 
-configurations.all {
+configurations.configureEach {
     // Check for updates every build
     resolutionStrategy.cacheChangingModulesFor 0, "seconds"
 }
@@ -23,6 +23,7 @@ configurations.all {
 subprojects {
     repositories {
         mavenLocal()
+        mavenCentral()
         maven {
             url "https://oss.jfrog.org/jfrog-dependencies"
         }

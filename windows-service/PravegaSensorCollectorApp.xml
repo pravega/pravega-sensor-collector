@@ -15,7 +15,7 @@
   <env name="pravega_client_auth_method" value="Bearer" />
   <env name="pravega_client_auth_loadDynamic" value="true" />
   <env name="KEYCLOAK_SERVICE_ACCOUNT_FILE" value="\opt\pravega-sensor-collector\windows-service\PSCFiles\keycloak.json" />  
-  <env name="PRAVEGA_SENSOR_COLLECTOR_RAW1_CLASS" value="io.pravega.sensor.collector.rawfile.RawFileIngestService" />
+  <env name="PRAVEGA_SENSOR_COLLECTOR_RAW1_CLASS" value="io.pravega.sensor.collector.file.rawfile.RawFileIngestService" />
   <env name="PRAVEGA_SENSOR_COLLECTOR_RAW1_FILE_SPEC" value="\opt\pravega-sensor-collector\Files" />
   <env name="PRAVEGA_SENSOR_COLLECTOR_RAW1_FILE_EXTENSION" value="parquet" />
   <env name="PRAVEGA_SENSOR_COLLECTOR_RAW1_DATABASE_FILE" value="\opt\pravega-sensor-collector\windows-service\PSCFiles\datafile.db" />
@@ -26,6 +26,7 @@
   <env name="PRAVEGA_SENSOR_COLLECTOR_RAW1_DELETE_COMPLETED_FILES" value="false" />
   <env name="PRAVEGA_SENSOR_COLLECTOR_RAW1_TRANSACTION_TIMEOUT_MINUTES" value="2.0" />
   <env name="PRAVEGA_SENSOR_COLLECTOR_RAW1_CREATE_SCOPE" value="false" />
+  <env name="PRAVEGA_SENSOR_COLLECTOR_RAW1_MIN_TIME_IN_MILLIS_TO_UPDATE_FILE" value="5000" />
   
   <onfailure action="restart"/>
 

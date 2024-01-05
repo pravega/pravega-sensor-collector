@@ -18,8 +18,8 @@ export pravega_client_auth_loadDynamic=true
 export KEYCLOAK_SERVICE_ACCOUNT_FILE=/opt/pravega-sensor-collector/conf/keycloak.json
 export JAVA_OPTS="-Xmx512m"
 
-export PRAVEGA_SENSOR_COLLECTOR_RAW1_CLASS=io.pravega.sensor.collector.rawfile.RawFileIngestService
-export PRAVEGA_SENSOR_COLLECTOR_RAW1_FILE_SPEC=/opt/pravega-sensor-collector/Files
+export PRAVEGA_SENSOR_COLLECTOR_RAW1_CLASS=io.pravega.sensor.collector.file.rawfile.RawFileIngestService
+export PRAVEGA_SENSOR_COLLECTOR_RAW1_FILE_SPEC="/opt/pravega-sensor-collector/Files/A,/opt/pravega-sensor-collector/Files/B"
 export PRAVEGA_SENSOR_COLLECTOR_RAW1_FILE_EXTENSION=parquet
 export PRAVEGA_SENSOR_COLLECTOR_RAW1_DATABASE_FILE=/opt/pravega-sensor-collector/datafile.db
 export PRAVEGA_SENSOR_COLLECTOR_RAW1_PRAVEGA_CONTROLLER_URI=tls://pravega-controller.sdp.cluster1.sdp-demo.org:443
@@ -29,5 +29,6 @@ export PRAVEGA_SENSOR_COLLECTOR_RAW1_ROUTING_KEY=$(hostname)
 export PRAVEGA_SENSOR_COLLECTOR_RAW1_DELETE_COMPLETED_FILES=false
 export PRAVEGA_SENSOR_COLLECTOR_RAW1_TRANSACTION_TIMEOUT_MINUTES=2.0
 export PRAVEGA_SENSOR_COLLECTOR_RAW1_CREATE_SCOPE=false
+export PRAVEGA_SENSOR_COLLECTOR_RAW1_MIN_TIME_IN_MILLIS_TO_UPDATE_FILE=5000
 
 ./gradlew --no-daemon run
