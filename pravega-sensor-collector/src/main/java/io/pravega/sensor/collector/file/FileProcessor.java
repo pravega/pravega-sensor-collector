@@ -177,8 +177,7 @@ public abstract class FileProcessor {
         /* Check if transactions can be aborted.
          * Will fail with {@link TxnFailedException} if the transaction has already been committed or aborted.
          */
-        if (config.exactlyOnce)
-        {
+        if (config.exactlyOnce) {
             log.debug("processFile: Transaction status {} ", writer.getTransactionStatus());
             if(writer.getTransactionStatus() == Transaction.Status.OPEN){
                 writer.abort();
