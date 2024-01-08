@@ -1,4 +1,3 @@
-package io.pravega.sensor.collector.file;
 /**
  * Copyright (c) Dell Inc., or its subsidiaries. All Rights Reserved.
  *
@@ -8,6 +7,7 @@ package io.pravega.sensor.collector.file;
  *
  *     http://www.apache.org/licenses/LICENSE-2.0
  */
+package io.pravega.sensor.collector.file;
 
 import com.google.common.io.CountingInputStream;
 import io.pravega.client.EventStreamClientFactory;
