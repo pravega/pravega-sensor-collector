@@ -58,6 +58,7 @@ public class Parameters {
 
     private static String getEnvVar(String name, String defaultValue) {
         String value = System.getenv(name);
+        System.out.println("System.getenv(name)" + System.getenv(name));
         if (value == null || value.isEmpty()) {
             return defaultValue;
         }

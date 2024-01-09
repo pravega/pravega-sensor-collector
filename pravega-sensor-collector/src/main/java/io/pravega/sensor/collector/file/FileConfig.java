@@ -48,19 +48,18 @@ public class FileConfig {
 
     @Override
     public String toString() {
-        return "FileConfig{" +
-                "stateDatabaseFileName='" + stateDatabaseFileName + '\'' +
-                ", fileSpec='" + fileSpec + '\'' +
-                ", fileExtension='" + fileExtension + '\'' +
-                ", fileType='" + fileType + '\'' +
-                ", routingKey='" + routingKey + '\'' +
-                ", streamName='" + streamName + '\'' +
-                ", eventTemplateStr='" + eventTemplateStr + '\'' +
-                ", maxRecordsPerEvent=" + maxRecordsPerEvent +
-                ", enableDeleteCompletedFiles=" + enableDeleteCompletedFiles +
-                ", exactlyOnce=" + exactlyOnce +
-                ", transactionTimeoutMinutes=" + transactionTimeoutMinutes +
-                ", minTimeInMillisToUpdateFile=" + minTimeInMillisToUpdateFile +
-                '}';
+        return "FileConfig{"
+                + "stateDatabaseFileName='" + stateDatabaseFileName + '\''
+                + ", fileSpec='" + fileSpec + '\''
+                + ", fileExtension='" + fileExtension + '\''
+                + ", fileType='" + fileType + '\''
+                + ", routingKey='" + routingKey + '\''
+                + ", streamName='" + streamName + '\''
+                + ", eventTemplateStr='" + eventTemplateStr + '\''
+                + ", maxRecordsPerEvent=" + maxRecordsPerEvent
+                + ", enableDeleteCompletedFiles=" + enableDeleteCompletedFiles
+                + ", exactlyOnce=" + exactlyOnce
+                + ", transactionTimeoutMinutes=" + transactionTimeoutMinutes
+                + '}';
     }
 }

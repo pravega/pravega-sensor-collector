@@ -13,10 +13,10 @@ import java.util.Date;
 import java.util.List;
 
 public class DeviceReadingsDto {
-    final public Date receivedTimestamp;
-    final public List<ReadingValueDto> values;
-    final public String deviceId;
-    final public Date readingTimestamp;
+    public final Date receivedTimestamp;
+    public final List<ReadingValueDto> values;
+    public final String deviceId;
+    public final Date readingTimestamp;
 
     public DeviceReadingsDto(Date receivedTimestamp, List<ReadingValueDto> values, String deviceId,
             Date readingTimestamp) {

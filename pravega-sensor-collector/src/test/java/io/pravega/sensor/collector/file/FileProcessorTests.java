@@ -18,11 +18,9 @@ import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
-import org.mockito.junit.MockitoJUnitRunner;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -41,7 +39,7 @@ import static org.mockito.Mockito.verify;
 
 
 public class FileProcessorTests {
-    private static final Logger log = LoggerFactory.getLogger(FileProcessorTests.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(FileProcessorTests.class);
 
     protected FileConfig config;
     @Mock
@@ -62,7 +60,7 @@ public class FileProcessorTests {
 
 
     @BeforeEach
-    public void setup(){
+    protected void setup() {
         MockitoAnnotations.initMocks(this);
         String stateDatabaseFileName = ":memory:";
         config = new FileConfig("./psc.db","/opt/pravega-sensor-collector/Files/A","parquet","key12",
@@ -91,7 +89,7 @@ public class FileProcessorTests {
     public void getDirectoryListingTest() throws IOException {
         final List<FileNameWithOffset> actual = FileUtils.getDirectoryListing(
                 "../log-file-sample-data/","csv", Paths.get("."), 5000);
-        log.info("actual={}", actual);
+        LOGGER.info("actual={}", actual);
     }
 
     /*
@@ -180,5 +178,4 @@ public class FileProcessorTests {
         targetPath = Paths.get("../../pravega-sensor-collector/parquet-file-sample-data/sub3.parquet");
         Files.copy(sourcePath, targetPath, StandardCopyOption.REPLACE_EXISTING);
     }
-
 }

@@ -75,9 +75,9 @@ public interface EventWriter<T> extends AutoCloseable {
     /**
      * This should called be prior to aborting any transactions to make sure it is not open.
      */
-    public Transaction.Status getTransactionStatus(UUID txnId);
+    Transaction.Status getTransactionStatus(UUID txnId);
 
-    public Transaction.Status getTransactionStatus();
+    Transaction.Status getTransactionStatus();
 
     void close();
 

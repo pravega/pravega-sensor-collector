@@ -31,10 +31,10 @@ import java.util.TimeZone;
 @Path("/")
 public class LeapMockResources {
 
-    final static Logger log = LoggerFactory.getLogger(LeapMockResources.class);
-    private static final SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSXXX");
+    static final Logger LOG = LoggerFactory.getLogger(LeapMockResources.class);
+    private static final SimpleDateFormat DATE_FORMAT = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSXXX");
     static {
-        dateFormat.setTimeZone(TimeZone.getTimeZone("UTC"));
+        DATE_FORMAT.setTimeZone(TimeZone.getTimeZone("UTC"));
     }
     private final ObjectMapper mapper = new ObjectMapper();
 
@@ -59,13 +59,14 @@ public class LeapMockResources {
 
         Long offsetDay = Date.from(current.toInstant().minus(Duration.ofDays(1))).getTime(); // reduces 1 day
         Date start = new Date(offsetDay - offsetDay % (24 * 60 * 60 * 1000)); // midnight of previous day
-        log.info("Current date is {}", dateFormat.format(current));
-        log.info("Getting all readings starting from {}", dateFormat.format(start)); //getting ~1day readings
+        LOG.info("Current date is {}", DATE_FORMAT.format(current));
+        LOG.info("Getting all readings starting from {}", DATE_FORMAT.format(start)); //getting ~1day readings
         int countAll = 0;
         for (;;) {
             start = Date.from(start.toInstant().plus(Duration.ofMinutes(1)));
-            if(start.getTime() > current.getTime())
+            if (start.getTime() > current.getTime()) {
                 break;
+            }
             ReadingValueDto readingValue1 = new ReadingValueDto(1, 0, 6, 5, "label", "iconUrl", "units",
                     5.637376656633329, "status");
             DeviceReadingsDto deviceReading = new DeviceReadingsDto(start, Arrays.asList(readingValue1, readingValue1),
@@ -73,7 +74,7 @@ public class LeapMockResources {
             allReadings.add(deviceReading);
             countAll++;
         }
-        log.info("Total {} readings", countAll);
+        LOG.info("Total {} readings", countAll);
         return allReadings;
     }
 
@@ -89,24 +90,23 @@ public class LeapMockResources {
             List<DeviceReadingsDto> allReadings = getAllReadings();
             List<DeviceReadingsDto> filteredReadings = new ArrayList<>();
             String jsonReadings;
-            if (startDate==null || startDate.isEmpty()) {
-                log.info("Final {} readings", allReadings.size());
+            if (startDate == null || startDate.isEmpty()) {
+                LOG.info("Final {} readings", allReadings.size());
                 jsonReadings = mapper.writeValueAsString(allReadings);
-            }
-            else {
-                Date timeStamp = dateFormat.parse(startDate);
-                log.info("Filtering readings starting from {}",startDate);
+            } else {
+                Date timeStamp = DATE_FORMAT.parse(startDate);
+                LOG.info("Filtering readings starting from {}", startDate);
                 for (DeviceReadingsDto deviceReading : allReadings) {
                     if (deviceReading.getReadingTimestamp().getTime() >= timeStamp.getTime()) {
                         filteredReadings.add(deviceReading);
                     }
                 }
-                log.info("Final {} readings", filteredReadings.size());
+                LOG.info("Final {} readings", filteredReadings.size());
                 jsonReadings = mapper.writeValueAsString(filteredReadings);
             }
             return jsonReadings;
         } catch (Exception e) {
-            log.info("Error", e);
+            LOG.info("Error", e);
             throw e;
         }
     }

@@ -20,7 +20,7 @@ import org.glassfish.jersey.server.ResourceConfig;
 
 public class LeapAPIMock {
 
-    private static final Logger log = LoggerFactory.getLogger(LeapAPIMock.class);
+    private static final Logger LOG = LoggerFactory.getLogger(LeapAPIMock.class);
     private static final String SERVER_URI = "http://0.0.0.0";
     private static final String PORT_NUM = "8083";
 
@@ -37,6 +37,6 @@ public class LeapAPIMock {
     public static void main(String[] args) throws Exception {
 
         final HttpServer server = startServer();
-        log.info("Server running at {}", SERVER_URI + ":" + PORT_NUM);
+        LOG.info("Server running at {}", SERVER_URI + ":" + PORT_NUM);
     }
 }

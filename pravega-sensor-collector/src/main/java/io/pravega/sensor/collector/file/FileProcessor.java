@@ -15,7 +15,14 @@ import io.pravega.client.stream.EventWriterConfig;
 import io.pravega.client.stream.Transaction;
 import io.pravega.client.stream.TxnFailedException;
 import io.pravega.client.stream.impl.ByteArraySerializer;
-import io.pravega.sensor.collector.util.*;
+import io.pravega.sensor.collector.util.EventWriter;
+import io.pravega.sensor.collector.util.FileNameWithOffset;
+import io.pravega.sensor.collector.util.FileUtils;
+import io.pravega.sensor.collector.util.PersistentId;
+import io.pravega.sensor.collector.util.SQliteDBUtility;
+import io.pravega.sensor.collector.util.TransactionCoordinator;
+import io.pravega.sensor.collector.util.TransactionStateDB;
+import io.pravega.sensor.collector.util.TransactionStateSQLiteImpl;
 import org.apache.commons.lang3.tuple.Pair;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -28,7 +35,6 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.nio.file.Path;
 import java.sql.Connection;
-import java.sql.SQLException;
 import java.util.List;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -62,7 +68,7 @@ public abstract class FileProcessor {
     }
 
     public static FileProcessor create(
-            FileConfig config, EventStreamClientFactory clientFactory){
+            FileConfig config, EventStreamClientFactory clientFactory) {
 
         final Connection connection = SQliteDBUtility.createDatabase(config.stateDatabaseFileName);
 
@@ -84,7 +90,7 @@ public abstract class FileProcessor {
         transactionCoordinator.performRecovery();
 
         final TransactionStateDB state = new TransactionStateSQLiteImpl(connection, transactionCoordinator);
-        return FileProcessorFactory.createFileSequenceProcessor(config, state, writer, transactionCoordinator,writerId);
+        return FileProcessorFactory.createFileSequenceProcessor(config, state, writer, transactionCoordinator, writerId);
 
     }
 
@@ -177,12 +183,12 @@ public abstract class FileProcessor {
          * Will fail with {@link TxnFailedException} if the transaction has already been committed or aborted.
          */
         log.debug("processFile: Transaction status {} ", writer.getTransactionStatus());
-        if(writer.getTransactionStatus() == Transaction.Status.OPEN){
+        if (writer.getTransactionStatus() == Transaction.Status.OPEN) {
             writer.abort();
         }
 
         File pendingFile = new File(fileNameWithBeginOffset.fileName);
-        if(!pendingFile.exists()){
+        if (!pendingFile.exists()) {
             log.warn("File {} does not exist. It was deleted before processing", fileNameWithBeginOffset.fileName);
             state.deletePendingFile(fileNameWithBeginOffset.fileName, fileNameWithBeginOffset.offset);
             return;
@@ -191,7 +197,7 @@ public abstract class FileProcessor {
         try (final InputStream inputStream = new FileInputStream(fileNameWithBeginOffset.fileName)) {
             final CountingInputStream countingInputStream = new CountingInputStream(inputStream);
             countingInputStream.skip(fileNameWithBeginOffset.offset);
-            final Pair<Long,Long> result = eventGenerator.generateEventsFromInputStream(countingInputStream, firstSequenceNumber,
+            final Pair<Long, Long> result = eventGenerator.generateEventsFromInputStream(countingInputStream, firstSequenceNumber,
                     e -> {
                         log.trace("processFile: event={}", e);
                         try {
@@ -222,16 +228,17 @@ public abstract class FileProcessor {
             log.debug("processFile: Adding completed file: {}",  fileNameWithBeginOffset.fileName);
             state.addCompletedFileRecord(fileNameWithBeginOffset.fileName, fileNameWithBeginOffset.offset, endOffset, nextSequenceNumber, txnId);
             // Add to completed file list only if commit is successfull else it will be taken care as part of recovery
-            if(txnId.isPresent()){
+            if (txnId.isPresent()) {
                 Transaction.Status status = writer.getTransactionStatus(txnId.get());
-                if(status == Transaction.Status.COMMITTED || status == Transaction.Status.ABORTED)
+                if (status == Transaction.Status.COMMITTED || status == Transaction.Status.ABORTED) {
                     state.deleteTransactionToCommit(txnId);
+                }
             }
 
             double elapsedSec = (System.nanoTime() - timestamp) / 1_000_000_000.0;
             double megabyteCount = numOfBytes.getAndSet(0) / 1_000_000.0;
             double megabytesPerSec = megabyteCount / elapsedSec;
-            log.info("Sent {} MB in {} sec. Transfer rate: {} MB/sec ", megabyteCount, elapsedSec, megabytesPerSec );
+            log.info("Sent {} MB in {} sec. Transfer rate: {} MB/sec ", megabyteCount, elapsedSec, megabytesPerSec);
             log.info("processFile: Finished ingesting file {}; endOffset={}, nextSequenceNumber={}",
                     fileNameWithBeginOffset.fileName, endOffset, nextSequenceNumber);
         }
@@ -255,7 +262,7 @@ public abstract class FileProcessor {
                  * If file gets deleted from completed files directory, or it does not exist in default ingestion directory
                  * then only remove the record from DB.
                  */
-                if(Files.deleteIfExists(filePath) || Files.notExists(Paths.get(file.fileName))) {
+                if (Files.deleteIfExists(filePath) || Files.notExists(Paths.get(file.fileName))) {
                     state.deleteCompletedFileRecord(file.fileName);
                     log.debug("deleteCompletedFiles: Deleted File default name:{}, and it's completed file name:{}.", file.fileName, filePath);
                 } else {

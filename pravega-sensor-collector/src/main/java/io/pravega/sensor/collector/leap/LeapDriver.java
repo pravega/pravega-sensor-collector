@@ -99,9 +99,9 @@ public class LeapDriver extends StatefulSensorDeviceDriver<String> {
         final List<PersistentQueueElement> events = new ArrayList<>();
         final HttpClient client = HttpClient.newHttpClient();
         final String uri;
-        if (state.isEmpty())
+        if (state.isEmpty()) {
             uri = apiUri + "/ClientApi/V1/DeviceReadings";
-        else {
+        } else {
             // Add 1 ms to get new readings from just after the last read state.
             final String startDate = dateFormat.format(Date.from(dateFormat.parse(state).toInstant().plus(Duration.ofMillis(1))));
             uri = apiUri + "/ClientApi/V1/DeviceReadings?startDate=" + URLEncoder.encode(startDate, StandardCharsets.UTF_8.toString());
@@ -128,8 +128,9 @@ public class LeapDriver extends StatefulSensorDeviceDriver<String> {
                 final PersistentQueueElement event = new PersistentQueueElement(bytes, routingKey, timestampNanos);
                 events.add(event);
                 Date curReading = mapper.convertValue(node.get("receivedTimestamp"), Date.class);
-                if (maxTime.getTime() < curReading.getTime())
+                if (maxTime.getTime() < curReading.getTime()) {
                     maxTime = curReading;
+                }
             }
             state = dateFormat.format(maxTime);
         }

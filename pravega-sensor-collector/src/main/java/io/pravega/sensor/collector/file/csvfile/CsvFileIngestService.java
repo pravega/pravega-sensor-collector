@@ -18,7 +18,7 @@ import org.slf4j.LoggerFactory;
  * Ingestion service for csv files.  
  */
 public class CsvFileIngestService extends FileIngestService {
-    private static final Logger log = LoggerFactory.getLogger(CsvFileIngestService.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(CsvFileIngestService.class);
 
 
     public CsvFileIngestService(DeviceDriverConfig config) {
