@@ -23,8 +23,8 @@ public class AccelerometerRawData {
 
     @Override
     public String toString() {
-        return "AccelerometerRawData{" +
-                ", bytes=" + Hex.encodeHexString(bytes) +
-                '}';
+        return "AccelerometerRawData{"
+                + ", bytes=" + Hex.encodeHexString(bytes)
+                + '}';
     }
 }

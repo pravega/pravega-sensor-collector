@@ -31,7 +31,7 @@ public interface TransactionStateDB {
      *
      * @return ((file name, begin offset), sequence number) or null if there is no pending file
      */
-    public Pair<FileNameWithOffset,Long> getNextPendingFileRecord() throws SQLException;
+    public Pair<FileNameWithOffset, Long> getNextPendingFileRecord() throws SQLException;
 
     /**
      * Update below details

@@ -33,7 +33,7 @@ import java.util.function.Consumer;
  * Generate Event from CSV file
  */
 public class CsvFileEventGenerator implements EventGenerator {
-    private static final Logger log = LoggerFactory.getLogger(CsvFileEventGenerator.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(CsvFileEventGenerator.class);
 
     private final String routingKey;
     private final int maxRecordsPerEvent;
@@ -75,8 +75,7 @@ public class CsvFileEventGenerator implements EventGenerator {
         List<HashMap<String,Object>> eventBatch = new ArrayList<>();
         for (CSVRecord record : parser) {
             HashMap<String,Object> recordDataMap = new HashMap<String,Object>();
-            for(int i=0; i<record.size();i++)
-            {
+            for (int i=0; i<record.size();i++) {
                 recordDataMap.put(parser.getHeaderNames().get(i), convertValue(record.get(i)));
             }
             eventBatch.add(recordDataMap);

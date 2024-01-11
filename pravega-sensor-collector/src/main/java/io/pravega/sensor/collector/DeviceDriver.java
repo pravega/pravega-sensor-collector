@@ -23,7 +23,7 @@ import java.text.MessageFormat;
  * This is an abstract class for all device drivers.
  */
 public abstract class DeviceDriver extends AbstractService implements AutoCloseable {
-    private static final Logger log = LoggerFactory.getLogger(DeviceDriver.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(DeviceDriver.class);
 
     private final DeviceDriverConfig config;
 
@@ -31,7 +31,7 @@ public abstract class DeviceDriver extends AbstractService implements AutoClosea
 
     public DeviceDriver(DeviceDriverConfig config) {
         this.config = config;
-        log.info("Create Scope: {}", isCreateScope());
+        LOGGER.info("Create Scope: {}", isCreateScope());
     }
 
     public String getProperty(String key) {

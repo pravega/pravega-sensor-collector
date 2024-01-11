@@ -22,7 +22,7 @@ import java.sql.ResultSet;
  * Stores and updates last-read timestamp in the persistent state (SQLite database) *
  */
 public class ReadingState {
-    private static final Logger log = LoggerFactory.getLogger(ReadingState.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(ReadingState.class);
     public final Connection connection;
     public ReadingState(Connection connection) {
         this.connection = connection;

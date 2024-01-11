@@ -19,7 +19,7 @@ import java.sql.Statement;
 import java.util.UUID;
 
 public class PersistentId {
-    private static final Logger log = LoggerFactory.getLogger(PersistentId.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(PersistentId.class);
 
     private final UUID persistentId;
 
@@ -46,7 +46,7 @@ public class PersistentId {
                         throw new SQLException("Unexpected query response");
                     }
                 }
-                log.info("persistentId={}", persistentId);
+                LOGGER.info("persistentId={}", persistentId);
             }
         } catch (SQLException e) {
             throw new RuntimeException(e);

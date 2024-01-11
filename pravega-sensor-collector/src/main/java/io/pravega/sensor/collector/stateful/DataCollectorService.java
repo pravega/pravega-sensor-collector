@@ -6,9 +6,9 @@
  * You may obtain a copy of the License at
  *
  *     http://www.apache.org/licenses/LICENSE-2.0
+ *
  */
 package io.pravega.sensor.collector.stateful;
-
 import com.google.common.util.concurrent.AbstractExecutionThreadService;
 
 import org.slf4j.Logger;
@@ -20,7 +20,7 @@ import io.pravega.sensor.collector.util.AutoRollback;
 /**
  */
 public class DataCollectorService<S> extends AbstractExecutionThreadService {
-    private static final Logger log = LoggerFactory.getLogger(DataCollectorService.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(DataCollectorService.class);
 
     private final String instanceName;
     private final PersistentQueue persistentQueue;
@@ -40,7 +40,7 @@ public class DataCollectorService<S> extends AbstractExecutionThreadService {
 
     @Override
     protected void run() throws Exception {
-        log.info("Running");
+        LOGGER.info("Running");
         for (;;) {
             try {
                 // Get state from persistent database
@@ -52,21 +52,21 @@ public class DataCollectorService<S> extends AbstractExecutionThreadService {
                     // Add samples, state atomically to persistent queue.
                     response.events.stream().forEach(event -> {
                         try {
-                            log.trace("Adding event {}", event);
+                            LOGGER.trace("Adding event {}", event);
                             persistentQueue.addWithoutCommit(event);
                         } catch (Exception e) {
                             throw new RuntimeException(e);
                         }
                     });
                     // Write state to database
-                    log.debug("Previous state ={}", state);
+                    LOGGER.debug("Previous state ={}", state);
                     readingState.updateState((String) response.state);
-                    log.debug("New State = {}", response.state);
+                    LOGGER.debug("New State = {}", response.state);
                     // Commit SQL transaction
                     autoRollback.commit();
                 }
             } catch (Exception e) {
-                log.error("Error", e);
+                LOGGER.error("Error", e);
                 Thread.sleep(10000);
                 // Continue on any errors. We will retry on the next iteration.
             }

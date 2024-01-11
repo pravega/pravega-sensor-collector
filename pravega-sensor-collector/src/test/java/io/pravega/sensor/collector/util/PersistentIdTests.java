@@ -21,23 +21,23 @@ import java.sql.SQLException;
 import java.util.UUID;
 
 public class PersistentIdTests {
-    private static final Logger log = LoggerFactory.getLogger(PersistentIdTests.class);
+    private static final Logger LOG = LoggerFactory.getLogger(PersistentIdTests.class);
 
     @Test
     public void persistentIdTest() throws SQLException {
         final String fileName = "persistent-id-test-" + UUID.randomUUID() + ".db";
-        log.info("fileName={}", fileName);
+        LOG.info("fileName={}", fileName);
 
         try {
             final String writerId1;
             try (final Connection connection = DriverManager.getConnection("jdbc:sqlite:" + fileName)) {
                 writerId1 = new PersistentId(connection).getPersistentId().toString();
-                log.info("writerId1={}", writerId1);
+                LOG.info("writerId1={}", writerId1);
             }
             final String writerId2;
             try (final Connection connection = DriverManager.getConnection("jdbc:sqlite:" + fileName)) {
                 writerId2 = new PersistentId(connection).getPersistentId().toString();
-                log.info("writerId2={}", writerId2);
+                LOG.info("writerId2={}", writerId2);
             }
             Assertions.assertEquals(writerId1, writerId2);
         } finally {

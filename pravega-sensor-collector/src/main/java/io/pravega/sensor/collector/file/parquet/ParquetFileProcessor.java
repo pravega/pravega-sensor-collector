@@ -20,18 +20,18 @@ import org.slf4j.LoggerFactory;
 
 
 public class ParquetFileProcessor extends FileProcessor {
-    private static final Logger log = LoggerFactory.getLogger(ParquetFileProcessor.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(ParquetFileProcessor.class);
 
     private final FileConfig config;
     private final String writerId;
 
     public ParquetFileProcessor(FileConfig config, TransactionStateDB state, EventWriter<byte[]> writer, TransactionCoordinator transactionCoordinator, String writerId) {
-       super(config,state,writer,transactionCoordinator);
-        this.config =config;
+       super(config, state, writer, transactionCoordinator);
+        this.config = config;
         this.writerId = writerId;
     }
 
-    /** Event generator for Parquet file
+    /** Event generator for Parquet file.
      * @param config configurations parameters
      * @return eventGenerator
      */

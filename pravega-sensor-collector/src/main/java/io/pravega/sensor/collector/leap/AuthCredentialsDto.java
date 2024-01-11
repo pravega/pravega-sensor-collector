@@ -10,8 +10,8 @@
 package io.pravega.sensor.collector.leap;
 
 public class AuthCredentialsDto {
-    final public String userName;
-    final public String password;
+    public final String userName;
+    public final  String password;
 
     public AuthCredentialsDto(String userName, String password) {
         this.userName = userName;
@@ -20,9 +20,9 @@ public class AuthCredentialsDto {
 
     @Override
     public String toString() {
-        return "AuthCredentialsDto{" +
-                "userName=" + userName +
-                ", password=" + password +
-                '}';
+        return "AuthCredentialsDto{"
+                + "userName=" + userName
+                + ", password=" + password
+                + '}';
     }
 }
