@@ -26,11 +26,11 @@ public class DeviceDriverConfig {
 
     @Override
     public String toString() {
-        return "DeviceDriverConfig{" +
-                "instanceName='" + instanceName + '\'' +
-                ", className='" + className + '\'' +
-                ", properties=" + properties +
-                '}';
+        return "DeviceDriverConfig{"
+                + "instanceName='" + instanceName + '\''
+                + ", className='" + className + '\''
+                + ", properties=" + properties
+                + '}';
     }
 
     public String getInstanceName() {

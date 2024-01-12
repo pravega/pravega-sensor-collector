@@ -19,7 +19,7 @@ import java.util.function.Consumer;
 /**
  *The EventGenerator is responsible for generating events depending on file type
  */
-public interface EventGenerator{
+public interface EventGenerator {
 
    /*
     * Generate events from Input stream.

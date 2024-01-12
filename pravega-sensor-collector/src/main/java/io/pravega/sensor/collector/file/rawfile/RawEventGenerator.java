@@ -30,7 +30,7 @@ import java.util.function.Consumer;
  * Generate Event from RAW file
  */
 public class RawEventGenerator implements EventGenerator {
-    private static final Logger log = LoggerFactory.getLogger(RawEventGenerator.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(RawEventGenerator.class);
 
     private final String routingKey;
     private final ObjectNode eventTemplate;
@@ -66,19 +66,19 @@ public class RawEventGenerator implements EventGenerator {
      */
     public Pair<Long, Long> generateEventsFromInputStream(CountingInputStream inputStream, long firstSequenceNumber, Consumer<PravegaWriterEvent> consumer) throws IOException {
         long nextSequenceNumber = firstSequenceNumber;
-        try{    
+        try {
             BufferedInputStream bis = new BufferedInputStream(inputStream);
             byte[] byteArray = IOUtils.toByteArray(bis);
 
             if (byteArray.length > 0) {         //non-empty file
                 consumer.accept(new PravegaWriterEvent(routingKey, nextSequenceNumber, byteArray));
                 nextSequenceNumber++;
-            }			        
+            }
             final long endOffset = inputStream.getCount();
             return new ImmutablePair<>(nextSequenceNumber, endOffset);
-        } catch (Exception e){
-            log.error("Exception = {}",e);
+        } catch (Exception e) {
+            LOGGER.error("Exception = {}", e);
             throw e;
         }
-    }   
+    }
 }

@@ -49,7 +49,7 @@ import java.util.stream.Collectors;
  * Generate Event from Parquet file
  */
 public class ParquetEventGenerator implements EventGenerator {
-    private static final Logger log = LoggerFactory.getLogger(ParquetEventGenerator.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(ParquetEventGenerator.class);
 
     private final String routingKey;
     private final int maxRecordsPerEvent;
@@ -90,11 +90,11 @@ public class ParquetEventGenerator implements EventGenerator {
     public Pair<Long, Long> generateEventsFromInputStream(CountingInputStream inputStream, long firstSequenceNumber, Consumer<PravegaWriterEvent> consumer) throws IOException {
         File tempFile = File.createTempFile("temp", ".parquet");
         FileOutputStream outputStream = new FileOutputStream(tempFile);
-        IOUtils.copy(inputStream,outputStream);
+        IOUtils.copy(inputStream, outputStream);
         outputStream.close();
         Path tempFilePath = new Path(tempFile.toString());
         Configuration conf = new Configuration();
-        MessageType schema = ParquetFileReader.readFooter(HadoopInputFile.fromPath(tempFilePath, conf),ParquetMetadataConverter.NO_FILTER).getFileMetaData().getSchema();
+        MessageType schema = ParquetFileReader.readFooter(HadoopInputFile.fromPath(tempFilePath, conf), ParquetMetadataConverter.NO_FILTER).getFileMetaData().getSchema();
         
         //Modifying field names in extracted schema (removing special characters) 
         List<Type> fields = schema.getFields().stream()
@@ -118,19 +118,19 @@ public class ParquetEventGenerator implements EventGenerator {
 
         long nextSequenceNumber = firstSequenceNumber;
         int numRecordsInEvent = 0;
-        List<HashMap<String,Object>> eventBatch = new ArrayList<>();
+        List<HashMap<String, Object>> eventBatch = new ArrayList<>();
         GenericRecord record;
-        while ((record=reader.read())!=null){
-            HashMap<String,Object> dataMap = new HashMap<String,Object>();
-            for(Schema.Field field : record.getSchema().getFields()){
+        while ((record = reader.read()) != null) {
+            HashMap<String, Object> dataMap = new HashMap<String, Object>();
+            for (Schema.Field field : record.getSchema().getFields()) {
                 String key = field.name();
                 Object value;
                 value = record.get(key);
-                dataMap.put(key,value);
+                dataMap.put(key, value);
             }
             eventBatch.add(dataMap);
             numRecordsInEvent++;
-            if(numRecordsInEvent>=maxRecordsPerEvent){
+            if (numRecordsInEvent >= maxRecordsPerEvent) {
                 byte[] batchJsonEvent = mapper.writeValueAsBytes(eventBatch);
                 consumer.accept(new PravegaWriterEvent(routingKey, nextSequenceNumber, batchJsonEvent));
                 nextSequenceNumber++;
@@ -138,7 +138,7 @@ public class ParquetEventGenerator implements EventGenerator {
                 eventBatch.clear();
             }
         }
-        if (!eventBatch.isEmpty()){
+        if (!eventBatch.isEmpty()) {
             byte[] batchJsonEvent = mapper.writeValueAsBytes(eventBatch);
             consumer.accept(new PravegaWriterEvent(routingKey, nextSequenceNumber, batchJsonEvent));
             nextSequenceNumber++;

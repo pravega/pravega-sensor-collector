@@ -30,7 +30,12 @@ import org.eclipse.milo.opcua.stack.core.types.enumerated.BrowseDirection;
 import org.eclipse.milo.opcua.stack.core.types.enumerated.BrowseResultMask;
 import org.eclipse.milo.opcua.stack.core.types.enumerated.NodeClass;
 import org.eclipse.milo.opcua.stack.core.types.enumerated.TimestampsToReturn;
-import org.eclipse.milo.opcua.stack.core.types.structured.*;
+import org.eclipse.milo.opcua.stack.core.types.structured.BrowseDescription;
+import org.eclipse.milo.opcua.stack.core.types.structured.BrowseResult;
+import org.eclipse.milo.opcua.stack.core.types.structured.EndpointDescription;
+import org.eclipse.milo.opcua.stack.core.types.structured.ReadResponse;
+import org.eclipse.milo.opcua.stack.core.types.structured.ReadValueId;
+import org.eclipse.milo.opcua.stack.core.types.structured.ReferenceDescription;
 import org.eclipse.milo.opcua.stack.core.util.TypeUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -50,8 +55,8 @@ import static org.eclipse.milo.opcua.stack.core.util.ConversionUtil.toList;
 
 public class OpcUaClientDriver extends SimpleMemorylessDriver<OpcUaRawData> {
 
-    private static final Logger log = LoggerFactory.getLogger(OpcUaClientDriver.class);
-    private static final Gson jsonParser = new Gson();
+    private static final Logger LOGGER = LoggerFactory.getLogger(OpcUaClientDriver.class);
+    private static final Gson JSON_PARSER = new Gson();
 
     private static String ENDPOINT = "ENDPOINT";
     private static String NS_INDEX = "NAMESPACE_INDEX";
@@ -65,13 +70,13 @@ public class OpcUaClientDriver extends SimpleMemorylessDriver<OpcUaRawData> {
 
     public OpcUaClientDriver(DeviceDriverConfig config) throws UaException, ExecutionException, InterruptedException {
         super(config);
-        log.info("Trying to establish connection with OPC server");
+        LOGGER.info("Trying to establish connection with OPC server");
         //TODO :connection monitoring and restore
         opcUaClient = buildClient();
         opcUaClient.connect().get();
-        log.info("Connection established with OPC server");
+        LOGGER.info("Connection established with OPC server");
         ns = opcUaClient.getNamespaceTable();
-        log.info("Creating sensor List");
+        LOGGER.info("Creating sensor List");
         nodeFilter = Pattern.compile(getNodeFilter());
         sensorList = new LinkedList<>();
         if (opcUaClient.getAddressSpace().getNode(getNodeID()).getNodeClass().getValue() == NodeClass.Variable.getValue()) {
@@ -92,7 +97,7 @@ public class OpcUaClientDriver extends SimpleMemorylessDriver<OpcUaRawData> {
             // As bulk read operation is in-place read , the list ordering of the input nodes will match the data fetched from responses.
             Variant rawVariant = data.getValue();
             String dataTypeClass = TypeUtil.getBackingClass(rawVariant.getDataType().get().toNodeId(ns).get()).getName();
-            log.trace("Sensor name {} : Raw Data {}", sensorList.get(i).getIdentifier(), rawVariant.getValue());
+            LOGGER.trace("Sensor name {} : Raw Data {}", sensorList.get(i).getIdentifier(), rawVariant.getValue());
             dataList.add(new OpcUaRawData(rawVariant.getValue(), data.getSourceTime().getUtcTime(), sensorList.get(i++).getIdentifier().toString(), dataTypeClass));
         }
         return dataList;
@@ -118,7 +123,7 @@ public class OpcUaClientDriver extends SimpleMemorylessDriver<OpcUaRawData> {
                     continue;
                 } else if (nodeFilter.matcher(rd.getBrowseName().getName()).find() && rd.getNodeClass().getValue() == NodeClass.Variable.getValue()) {
                     //Sensor which matches RegEx and node type being a Variable.
-                    log.info("Qualified Sensor: {}", rd.getNodeId().toNodeId(ns).get().getIdentifier());
+                    LOGGER.info("Qualified Sensor: {}", rd.getNodeId().toNodeId(ns).get().getIdentifier());
                     sensorList.add(rd.getNodeId().toNodeId(ns).get());
                 }
 
@@ -126,7 +131,7 @@ public class OpcUaClientDriver extends SimpleMemorylessDriver<OpcUaRawData> {
                         .ifPresent(nodeId -> filterNode(client, nodeId));
             }
         } catch (InterruptedException | ExecutionException e) {
-            log.error("Browsing nodeId={} failed: {}", rootNode, e.getMessage(), e);
+            LOGGER.error("Browsing nodeId={} failed: {}", rootNode, e.getMessage(), e);
         }
     }
 
@@ -141,7 +146,7 @@ public class OpcUaClientDriver extends SimpleMemorylessDriver<OpcUaRawData> {
 
     @Override
     public byte[] getEvent(OpcUaRawData rawData) {
-        return jsonParser.toJson(rawData).getBytes(StandardCharsets.UTF_8);
+        return JSON_PARSER.toJson(rawData).getBytes(StandardCharsets.UTF_8);
     }
 
     @Override
