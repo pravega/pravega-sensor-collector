@@ -15,18 +15,18 @@ import org.slf4j.LoggerFactory;
 import java.util.Map;
 
 public class PravegaSensorCollectorApp {
-    private static final Logger log = LoggerFactory.getLogger(PravegaSensorCollectorApp.class);
+    private static final Logger LOG = LoggerFactory.getLogger(PravegaSensorCollectorApp.class);
 
     public static void main(String[] args) {
         try {
-            log.info("Collector starting");
+            LOG.info("Collector starting");
             final Map<String, String> properties = Parameters.getProperties();
-            log.debug("Properties: {}", properties);
+            LOG.debug("Properties: {}", properties);
             final DeviceDriverManager deviceDriverManager = new DeviceDriverManager(properties);
             deviceDriverManager.startAsync();
             deviceDriverManager.awaitTerminated();
         } catch (Exception e) {
-            log.error("Fatal Error", e);
+            LOG.error("Fatal Error", e);
             System.exit(2);
         }
     }

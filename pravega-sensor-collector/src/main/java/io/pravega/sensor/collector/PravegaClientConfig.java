@@ -48,11 +48,11 @@ public class PravegaClientConfig {
 
     @Override
     public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+        if (this == o) { return true; }
+        if (o == null || getClass() != o.getClass()) { return false; }
         PravegaClientConfig that = (PravegaClientConfig) o;
-        return controllerURI.equals(that.controllerURI) &&
-                scopeName.equals(that.scopeName);
+        return controllerURI.equals(that.controllerURI)
+                && scopeName.equals(that.scopeName);
     }
 
     @Override

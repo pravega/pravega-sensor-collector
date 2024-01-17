@@ -18,7 +18,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class PravegaClientPool implements AutoCloseable {
-    private static final Logger log = LoggerFactory.getLogger(DeviceDriverManager.class);
+    private static final Logger log = LoggerFactory.getLogger(PravegaClientPool.class);
 
     private final Map<PravegaClientConfig, ClientConfig> clientConfigs = new HashMap<>();
     private final Map<PravegaClientConfig, EventStreamClientFactory> eventStreamClientFactories = new HashMap<>();

@@ -9,7 +9,6 @@
  */
 package io.pravega.sensor.collector.util;
 
-import io.pravega.client.stream.Transaction;
 import io.pravega.client.stream.TxnFailedException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -60,7 +59,7 @@ import java.util.UUID;
  *
  */
 public class TransactionCoordinator {
-    private static final Logger log = LoggerFactory.getLogger(TransactionCoordinator.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(TransactionCoordinator.class);
 
     private final Connection connection;
     private final EventWriter<byte[]> writer;
@@ -140,15 +139,15 @@ public class TransactionCoordinator {
     public void performRecovery() {
         final List<UUID> transactionsToCommit = getTransactionsToCommit();
         if (transactionsToCommit.isEmpty()) {
-            log.info("performRecovery: No transactions to be recovered");
+            LOGGER.info("performRecovery: No transactions to be recovered");
         } else {
-            log.info("Transaction recovery needed on {} transactions", transactionsToCommit.size());
+            LOGGER.info("Transaction recovery needed on {} transactions", transactionsToCommit.size());
             transactionsToCommit.forEach((txnId) -> {
-                log.info("Committing transaction {} from a previous process", txnId);
+                LOGGER.info("Committing transaction {} from a previous process", txnId);
                 try {
                     writer.commit(txnId);
                 } catch (TxnFailedException e) {
-                    log.error(
+                    LOGGER.error(
                             "Unable to commit transaction {} from a previous process. Events may have been lost. " +
                             "Try increasing the transaction timeout.", txnId, e);
                     // Continue recovery and run as normal.
@@ -156,12 +155,12 @@ public class TransactionCoordinator {
                     if (e.getMessage().startsWith("Unknown transaction")) {
                         // This may occur if an entire Pravega cluster fails and has been recreated, losing prior state.
                         // There is no point in retrying if this error occurs.
-                        log.error(
+                        LOGGER.error(
                                 "Unable to commit transaction {} from a previous process. Events may have been lost.",
                                 txnId, e);
                         // Continue recovery and run as normal.
                     } else {
-                        log.error(
+                        LOGGER.error(
                                 "Unable to commit transaction {} from a previous process. Events may have been lost. " +
                                         "Try increasing the transaction timeout.", txnId, e);
                         throw e;
@@ -169,7 +168,7 @@ public class TransactionCoordinator {
                 }
                 deleteTransactionToCommit(Optional.of(txnId));
             });
-            log.info("Transaction recovery completed");
+            LOGGER.info("Transaction recovery completed");
         }
     }
 }

@@ -105,7 +105,7 @@ abstract public class StatefulSensorDeviceDriver<S> extends DeviceDriver {
     }
 
     int getPersistentQueueCapacityEvents() {
-        return Integer.parseInt(getProperty(PERSISTENT_QUEUE_CAPACITY_EVENTS_KEY, Integer.toString(1000*1000)));
+        return Integer.parseInt(getProperty(PERSISTENT_QUEUE_CAPACITY_EVENTS_KEY, Integer.toString(1000 * 1000)));
     }
 
     String getPersistentQueueFileName() {

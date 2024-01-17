@@ -1,3 +1,12 @@
+/**
+ * Copyright (c) Dell Inc., or its subsidiaries. All Rights Reserved.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ */
 package io.pravega.sensor.collector.leap;
 
 import org.slf4j.Logger;
@@ -11,7 +20,7 @@ import org.glassfish.jersey.server.ResourceConfig;
 
 public class LeapAPIMock {
 
-    private static final Logger log = LoggerFactory.getLogger(LeapAPIMock.class);
+    private static final Logger LOG = LoggerFactory.getLogger(LeapAPIMock.class);
     private static final String SERVER_URI = "http://0.0.0.0";
     private static final String PORT_NUM = "8083";
 
@@ -28,6 +37,6 @@ public class LeapAPIMock {
     public static void main(String[] args) throws Exception {
 
         final HttpServer server = startServer();
-        log.info("Server running at {}", SERVER_URI + ":" + PORT_NUM);
+        LOG.info("Server running at {}", SERVER_URI + ":" + PORT_NUM);
     }
 }
