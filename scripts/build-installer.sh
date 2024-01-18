@@ -12,8 +12,9 @@ set -ex
 ROOT_DIR=$(readlink -f $(dirname $0)/..)
 source ${ROOT_DIR}/scripts/env.sh
 pushd ${ROOT_DIR}
-
+cp ${ROOT_DIR}/pravega-sensor-collector/src/main/resources/logback.xml ${ROOT_DIR}/pravega-sensor-collector/src/main/dist/bin/logback.xml
 GZIP="--rsyncable" ./gradlew distTar ${GRADLE_OPTIONS}
+rm ${ROOT_DIR}/pravega-sensor-collector/src/main/dist/bin/logback.xml
 
 ls -lh ${ROOT_DIR}/pravega-sensor-collector/build/distributions/pravega-sensor-collector-${APP_VERSION}.tgz
 
