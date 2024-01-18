@@ -1,3 +1,12 @@
+/**
+ * Copyright (c) Dell Inc., or its subsidiaries. All Rights Reserved.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ */
 package io.pravega.sensor.collector;
 
 import org.junit.jupiter.api.Test;
@@ -12,10 +21,10 @@ import static org.junit.Assert.assertEquals;
 public class PravegaClientConfigTests {
 
     @Test
-    public void testConstructorWithValues(){
+    public void testConstructorWithValues() {
         URI uri = URI.create("tcp://localhost:9090");
         String scopeName = "testScope";
-        PravegaClientConfig conf = new PravegaClientConfig(uri,scopeName);
+        PravegaClientConfig conf = new PravegaClientConfig(uri, scopeName);
         assertEquals(scopeName, conf.getScopeName());
         assertEquals(uri, conf.toClientConfig().getControllerURI());
 

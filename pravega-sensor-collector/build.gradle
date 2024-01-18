@@ -26,6 +26,7 @@ apply plugin: "com.github.spotbugs"
 apply plugin: 'checkstyle'
 apply plugin: "application"
 apply plugin: "com.github.johnrengelman.shadow"
+apply plugin: "jacoco"
 
 group = "io.pravega"
 archivesBaseName = "pravega-sensor-collector"
@@ -156,3 +157,24 @@ checkstyle {
     }
 }
 
+
+test {
+    finalizedBy jacocoTestReport // report is always generated after tests run
+}
+
+jacocoTestReport {
+    dependsOn test // tests are required to run before generating the report
+}
+
+jacoco {
+    toolVersion = "0.8.9"
+    reportsDirectory = layout.buildDirectory.dir('customJacocoReportDir')
+}
+
+jacocoTestReport {
+    reports {
+        xml.required = false
+        csv.required = false
+        html.outputLocation = layout.buildDirectory.dir('jacocoHtml')
+    }
+}

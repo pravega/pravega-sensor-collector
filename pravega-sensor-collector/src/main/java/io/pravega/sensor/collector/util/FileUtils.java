@@ -1,3 +1,12 @@
+/**
+ * Copyright (c) Dell Inc., or its subsidiaries. All Rights Reserved.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ */
 package io.pravega.sensor.collector.util;
 
 import java.io.File;
@@ -19,8 +28,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public class FileUtils {
-
-    private static final Logger log = LoggerFactory.getLogger(FileUtils.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(FileUtils.class);
     final static String separator = ",";
     public static final String FAILED_FILES = "Failed_Files";
     public static final String COMPLETED_FILES = "Completed_Files";
@@ -33,13 +41,13 @@ public class FileUtils {
      *  3. check for empty file, log the message and continue with valid files
      *
      */
-    static public List<FileNameWithOffset> getDirectoryListing(String fileSpec, String fileExtension, Path movedFilesDirectory, long minTimeInMillisToUpdateFile) throws IOException {
+    public static List<FileNameWithOffset> getDirectoryListing(String fileSpec, String fileExtension, Path movedFilesDirectory, long minTimeInMillisToUpdateFile) throws IOException {
         String[] directories= fileSpec.split(separator);
         List<FileNameWithOffset> directoryListing = new ArrayList<>();
         for (String directory : directories) {
             final Path pathSpec = Paths.get(directory);
             if (!Files.isDirectory(pathSpec.toAbsolutePath())) {
-                log.error("getDirectoryListing: Directory does not exist or spec is not valid : {}", pathSpec.toAbsolutePath());
+                LOGGER.error("getDirectoryListing: Directory does not exist or spec is not valid : {}", pathSpec.toAbsolutePath());
                 throw new IOException("Directory does not exist or spec is not valid");
             }
             getDirectoryFiles(pathSpec, fileExtension, directoryListing, movedFilesDirectory, minTimeInMillisToUpdateFile);
@@ -50,26 +58,26 @@ public class FileUtils {
     /**
      * get all files in directory(including subdirectories) and their respective file size in bytes
      */
-    static protected void getDirectoryFiles(Path pathSpec, String fileExtension, List<FileNameWithOffset> directoryListing, Path movedFilesDirectory, long minTimeInMillisToUpdateFile) throws IOException{
+    protected static void getDirectoryFiles(Path pathSpec, String fileExtension, List<FileNameWithOffset> directoryListing, Path movedFilesDirectory, long minTimeInMillisToUpdateFile) throws IOException{
         DirectoryStream.Filter<Path> lastModifiedTimeFilter = getLastModifiedTimeFilter(minTimeInMillisToUpdateFile);
-        try(DirectoryStream<Path> dirStream=Files.newDirectoryStream(pathSpec, lastModifiedTimeFilter)){
-            for(Path path: dirStream){
-                if(Files.isDirectory(path))         //traverse subdirectories
+        try (DirectoryStream<Path> dirStream=Files.newDirectoryStream(pathSpec, lastModifiedTimeFilter)) {
+            for (Path path: dirStream) {
+                if (Files.isDirectory(path))         //traverse subdirectories
                     getDirectoryFiles(path, fileExtension, directoryListing, movedFilesDirectory, minTimeInMillisToUpdateFile);
                 else {
                     FileNameWithOffset fileEntry = new FileNameWithOffset(path.toAbsolutePath().toString(), path.toFile().length());                    
-                    if(isValidFile(fileEntry, fileExtension))
+                    if (isValidFile(fileEntry, fileExtension))
                         directoryListing.add(fileEntry);    
                     else                            //move failed file to different folder
                         moveFailedFile(fileEntry, movedFilesDirectory);
                 }
             }
-        } catch(Exception ex){
-            if(ex instanceof IOException){
-                log.error("getDirectoryListing: Directory does not exist or spec is not valid : {}", pathSpec.toAbsolutePath());
+        } catch (Exception ex) {
+            if (ex instanceof IOException) {
+                LOGGER.error("getDirectoryListing: Directory does not exist or spec is not valid : {}", pathSpec.toAbsolutePath());
                 throw new IOException("Directory does not exist or spec is not valid");
-            } else{
-                log.error("getDirectoryListing: Exception while listing files: {}", pathSpec.toAbsolutePath());
+            } else {
+                LOGGER.error("getDirectoryListing: Exception while listing files: {}", pathSpec.toAbsolutePath());
                 throw new IOException(ex);
             }
         }
@@ -80,7 +88,7 @@ public class FileUtils {
      * This filter helps to eliminate the files that are partially written in to lookup directory by external services.
      */
     private static DirectoryStream.Filter<Path> getLastModifiedTimeFilter(long minTimeInMillisToUpdateFile) {
-        log.debug("getLastModifiedTimeFilter: minTimeInMillisToUpdateFile: {}", minTimeInMillisToUpdateFile);
+        LOGGER.debug("getLastModifiedTimeFilter: minTimeInMillisToUpdateFile: {}", minTimeInMillisToUpdateFile);
         return entry -> {
             BasicFileAttributes attr = Files.readAttributes(entry, BasicFileAttributes.class);
             if(attr.isDirectory()) {
@@ -98,15 +106,15 @@ public class FileUtils {
      */
     public static boolean isValidFile(FileNameWithOffset fileEntry, String fileExtension) {
 
-        if(fileEntry.offset<=0){
-            log.warn("isValidFile: Empty file {} can not be processed",fileEntry.fileName);
+        if (fileEntry.offset <= 0) {
+            LOGGER.warn("isValidFile: Empty file {} can not be processed",fileEntry.fileName);
         }
         // If extension is null, ingest all files
-        else if(fileExtension.isEmpty() || fileExtension.equals(fileEntry.fileName.substring(fileEntry.fileName.lastIndexOf(".")+1)))
+        else if (fileExtension.isEmpty() || fileExtension.equals(fileEntry.fileName.substring(fileEntry.fileName.lastIndexOf(".") + 1))) {
             return true;
-        else
-            log.warn("isValidFile: File format {} is not supported ", fileEntry.fileName);
-
+        } else {
+            LOGGER.warn("isValidFile: File format {} is not supported ", fileEntry.fileName);
+        }
         return false;
     }
 
@@ -148,21 +156,21 @@ public class FileUtils {
     static void moveFile(Path sourcePath, Path targetPath) throws IOException {
         Files.createDirectories(targetPath.getParent());
         //Obtain a lock on file before moving
-        try(FileChannel channel = FileChannel.open(sourcePath, StandardOpenOption.WRITE)) {
-            try(FileLock lock = channel.tryLock()) {
-                if(lock!=null){
+        try (FileChannel channel = FileChannel.open(sourcePath, StandardOpenOption.WRITE)) {
+            try (FileLock lock = channel.tryLock()) {
+                if (lock!=null) {
                     Files.move(sourcePath, targetPath, StandardCopyOption.REPLACE_EXISTING);
-                    log.debug("movedFile: Moved file from {} to {}", sourcePath, targetPath);
+                    LOGGER.debug("movedFile: Moved file from {} to {}", sourcePath, targetPath);
                     lock.release();
                 }
                 else{
-                    log.warn("Unable to obtain lock on file {} for moving. File is locked by another process.", sourcePath);
+                    LOGGER.warn("Unable to obtain lock on file {} for moving. File is locked by another process.", sourcePath);
                     throw new Exception();
                 }
             }
         } catch (Exception e) {
-            log.warn("Unable to move file {}", e.getMessage());
-            log.warn("File will be moved on the next iteration.");
+            LOGGER.warn("Unable to move failed file {}", e.getMessage());
+            LOGGER.warn("Failed file will be moved on the next iteration.");
             // We can continue on this error. Moving will be retried on the next iteration.
         }
     }    

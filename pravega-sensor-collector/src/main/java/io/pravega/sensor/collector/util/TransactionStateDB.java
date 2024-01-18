@@ -1,3 +1,12 @@
+/**
+ * Copyright (c) Dell Inc., or its subsidiaries. All Rights Reserved.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ */
 package io.pravega.sensor.collector.util;
 
 import org.apache.commons.lang3.tuple.Pair;
@@ -22,7 +31,7 @@ public interface TransactionStateDB {
      *
      * @return ((file name, begin offset), sequence number) or null if there is no pending file
      */
-    public Pair<FileNameWithOffset,Long> getNextPendingFileRecord() throws SQLException;
+    public Pair<FileNameWithOffset, Long> getNextPendingFileRecord() throws SQLException;
 
     /**
      * Update below details

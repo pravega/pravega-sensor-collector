@@ -31,15 +31,15 @@ public class NetworkSamples implements Samples {
 
     // Timestamps as nanoseconds since 1970-01-01.
     @JsonProperty("TimestampNanos")
-    final public List<Long> timestampNanos = new ArrayList<>();
+    public final List<Long> timestampNanos = new ArrayList<>();
     @JsonProperty("RxBytes")
-    final public List<Long> rxBytes = new ArrayList<>();
+    public final List<Long> rxBytes = new ArrayList<>();
     @JsonProperty("TxBytes")
-    final public List<Long> txBytes = new ArrayList<>();
+    public final List<Long> txBytes = new ArrayList<>();
     @JsonProperty("RemoteAddr")
-    final public String remoteAddr;
+    public final String remoteAddr;
     @JsonProperty("Interface")
-    final public String interfaceName;
+    public final String interfaceName;
     // The last timestamp formatted as a string.
     @JsonProperty("LastTimestampFormatted")
     public String lastTimestampFormatted;
@@ -66,7 +66,7 @@ public class NetworkSamples implements Samples {
     }
 
     public void setLastTimestampFormatted() {
-        lastTimestampFormatted = dateFormat.format(new Date(lastTimestamp()/1000/1000));
+        lastTimestampFormatted = dateFormat.format(new Date(lastTimestamp() / 1000 / 1000));
     }
 
     @Override

@@ -33,7 +33,7 @@ import static java.sql.Connection.TRANSACTION_SERIALIZABLE;
  * A persistent queue that uses a SQLite database on disk.
  */
 public class PersistentQueue implements AutoCloseable {
-    private static final Logger log = LoggerFactory.getLogger(PersistentQueue.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(PersistentQueue.class);
 
     /**
      * The connection should not be used concurrently. Currently, this is enforced
@@ -51,9 +51,9 @@ public class PersistentQueue implements AutoCloseable {
             this.connection = connection;
             this.transactionCoordinator = transactionCoordinator;
             final long initialSize = getDatabaseRecordCount();
-            log.info("Persistent queue has {} elements.", initialSize);
+            LOGGER.info("Persistent queue has {} elements.", initialSize);
             final int permits = (int) Long.max(Integer.MIN_VALUE, Long.min(Integer.MAX_VALUE, capacity - initialSize));
-            log.info("Semaphore Permits: {}", permits);
+            LOGGER.info("Semaphore Permits: {}", permits);
             semaphore = new Semaphore(permits);
             performRecovery();
         } catch (Exception e) {
@@ -97,9 +97,9 @@ public class PersistentQueue implements AutoCloseable {
             throw new IllegalArgumentException();
         }
         if (!semaphore.tryAcquire(1)) {
-            log.warn("Persistent queue is full. No more elements can be added until elements are removed.");
+            LOGGER.warn("Persistent queue is full. No more elements can be added until elements are removed.");
             semaphore.acquire(1);
-            log.info("Persistent queue now has capacity.");
+            LOGGER.info("Persistent queue now has capacity.");
         }
         synchronized (this) {
             try (final PreparedStatement insertStatement = connection
@@ -123,9 +123,9 @@ public class PersistentQueue implements AutoCloseable {
             throw new IllegalArgumentException();
         }
         if (!semaphore.tryAcquire(1)) {
-            log.warn("Persistent queue is full. No more elements can be added until elements are removed.");
+            LOGGER.warn("Persistent queue is full. No more elements can be added until elements are removed.");
             semaphore.acquire(1);
-            log.info("Persistent queue now has capacity.");
+            LOGGER.info("Persistent queue now has capacity.");
         }
         synchronized (this) {
             try (final PreparedStatement insertStatement = connection

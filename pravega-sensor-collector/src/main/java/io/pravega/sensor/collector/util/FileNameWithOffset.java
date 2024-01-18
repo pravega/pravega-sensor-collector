@@ -12,7 +12,7 @@ package io.pravega.sensor.collector.util;
 import java.util.Objects;
 
 /**
- * File name and file size
+ * File name and file size.
  */
 public class FileNameWithOffset implements Comparable<FileNameWithOffset> {
     public final String fileName;
@@ -39,11 +39,11 @@ public class FileNameWithOffset implements Comparable<FileNameWithOffset> {
 
     @Override
     public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+        if (this == o) { return true; }
+        if (o == null || getClass() != o.getClass()) { return false; }
         FileNameWithOffset that = (FileNameWithOffset) o;
-        return offset == that.offset &&
-                Objects.equals(fileName, that.fileName);
+        return offset == that.offset
+                && Objects.equals(fileName, that.fileName);
     }
 
     @Override

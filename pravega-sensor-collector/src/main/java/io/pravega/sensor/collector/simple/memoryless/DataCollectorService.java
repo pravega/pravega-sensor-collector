@@ -24,7 +24,7 @@ public class DataCollectorService<R> extends AbstractExecutionThreadService {
     private final EventWriter<byte[]> writer;
     private final long readPeriodicityMs;
 
-    private static final Logger log = LoggerFactory.getLogger(DataCollectorService.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(DataCollectorService.class);
 
     public DataCollectorService(String instanceName, SimpleMemorylessDriver<R> driver, EventWriter<byte[]> writer, long readPeriodicityMs) {
         this.instanceName = instanceName;
@@ -40,7 +40,7 @@ public class DataCollectorService<R> extends AbstractExecutionThreadService {
 
     @Override
     protected void run() throws InterruptedException {
-        for (; ; ) {
+        for (;;) {
             try {
                 final long t0 = System.nanoTime();
                 // Place blocking read request to get sensor data.
@@ -57,9 +57,9 @@ public class DataCollectorService<R> extends AbstractExecutionThreadService {
                 writer.flush();
                 writer.commit(timestamp);
                 final double ms = (System.nanoTime() - t0) * 1e-6;
-                log.info(String.format("Done writing %d event in %.3f ms to Pravega", eventCounter, ms));
+                LOGGER.info(String.format("Done writing %d event in %.3f ms to Pravega", eventCounter, ms));
             } catch (Exception e) {
-                log.error("Error", e);
+                LOGGER.error("Error", e);
 
             }
             Thread.sleep(readPeriodicityMs);

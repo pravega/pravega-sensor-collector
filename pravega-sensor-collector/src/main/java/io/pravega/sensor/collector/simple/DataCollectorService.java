@@ -21,7 +21,7 @@ import java.util.concurrent.TimeUnit;
  * Read raw data from a device and send it to the memory queue.
  */
 public class DataCollectorService<R, S extends Samples> extends AbstractExecutionThreadService {
-    private static final Logger log = LoggerFactory.getLogger(DataCollectorService.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(DataCollectorService.class);
 
     private final String instanceName;
     private final BlockingQueue<R> memoryQueue;
@@ -40,18 +40,18 @@ public class DataCollectorService<R, S extends Samples> extends AbstractExecutio
 
     @Override
     protected void run() throws Exception {
-        log.info("Running");
+        LOGGER.info("Running");
         for (;;) {
             try {
                 final R rawSensorData = driver.readRawData();
                 if (!memoryQueue.offer(rawSensorData, 10, TimeUnit.SECONDS)) {
-                    log.warn("Memory queue is full. Data will be discarded. Writing to persistent queue took too long.");
+                    LOGGER.warn("Memory queue is full. Data will be discarded. Writing to persistent queue took too long.");
                 }
             } catch (EOFException e) {
-                log.warn("EOF");
+                LOGGER.warn("EOF");
                 Thread.sleep(1000);
             } catch (Exception e) {
-                log.error("Error", e);
+                LOGGER.error("Error", e);
                 Thread.sleep(10000);
                 // Continue on any errors. We will retry on the next iteration.
             }

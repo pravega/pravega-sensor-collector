@@ -26,10 +26,10 @@ import java.util.concurrent.TimeUnit;
  * Ingestion service with common implementation logic for all files.
  */
 public abstract class FileIngestService extends DeviceDriver {
-    private static final Logger log = LoggerFactory.getLogger(FileIngestService.class);
+    private static final Logger LOG = LoggerFactory.getLogger(FileIngestService.class);
 
     private static final String FILE_SPEC_KEY = "FILE_SPEC";
-    private static final String FILE_EXT= "FILE_EXTENSION";
+    private static final String FILE_EXT = "FILE_EXTENSION";
     private static final String DELETE_COMPLETED_FILES_KEY = "DELETE_COMPLETED_FILES";
     private static final String DATABASE_FILE_KEY = "DATABASE_FILE";
     private static final String EVENT_TEMPLATE_KEY = "EVENT_TEMPLATE";
@@ -43,6 +43,10 @@ public abstract class FileIngestService extends DeviceDriver {
     private static final String TRANSACTION_TIMEOUT_MINUTES_KEY = "TRANSACTION_TIMEOUT_MINUTES";
     private static final String MIN_TIME_IN_MILLIS_TO_UPDATE_FILE_KEY = "MIN_TIME_IN_MILLIS_TO_UPDATE_FILE";
     private static final String DELETE_COMPLETED_FILES_INTERVAL_IN_MINUTES_KEY = "DELETE_COMPLETED_FILES_INTERVAL_IN_MINUTES";
+
+    private static final int DEFAULT_SAMPLES_PER_EVENT_KEY = 100;
+
+    private static final int DEFAULT_INTERVAL_MS_KEY = 10000;
 
     private final FileProcessor processor;
     private final ScheduledExecutorService executor;
@@ -66,12 +70,12 @@ public abstract class FileIngestService extends DeviceDriver {
                 getTransactionTimeoutMinutes(),
                 getMinTimeInMillisToUpdateFile(),
                 config.getClassName());
-        log.info("File Ingest Config: {}", fileSequenceConfig);
+        LOG.info("File Ingest Config: {}", fileSequenceConfig);
         final String scopeName = getScopeName();
-        log.info("Scope: {}", scopeName);
+        LOG.info("Scope: {}", scopeName);
         createStream(scopeName, getStreamName());
         final EventStreamClientFactory clientFactory = getEventStreamClientFactory(scopeName);
-        processor =FileProcessor.create(fileSequenceConfig, clientFactory);
+        processor = FileProcessor.create(fileSequenceConfig, clientFactory);
         ThreadFactory namedThreadFactory = new ThreadFactoryBuilder().setNameFormat(
                 FileIngestService.class.getSimpleName() + "-" + config.getInstanceName() + "-%d").build();
         executor = Executors.newScheduledThreadPool(1, namedThreadFactory);
@@ -97,11 +101,11 @@ public abstract class FileIngestService extends DeviceDriver {
     }
 
     int getSamplesPerEvent() {
-        return Integer.parseInt(getProperty(SAMPLES_PER_EVENT_KEY, Integer.toString(100)));
+        return Integer.parseInt(getProperty(SAMPLES_PER_EVENT_KEY, Integer.toString(DEFAULT_SAMPLES_PER_EVENT_KEY)));
     }
 
     long getIntervalMs() {
-        return Long.parseLong(getProperty(INTERVAL_MS_KEY, Long.toString(10000)));
+        return Long.parseLong(getProperty(INTERVAL_MS_KEY, Long.toString(DEFAULT_INTERVAL_MS_KEY)));
     }
 
     String getScopeName() {
@@ -136,35 +140,35 @@ public abstract class FileIngestService extends DeviceDriver {
     }
 
     protected void watchFiles() {
-        log.trace("watchFiles: BEGIN");
+        LOG.trace("watchFiles: BEGIN");
         try {
             processor.watchFiles();
         } catch (Exception e) {
-            log.error("watchFiles: watch file error", e);
+            LOG.error("watchFiles: watch file error", e);
             // Continue on any errors. We will retry on the next iteration.
         }
-        log.trace("watchFiles: END");
+        LOG.trace("watchFiles: END");
     }
     protected void processFiles() {
-        log.trace("processFiles: BEGIN");
+        LOG.trace("processFiles: BEGIN");
         try {
             processor.processFiles();
         } catch (Exception e) {
-            log.error("processFiles: Process file error", e);
+            LOG.error("processFiles: Process file error", e);
             // Continue on any errors. We will retry on the next iteration.
         }
-        log.trace("processFiles: END");
+        LOG.trace("processFiles: END");
     }
 
     protected void deleteCompletedFiles() {
-        log.trace("deleteCompletedFiles: BEGIN");
+        LOG.trace("deleteCompletedFiles: BEGIN");
         try {
             processor.deleteCompletedFiles();
         } catch (Exception e) {
-            log.error("deleteCompletedFiles: Delete file error", e);
+            LOG.error("deleteCompletedFiles: Delete file error", e);
             // Continue on any errors. We will retry on the next iteration.
         }
-        log.trace("deleteCompletedFiles: END");
+        LOG.trace("deleteCompletedFiles: END");
     }
 
     @Override
@@ -197,7 +201,7 @@ public abstract class FileIngestService extends DeviceDriver {
 
     @Override
     protected void doStop() {
-        log.info("doStop: Cancelling ingestion task and process file task");
+        LOG.info("doStop: Cancelling ingestion task and process file task");
         watchFileTask.cancel(false);
         processFileTask.cancel(false);
         deleteFileTask.cancel(false);
