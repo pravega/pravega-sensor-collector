@@ -27,7 +27,7 @@ public class RawFileProcessorTests extends FileProcessorTests {
      */
     @Test
     public void generateEventForRawFileTests() throws Exception {
-        FileProcessor fileProcessor = new RawFileProcessor(config, state, transactionalEventWriter,transactionCoordinator, "test");
+        FileProcessor fileProcessor = new RawFileProcessor(config, state, transactionalEventWriter, transactionCoordinator, "test");
         fileProcessor.processNewFiles();
         Mockito.verify(state, Mockito.times(1)).getNextPendingFileRecord();
     }

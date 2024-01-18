@@ -19,9 +19,9 @@ import java.util.UUID;
 public interface TransactionStateDB {
 
     /**
-     * Add file name and begin offset to PendingFiles table
-     *
-     *  @param files      List of file name with Offset.
+     * Add file name and begin offset to PendingFiles table.
+     * @param files      List of file name with Offset.
+     * @throws SQLException
      *
      */
     public void addPendingFileRecords(List<FileNameWithOffset> files) throws SQLException;
@@ -30,6 +30,7 @@ public interface TransactionStateDB {
      * Get next file to process. Read the file name with begin offset from PendingFiles table and sequence number from SequenceNumber table.
      *
      * @return ((file name, begin offset), sequence number) or null if there is no pending file
+     * @throws SQLException
      */
     public Pair<FileNameWithOffset, Long> getNextPendingFileRecord() throws SQLException;
 
@@ -50,7 +51,7 @@ public interface TransactionStateDB {
     public void addCompletedFileRecord(String fileName, long beginOffset, long endOffset, long newNextSequenceNumber, Optional<UUID> txnId) throws SQLException;
 
     /**
-     * Delete record from pendingFiles table
+     * Delete record from pendingFiles table.
      *
      * @param fileName          file name of pending file
      * @param beginOffset       begin offset from where file read starts
@@ -66,28 +67,31 @@ public interface TransactionStateDB {
      * @param beginOffset            begin offset from where file read starts
      * @param endOffset              end offset where reading ends.
      * @param newNextSequenceNumber  next sequence number.
+     * @throws SQLException
      *
      */
     public void addCompletedFileRecord(String fileName, long beginOffset, long endOffset, long newNextSequenceNumber) throws SQLException;
 
     /**
-    * Delete record from TransactionsToCommit table
+    * Delete record from TransactionsToCommit table.
     *
     * @param  txnId transaction id
     */
     public void deleteTransactionToCommit(Optional<UUID> txnId);
 
     /**
-     * Get a list of files from completedFiles table
+     * Get a list of files from completedFiles table.
      *
      * @return list of file name and end offset (file size)
+     * @throws SQLException
      */
     public List<FileNameWithOffset> getCompletedFileRecords() throws SQLException;
 
     /**
-     * Delete completed file record from completedFiles table for given file name
+     * Delete completed file record from completedFiles table for given file name.
      *
      * @param fileName  file name
+     * @throws SQLException
      */
     public void deleteCompletedFileRecord(String fileName) throws SQLException;
 

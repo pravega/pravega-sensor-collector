@@ -204,11 +204,14 @@ public abstract class SimpleDeviceDriver<R, S extends Samples> extends DeviceDri
 
     /**
      * Reads raw data (byte arrays) from a sensor.
+     * @throws Exception
      */
     abstract public R readRawData() throws Exception;
 
     /**
      * Decode raw data (byte arrays) and append to Samples.
+     * @param samples
+     * @param rawSensorData
      */
     abstract public void decodeRawDataToSamples(S samples, R rawSensorData);
 
@@ -219,6 +222,8 @@ public abstract class SimpleDeviceDriver<R, S extends Samples> extends DeviceDri
 
     /**
      * Serialize Samples to a byte array. This will be written to Pravega as an event.
+     * @param samples
+     * @throws Exception
      */
     abstract public byte[] serializeSamples(S samples) throws Exception;
 
@@ -230,6 +235,7 @@ public abstract class SimpleDeviceDriver<R, S extends Samples> extends DeviceDri
      * Get the timestamp that will be sent to Pravega with {@link io.pravega.client.stream.EventStreamWriter#noteTime}.
      * Generally, this should be the number of nanoseconds since 1970-01-01.
      * All future events should have a timestamp greater or equal to this value.
+     * @param samples
      */
     public long getTimestamp(S samples) {
         return samples.getMaxTimestampNanos();

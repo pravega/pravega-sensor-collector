@@ -68,7 +68,7 @@ public class TransactionCoordinatorTests {
         when(mockStatement.execute(anyString())).thenReturn(true);
         /*when(mockConnection.prepareStatement(anyString())).thenReturn(mockPrepareStatement);
         when(mockPrepareStatement.execute()).thenReturn(true);*/
-        transactionProcessor = new TransactionCoordinator(mockConnection,transactionalEventWriter);
+        transactionProcessor = new TransactionCoordinator(mockConnection, transactionalEventWriter);
     }
 
     @Test
@@ -156,13 +156,13 @@ public class TransactionCoordinatorTests {
         when(mockResultSet.getString("txnId")).thenReturn(UUID.randomUUID().toString(), UUID.randomUUID().toString());
 
         // Get List of transaction ID's from TransactionToCommit table
-        List<UUID> uuidList =transactionProcessor.getTransactionsToCommit();
+        List<UUID> uuidList = transactionProcessor.getTransactionsToCommit();
 
         // Assert
         verify(mockResultSet, times(3)).next();
         verify(mockResultSet, times(2)).getString("txnId");
         //verify result contains 2 UUIDs
-        assertEquals(2,uuidList.size());
+        assertEquals(2, uuidList.size());
     }
 
     /*
@@ -201,7 +201,7 @@ public class TransactionCoordinatorTests {
         // Mock behavior: when statement.executeQuery is called, return the mock result set
         when(mockStatement.executeQuery("select txnId from TransactionsToCommit")).thenReturn(mockResultSet);
         // Mock behavior: simulate the result set having two rows with different UUIDs
-        when(mockResultSet.next()).thenReturn(true,  true,false);
+        when(mockResultSet.next()).thenReturn(true,  true, false);
         when(mockResultSet.getString("txnId")).thenReturn(UUID.randomUUID().toString(), UUID.randomUUID().toString());
         //mock for delete transaction call
         when(mockConnection.prepareStatement(anyString())).thenReturn(mockPrepareStatement);
@@ -212,7 +212,7 @@ public class TransactionCoordinatorTests {
         //doNothing().when(transactionalEventWriter).commit(any());
 
         // Perform recovery
-       transactionProcessor.performRecovery();
+        transactionProcessor.performRecovery();
 
         // Assert
         verify(mockResultSet, times(3)).next();
@@ -230,7 +230,7 @@ public class TransactionCoordinatorTests {
         // Mock behavior: when statement.executeQuery is called, return the mock result set
         when(mockStatement.executeQuery("select txnId from TransactionsToCommit")).thenReturn(mockResultSet);
         // Mock behavior: simulate the result set having two rows with different UUIDs
-        when(mockResultSet.next()).thenReturn(true,true,false);
+        when(mockResultSet.next()).thenReturn(true, true, false);
         when(mockResultSet.getString("txnId")).thenReturn(UUID.randomUUID().toString(), UUID.randomUUID().toString());
         //mock for delete transaction call
         when(mockConnection.prepareStatement(anyString())).thenReturn(mockPrepareStatement);
@@ -240,9 +240,9 @@ public class TransactionCoordinatorTests {
         }).when(transactionalEventWriter).commit(Mockito.any());
 
         // Perform recovery
-            transactionProcessor.performRecovery();
+        transactionProcessor.performRecovery();
 
-            // Assert
+        // Assert
         verify(mockResultSet, times(3)).next();
         verify(mockResultSet, times(2)).getString("txnId");
 
@@ -257,7 +257,7 @@ public class TransactionCoordinatorTests {
         // Mock behavior: when statement.executeQuery is called, return the mock result set
         when(mockStatement.executeQuery("select txnId from TransactionsToCommit")).thenReturn(mockResultSet);
         // Mock behavior: simulate the result set having two rows with different UUIDs
-        when(mockResultSet.next()).thenReturn(true,false);
+        when(mockResultSet.next()).thenReturn(true, false);
         when(mockResultSet.getString("txnId")).thenReturn(UUID.randomUUID().toString(), UUID.randomUUID().toString());
         //mock for delete transaction call
         when(mockConnection.prepareStatement(anyString())).thenReturn(mockPrepareStatement);
@@ -274,8 +274,6 @@ public class TransactionCoordinatorTests {
         // Assert
         String expectedMessage = "Other Runtime Exception";
         assertEquals(expectedMessage, exception.getMessage(), "Exception message mismatch");
-
-
     }
 }
 

@@ -1,4 +1,3 @@
-
 /**
  * Copyright (c) Dell Inc., or its subsidiaries. All Rights Reserved.
  *
@@ -46,7 +45,7 @@ import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
 /**
- * Generate Event from Parquet file
+ * Generate Event from Parquet file.
  */
 public class ParquetEventGenerator implements EventGenerator {
     private static final Logger LOGGER = LoggerFactory.getLogger(ParquetEventGenerator.class);
@@ -85,6 +84,8 @@ public class ParquetEventGenerator implements EventGenerator {
      *
      * @param inputStream
      * @param firstSequenceNumber
+     * @param consumer
+     * @throws IOException
      * @return next sequence number, end offset
      */
     public Pair<Long, Long> generateEventsFromInputStream(CountingInputStream inputStream, long firstSequenceNumber, Consumer<PravegaWriterEvent> consumer) throws IOException {

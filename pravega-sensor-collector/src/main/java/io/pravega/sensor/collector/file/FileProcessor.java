@@ -100,9 +100,11 @@ public abstract class FileProcessor {
      * @return eventGenerator
      */
     public abstract EventGenerator getEventGenerator(FileConfig config);
+
     public void watchFiles() throws Exception {
         findAndRecordNewFiles();
     }
+
     public void processFiles() throws Exception {
         log.debug("processFiles: BEGIN");
         if (config.enableDeleteCompletedFiles) {
@@ -134,7 +136,9 @@ public abstract class FileProcessor {
     }
 
     /**
+     * Get directory listing.
      * @return list of file name and file size in bytes
+     * @throws IOException If unable to list files
      */
     protected List<FileNameWithOffset> getDirectoryListing() throws IOException {
         log.debug("getDirectoryListing: fileSpec={}", config.fileSpec);
@@ -146,6 +150,9 @@ public abstract class FileProcessor {
     }
 
     /**
+     * Get list of new files.
+     * @param directoryListing list of directories
+     * @param completedFiles list of completed files
      * @return sorted list of file name and file size in bytes
      */
     protected List<FileNameWithOffset> getNewFiles(List<FileNameWithOffset> directoryListing, List<FileNameWithOffset> completedFiles) {
@@ -162,7 +169,7 @@ public abstract class FileProcessor {
                     FileUtils.moveCompletedFile(dirFile, movedFilesDirectory);
                     log.warn("File: {} already marked as completed, moving now", dirFile.fileName);
                 } catch (IOException e) {
-                    log.error("File: {} already marked as completed, but failed to move, error:{}", dirFile.fileName,e.getMessage());
+                    log.error("File: {} already marked as completed, but failed to move, error:{}", dirFile.fileName, e.getMessage());
                 }
             }
         });
@@ -206,8 +213,8 @@ public abstract class FileProcessor {
                         } catch (TxnFailedException ex) {
                             log.error("processFile: Write event to transaction failed with exception {} while processing file: {}, event: {}", ex, fileNameWithBeginOffset.fileName, e);
 
-                           /* TODO while writing event if we get Transaction failed exception then should we abort the trasaction and process again?
-                            This will occur only if Transaction state is not open*/
+                            /* TODO while writing event if we get Transaction failed exception then should we abort the trasaction and process again?
+                               This will occur only if Transaction state is not open */
 
                             throw new RuntimeException(ex);
                         }
@@ -258,18 +265,14 @@ public abstract class FileProcessor {
             Path filePath = completedFilesPath.resolve(completedFileName);
             log.debug("deleteCompletedFiles: Deleting File default name:{}, and it's completed file name:{}.", file.fileName, filePath);
             try {
-                /**
-                 * If file gets deleted from completed files directory, or it does not exist in default ingestion directory
-                 * then only remove the record from DB.
-                 */
+                /* If file gets deleted from completed files directory, or it does not exist in default ingestion directory
+                 * then only remove the record from DB. */
                 if (Files.deleteIfExists(filePath) || Files.notExists(Paths.get(file.fileName))) {
                     state.deleteCompletedFileRecord(file.fileName);
                     log.debug("deleteCompletedFiles: Deleted File default name:{}, and it's completed file name:{}.", file.fileName, filePath);
                 } else {
-                    /**
-                     * This situation occurs because at first attempt moving file to completed directory fails, but the file still exists in default ingestion directory.
-                     * Moving file from default directory to completed directory will be taken care in next iteration, post which delete will be taken care.
-                     */
+                    /* This situation occurs because at first attempt moving file to completed directory fails, but the file still exists in default ingestion directory.
+                     * Moving file from default directory to completed directory will be taken care in next iteration, post which delete will be taken care. */
                     log.warn("deleteCompletedFiles: File {} doesn't exists in completed directory but still exist in default ingestion directory.", filePath);
                 }
             } catch (Exception e) {

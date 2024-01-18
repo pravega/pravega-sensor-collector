@@ -13,7 +13,11 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.ws.rs.Consumes;
-import javax.ws.rs.*;
+import javax.ws.rs.GET;
+import javax.ws.rs.POST;
+import javax.ws.rs.Path;
+import javax.ws.rs.Produces;
+import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.Context;
 
 import org.glassfish.grizzly.http.server.Request;
@@ -51,7 +55,7 @@ public class LeapMockResources {
     }
 
     /**
-     * Generate readings from time 0:00 UTC of the previous day until the currenttime
+     * Generate readings from time 0:00 UTC of the previous day until the currenttime.
      * */
     public List<DeviceReadingsDto> getAllReadings() throws Exception {
         List<DeviceReadingsDto> allReadings = new ArrayList<>();
@@ -80,6 +84,9 @@ public class LeapMockResources {
 
     /**
      * Gets readings from getAllReadings and filters out any readings prior to startDate.
+     * @param request
+     * @param startDate
+     * @throws Exception
      * */
     @GET
     @Path("ClientApi/V1/DeviceReadings")
