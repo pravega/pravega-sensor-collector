@@ -9,6 +9,8 @@
  */
 package io.pravega.sensor.collector.network;
 
+import com.google.common.base.Preconditions;
+
 import java.util.List;
 
 public class NetworkRawData {
@@ -17,7 +19,7 @@ public class NetworkRawData {
 
     public NetworkRawData(long timestampNanos, List<Long> statisticValues) {
         this.timestampNanos = timestampNanos;
-        this.statisticValues = statisticValues;
+        this.statisticValues = Preconditions.checkNotNull(statisticValues, "statisticValues");
     }
 
     @Override

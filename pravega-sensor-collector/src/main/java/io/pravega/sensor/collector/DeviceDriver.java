@@ -9,6 +9,7 @@
  */
 package io.pravega.sensor.collector;
 
+import com.google.common.base.Preconditions;
 import com.google.common.util.concurrent.AbstractService;
 import io.pravega.client.ClientConfig;
 import io.pravega.client.EventStreamClientFactory;
@@ -30,7 +31,7 @@ public abstract class DeviceDriver extends AbstractService implements AutoClosea
     private static final String CREATE_SCOPE_KEY = "CREATE_SCOPE";
 
     public DeviceDriver(DeviceDriverConfig config) {
-        this.config = config;
+        this.config = Preconditions.checkNotNull(config, "deviceDriverConfig");
         LOGGER.info("Create Scope: {}", isCreateScope());
     }
 

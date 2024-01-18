@@ -9,6 +9,7 @@
  */
 package io.pravega.sensor.collector;
 
+import com.google.common.base.Preconditions;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -20,6 +21,7 @@ public class DeviceDriverFactory {
      */
     DeviceDriver create(DeviceDriverConfig config) {
         try {
+            Preconditions.checkNotNull(config, "deviceDriverConfig");
             LOGGER.info("Creating device driver instance {} with class {}", config.getInstanceName(), config.getClassName());
             final Class<?> deviceDriverClass = Class.forName(config.getClassName());
             final DeviceDriver driver = (DeviceDriver) deviceDriverClass.getConstructor(DeviceDriverConfig.class).newInstance(config);
