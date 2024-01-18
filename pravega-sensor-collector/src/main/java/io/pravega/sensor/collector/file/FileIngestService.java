@@ -132,7 +132,7 @@ public abstract class FileIngestService extends DeviceDriver {
     }
 
     long getDeleteCompletedFilesIntervalInMinutes() {
-        return Long.parseLong(getProperty(DELETE_COMPLETED_FILES_INTERVAL_IN_MINUTES_KEY, "60"));
+        return Long.parseLong(getProperty(DELETE_COMPLETED_FILES_INTERVAL_IN_MINUTES_KEY, "720"));
     }
 
     protected void watchFiles() {
