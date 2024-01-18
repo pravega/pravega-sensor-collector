@@ -9,6 +9,8 @@
  */
 package io.pravega.sensor.collector;
 
+import com.google.common.base.Preconditions;
+
 import java.util.Map;
 
 public class DeviceDriverConfig {
@@ -18,10 +20,10 @@ public class DeviceDriverConfig {
     private final DeviceDriverManager deviceDriverManager;
 
     public DeviceDriverConfig(String instanceName, String className, Map<String, String> properties, DeviceDriverManager deviceDriverManager) {
-        this.instanceName = instanceName;
-        this.className = className;
-        this.properties = properties;
-        this.deviceDriverManager = deviceDriverManager;
+        this.instanceName = Preconditions.checkNotNull(instanceName, "instanceName");
+        this.className = Preconditions.checkNotNull(className, "className");
+        this.properties = Preconditions.checkNotNull(properties, "deviceDriverProperties");
+        this.deviceDriverManager = Preconditions.checkNotNull(deviceDriverManager, "deviceDriverManager");
     }
 
     @Override

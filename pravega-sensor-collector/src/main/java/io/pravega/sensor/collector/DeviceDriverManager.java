@@ -9,6 +9,7 @@
  */
 package io.pravega.sensor.collector;
 
+import com.google.common.base.Preconditions;
 import com.google.common.util.concurrent.AbstractService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -31,7 +32,7 @@ public class DeviceDriverManager extends AbstractService {
     private List<DeviceDriver> drivers;
 
     public DeviceDriverManager(Map<String, String> properties) {
-        configs = configFromProperties(PREFIX, SEPARATOR, properties);
+        configs = configFromProperties(PREFIX, SEPARATOR, Preconditions.checkNotNull(properties, "properties"));
     }
 
     @Override
