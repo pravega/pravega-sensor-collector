@@ -94,6 +94,7 @@ public class TransactionalEventWriter<T> implements EventWriter<T> {
         }
         return null;
     }
+
     public Transaction.Status getTransactionStatus(UUID txnId) {
         return writer.getTxn(txnId).checkStatus();
     }

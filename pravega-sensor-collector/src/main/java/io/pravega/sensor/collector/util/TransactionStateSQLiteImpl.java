@@ -45,7 +45,7 @@ public class TransactionStateSQLiteImpl  implements AutoCloseable, TransactionSt
         }
 
         /**
-         * Add file name and begin offset to PendingFiles table
+         * Add file name and begin offset to PendingFiles table.
          *
          *  @param files      List of file name with Offset.
          *
@@ -129,7 +129,7 @@ public class TransactionStateSQLiteImpl  implements AutoCloseable, TransactionSt
         }
 
     /**
-     * Delete record from PendingFiles table
+     * Delete record from PendingFiles table.
      *
      * @param  fileName         file name of pending file
      * @param beginOffset       begin offset from where file read starts
@@ -145,67 +145,66 @@ public class TransactionStateSQLiteImpl  implements AutoCloseable, TransactionSt
         }
     }
 
+    /**
+     * Update below details
+     *      1. Update sequence number into SequenceNumber table
+     *      2. Add entry into CompletedFiles table for given file name and end offset
+     *      3. Delete all entry from PendingFiles for given file name offset less than equal to given begin offset value
+     * @param fileName               file name of processed file
+     * @param beginOffset            begin offset from where file read starts
+     * @param endOffset              end offset where reading ends.
+     * @param newNextSequenceNumber  next sequence number.
+     *
+     */
+    @Override
+    @VisibleForTesting
+    public void addCompletedFileRecord(String fileName, long beginOffset, long endOffset, long newNextSequenceNumber) throws SQLException {
+        addCompletedFileRecord(fileName, beginOffset, endOffset, newNextSequenceNumber, Optional.empty());
+    }
 
     /**
-         * Update below details
-         *      1. Update sequence number into SequenceNumber table
-         *      2. Add entry into CompletedFiles table for given file name and end offset
-         *      3. Delete all entry from PendingFiles for given file name offset less than equal to given begin offset value
-         * @param fileName               file name of processed file
-         * @param beginOffset            begin offset from where file read starts
-         * @param endOffset              end offset where reading ends.
-         * @param newNextSequenceNumber  next sequence number.
-         *
-         */
-        @Override
-        @VisibleForTesting
-        public void addCompletedFileRecord(String fileName, long beginOffset, long endOffset, long newNextSequenceNumber) throws SQLException {
-            addCompletedFileRecord(fileName, beginOffset, endOffset, newNextSequenceNumber, Optional.empty());
-        }
+     * Delete record from TransactionsToCommit table.
+     *
+     * @param  txnId transaction id
+     */
+    @Override
+    public void deleteTransactionToCommit(Optional<UUID> txnId) {
+        transactionCoordinator.deleteTransactionToCommit(txnId);
+    }
 
-        /**
-         * Delete record from TransactionsToCommit table
-         *
-         * @param  txnId transaction id
-         */
-        @Override
-        public void deleteTransactionToCommit(Optional<UUID> txnId) {
-            transactionCoordinator.deleteTransactionToCommit(txnId);
-        }
-
-        /**
-         * Get a list of files from completedFiles table
-         *
-         * @return list of file name and end offset (file size)
-         */
-        @Override
-        public List<FileNameWithOffset> getCompletedFileRecords() throws SQLException {
-            try (final Statement statement = connection.createStatement();
-                 final ResultSet rs = statement.executeQuery("select fileName, offset from completedFiles")) {
-                final List<FileNameWithOffset> files = new ArrayList<>();
-                while (rs.next()) {
-                    final FileNameWithOffset fileNameWithOffset = new FileNameWithOffset(rs.getString("fileName"), rs.getLong("offset"));
-                    files.add(fileNameWithOffset);
-                }
-                return files;
-            } finally {
-                connection.commit();
+    /**
+     * Get a list of files from completedFiles table.
+     *
+     * @return list of file name and end offset (file size)
+     */
+    @Override
+    public List<FileNameWithOffset> getCompletedFileRecords() throws SQLException {
+        try (final Statement statement = connection.createStatement();
+             final ResultSet rs = statement.executeQuery("select fileName, offset from completedFiles")) {
+            final List<FileNameWithOffset> files = new ArrayList<>();
+            while (rs.next()) {
+                final FileNameWithOffset fileNameWithOffset = new FileNameWithOffset(rs.getString("fileName"), rs.getLong("offset"));
+                files.add(fileNameWithOffset);
             }
+            return files;
+        } finally {
+            connection.commit();
         }
+    }
 
     /**
-     * Delete completed file record from completedFiles table for given file name
+     * Delete completed file record from completedFiles table for given file name.
      *
      * @param fileName  file name
      */
-        @Override
-        public void deleteCompletedFileRecord(String fileName) throws SQLException {
-            try (final PreparedStatement deleteStatement = connection.prepareStatement(
-                    "delete from CompletedFiles where fileName = ?");
-                 final AutoRollback autoRollback = new AutoRollback(connection)) {
-                deleteStatement.setString(1, fileName);
-                deleteStatement.execute();
-                autoRollback.commit();
-            }
+    @Override
+    public void deleteCompletedFileRecord(String fileName) throws SQLException {
+        try (final PreparedStatement deleteStatement = connection.prepareStatement(
+                "delete from CompletedFiles where fileName = ?");
+             final AutoRollback autoRollback = new AutoRollback(connection)) {
+            deleteStatement.setString(1, fileName);
+            deleteStatement.execute();
+            autoRollback.commit();
         }
+    }
 }

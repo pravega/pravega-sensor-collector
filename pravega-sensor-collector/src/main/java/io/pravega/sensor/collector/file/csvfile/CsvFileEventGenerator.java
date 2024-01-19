@@ -30,7 +30,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.function.Consumer;
 
 /**
- * Generate Event from CSV file
+ * Generate Event from CSV file.
  */
 public class CsvFileEventGenerator implements EventGenerator {
     private static final Logger LOGGER = LoggerFactory.getLogger(CsvFileEventGenerator.class);
@@ -65,6 +65,8 @@ public class CsvFileEventGenerator implements EventGenerator {
     /** Generate event from input stream. number of records in one event is defined in input config file
      * @param inputStream
      * @param firstSequenceNumber
+     * @param consumer
+     * @throws IOException If there is any error generating event.
      * @return next sequence number, end offset
      */
     public Pair<Long, Long> generateEventsFromInputStream(CountingInputStream inputStream, long firstSequenceNumber, Consumer<PravegaWriterEvent> consumer) throws IOException {
@@ -72,10 +74,10 @@ public class CsvFileEventGenerator implements EventGenerator {
         final CSVParser parser = CSVParser.parse(inputStream, StandardCharsets.UTF_8, format);
         long nextSequenceNumber = firstSequenceNumber;
         int numRecordsInEvent = 0;
-        List<HashMap<String,Object>> eventBatch = new ArrayList<>();
+        List<HashMap<String, Object>> eventBatch = new ArrayList<>();
         for (CSVRecord record : parser) {
-            HashMap<String,Object> recordDataMap = new HashMap<String,Object>();
-            for (int i=0; i<record.size();i++) {
+            HashMap<String, Object> recordDataMap = new HashMap<String, Object>();
+            for (int i = 0; i < record.size(); i++) {
                 recordDataMap.put(parser.getHeaderNames().get(i), convertValue(record.get(i)));
             }
             eventBatch.add(recordDataMap);
@@ -100,10 +102,10 @@ public class CsvFileEventGenerator implements EventGenerator {
         // TODO: convert timestamp
         try {
             return Long.parseLong(s);
-        } catch (NumberFormatException ignored) {}
+        } catch (NumberFormatException ignored) { }
         try {
             return Double.parseDouble(s);
-        } catch (NumberFormatException ignored) {}
+        } catch (NumberFormatException ignored) { }
         return s;
     }
 }

@@ -13,7 +13,12 @@ import com.google.common.collect.ImmutableList;
 import io.pravega.client.EventStreamClientFactory;
 import io.pravega.client.stream.TxnFailedException;
 import io.pravega.sensor.collector.file.rawfile.RawFileProcessor;
-import io.pravega.sensor.collector.util.*;
+import io.pravega.sensor.collector.util.EventWriter;
+import io.pravega.sensor.collector.util.FileNameWithOffset;
+import io.pravega.sensor.collector.util.FileUtils;
+import io.pravega.sensor.collector.util.TransactionCoordinator;
+import io.pravega.sensor.collector.util.TransactionStateSQLiteImpl;
+import io.pravega.sensor.collector.util.TransactionalEventWriter;
 import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
@@ -63,9 +68,9 @@ public class FileProcessorTests {
     protected void setup() {
         MockitoAnnotations.initMocks(this);
         String stateDatabaseFileName = ":memory:";
-        config = new FileConfig("./psc.db","/opt/pravega-sensor-collector/Files/A","parquet","key12",
-                "stream1","{}",10, false,
-                true,20.0, 5000,"RawFileIngestService");
+        config = new FileConfig("./psc.db", "/opt/pravega-sensor-collector/Files/A", "parquet", "key12",
+                "stream1", "{}", 10, false,
+                true, 20.0, 5000, "RawFileIngestService");
     }
 
     @Test
@@ -80,7 +85,7 @@ public class FileProcessorTests {
         final List<FileNameWithOffset> expected = ImmutableList.of(
                 new FileNameWithOffset("file3", 0),
                 new FileNameWithOffset("file4", 0));
-        RawFileProcessor fileProcessor = new RawFileProcessor(config,state, writer, transactionCoordinator, "writerId");
+        RawFileProcessor fileProcessor = new RawFileProcessor(config, state, writer, transactionCoordinator, "writerId");
         final List<FileNameWithOffset> actual = fileProcessor.getNewFiles(directoryListing, completedFiles);
         Assertions.assertEquals(expected, actual);
     }
@@ -88,7 +93,7 @@ public class FileProcessorTests {
     @Test
     public void getDirectoryListingTest() throws IOException {
         final List<FileNameWithOffset> actual = FileUtils.getDirectoryListing(
-                "../log-file-sample-data/","csv", Paths.get("."), 5000);
+                "../log-file-sample-data/", "csv", Paths.get("."), 5000);
         LOGGER.info("actual={}", actual);
     }
 
@@ -107,7 +112,7 @@ public class FileProcessorTests {
     @Test
     public void processNextFile() throws Exception {
         copyFile();
-        FileProcessor fileProcessor = new RawFileProcessor(config, state, transactionalEventWriter,transactionCoordinator, "test");
+        FileProcessor fileProcessor = new RawFileProcessor(config, state, transactionalEventWriter, transactionCoordinator, "test");
         doNothing().when(transactionalEventWriter).writeEvent(anyString(), any());
         fileProcessor.processFile(new FileNameWithOffset("../../pravega-sensor-collector/parquet-file-sample-data/sub1.parquet", 0), 1L);
         verify(transactionalEventWriter).writeEvent(anyString(), any());
@@ -126,7 +131,7 @@ public class FileProcessorTests {
                 .thenReturn(new ImmutablePair<>(new FileNameWithOffset("../../pravega-sensor-collector/parquet-file-sample-data/sub3.parquet", 0), 3L))
                 .thenAnswer(invocation -> null);
 
-        FileProcessor fileProcessor = new RawFileProcessor(config, state, transactionalEventWriter,transactionCoordinator, "test");
+        FileProcessor fileProcessor = new RawFileProcessor(config, state, transactionalEventWriter, transactionCoordinator, "test");
         doNothing().when(transactionalEventWriter).writeEvent(anyString(), any());
         fileProcessor.processNewFiles();
 
@@ -142,13 +147,14 @@ public class FileProcessorTests {
     @Test
     public void processNextFile_WriteEventException() throws Exception {
         copyFile();
-        FileProcessor fileProcessor = new RawFileProcessor(config, state, transactionalEventWriter,transactionCoordinator, "test");
+        FileProcessor fileProcessor = new RawFileProcessor(config, state, transactionalEventWriter, transactionCoordinator, "test");
         Mockito.doThrow(TxnFailedException.class).when(transactionalEventWriter).writeEvent(anyString(), any());
         assertThrows(RuntimeException.class, () -> fileProcessor.processFile(new FileNameWithOffset("../../pravega-sensor-collector/parquet-file-sample-data/sub1.parquet", 0), 1L));
         // Verify that myMethod was called exactly three times
         Mockito.verify(transactionalEventWriter, Mockito.times(1)).writeEvent(anyString(), any());
 
     }
+
     /*
      * Process the single file .
      * Throw transaction failed exception while commiting transaction
@@ -156,7 +162,7 @@ public class FileProcessorTests {
     @Test
     public void processNextFile_CommitException() throws Exception {
         copyFile();
-        FileProcessor fileProcessor = new RawFileProcessor(config, state, transactionalEventWriter,transactionCoordinator, "test");
+        FileProcessor fileProcessor = new RawFileProcessor(config, state, transactionalEventWriter, transactionCoordinator, "test");
         Mockito.doThrow(TxnFailedException.class).when(transactionalEventWriter).commit();
         assertThrows(RuntimeException.class, () -> fileProcessor.processFile(new FileNameWithOffset("../../pravega-sensor-collector/parquet-file-sample-data/sub1.parquet", 0), 1L));
         // Verify that myMethod was called exactly three times

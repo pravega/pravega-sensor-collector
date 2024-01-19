@@ -43,10 +43,10 @@ import io.pravega.sensor.collector.stateful.PollResponse;
 import io.pravega.sensor.collector.stateful.StatefulSensorDeviceDriver;
 
 public class LeapDriver extends StatefulSensorDeviceDriver<String> {
-    private static final Logger log = LoggerFactory.getLogger(LeapDriver.class);
-    private static final SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSXXX");
+    private static final Logger LOGGER = LoggerFactory.getLogger(LeapDriver.class);
+    private static final SimpleDateFormat DATE_FORMAT = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSXXX");
     static {
-        dateFormat.setTimeZone(TimeZone.getTimeZone("UTC"));
+        DATE_FORMAT.setTimeZone(TimeZone.getTimeZone("UTC"));
     }
 
     private static final String POLL_PERIOD_SEC_KEY = "POLL_PERIOD_SEC";
@@ -69,16 +69,16 @@ public class LeapDriver extends StatefulSensorDeviceDriver<String> {
         apiUri = getProperty(API_URI_KEY);
         userName = getProperty(USERNAME_KEY);
         password = getProperty(PASSWORD_KEY);
-        log.info("Poll Period Sec: {}", pollPeriodSec);
-        log.info("API URI: {}", apiUri);
-        log.info("User Name: {}", userName);
-        log.info("Password: {}", password);
+        LOGGER.info("Poll Period Sec: {}", pollPeriodSec);
+        LOGGER.info("API URI: {}", apiUri);
+        LOGGER.info("User Name: {}", userName);
+        LOGGER.info("Password: {}", password);
 
         final long bucketCapacity = 2;
         final long periodMillis = (long) (bucketCapacity * 1000 * pollPeriodSec);
         bucket = Bucket4j.builder().withMillisecondPrecision()
                 .addLimit(Bandwidth.simple(bucketCapacity, Duration.ofMillis(periodMillis))).build();
-        log.info("Token Bucket: {}", bucket);
+        LOGGER.info("Token Bucket: {}", bucket);
 
         bucket.tryConsume(bucketCapacity - 1);
     }
@@ -89,12 +89,13 @@ public class LeapDriver extends StatefulSensorDeviceDriver<String> {
     }
 
     /**
+     * For poll events.
      * @param state A string containing a timestamp which is the maximum timestamp of any reading
      *              ever returned by the Leap server.
      */
     @Override
     public PollResponse<String> pollEvents(String state) throws Exception {
-        log.debug("pollEvents: BEGIN");
+        LOGGER.debug("pollEvents: BEGIN");
         bucket.asScheduler().consume(1);
         final List<PersistentQueueElement> events = new ArrayList<>();
         final HttpClient client = HttpClient.newHttpClient();
@@ -103,19 +104,19 @@ public class LeapDriver extends StatefulSensorDeviceDriver<String> {
             uri = apiUri + "/ClientApi/V1/DeviceReadings";
         } else {
             // Add 1 ms to get new readings from just after the last read state.
-            final String startDate = dateFormat.format(Date.from(dateFormat.parse(state).toInstant().plus(Duration.ofMillis(1))));
+            final String startDate = DATE_FORMAT.format(Date.from(DATE_FORMAT.parse(state).toInstant().plus(Duration.ofMillis(1))));
             uri = apiUri + "/ClientApi/V1/DeviceReadings?startDate=" + URLEncoder.encode(startDate, StandardCharsets.UTF_8.toString());
         }
         final HttpRequest request = HttpRequest.newBuilder().uri(URI.create(uri))
                 .header("Authorization", "Bearer " + getAuthToken()).build();
-        log.info("pollEvents: request={}", request);
+        LOGGER.info("pollEvents: request={}", request);
         final HttpResponse<String> response = client.send(request, BodyHandlers.ofString());
-        log.debug("pollEvents: response={}", response);
+        LOGGER.debug("pollEvents: response={}", response);
         if (response.statusCode() != 200) {
             throw new RuntimeException(
                     MessageFormat.format("HTTP server returned status code {0}", response.statusCode()));
         }
-        log.trace("pollEvents: body={}", response.body());
+        LOGGER.trace("pollEvents: body={}", response.body());
         JsonNode jsonNode = mapper.readTree(response.body());
         final ArrayNode arrayNode = (ArrayNode) jsonNode;
         // if no response, empty event list and same state will be returned
@@ -132,36 +133,36 @@ public class LeapDriver extends StatefulSensorDeviceDriver<String> {
                     maxTime = curReading;
                 }
             }
-            state = dateFormat.format(maxTime);
+            state = DATE_FORMAT.format(maxTime);
         }
-        log.debug("pollEvents: New state will be {}", state);
+        LOGGER.debug("pollEvents: New state will be {}", state);
         final PollResponse<String> pollResponse = new PollResponse<String>(events, state);
-        log.debug("pollEvents: pollResponse={}", pollResponse);
-        log.debug("pollEvents: END");
+        LOGGER.debug("pollEvents: pollResponse={}", pollResponse);
+        LOGGER.debug("pollEvents: END");
         return pollResponse;
     }
 
     protected String getAuthToken() throws Exception {
-        log.debug("getAuthToken: BEGIN");
+        LOGGER.debug("getAuthToken: BEGIN");
         final HttpClient client = HttpClient.newBuilder().version(Version.HTTP_1_1).build();
         final String uri = apiUri + "/api/Auth/authenticate";
         final AuthCredentialsDto authCredentialsDto = new AuthCredentialsDto(userName, password);
         final String requestBody = mapper.writeValueAsString(authCredentialsDto);
-        log.debug("getAuthToken: requestBody={}", requestBody);
+        LOGGER.debug("getAuthToken: requestBody={}", requestBody);
         final HttpRequest request = HttpRequest.newBuilder().uri(URI.create(uri)).timeout(Duration.ofMinutes(1))
                 .header("Accept", "*/*").header("Content-Type", "application/json")
                 .POST(BodyPublishers.ofString(requestBody)).build();
-        log.debug("getAuthToken: request={}", request);
+        LOGGER.debug("getAuthToken: request={}", request);
         final HttpResponse<String> response = client.send(request, BodyHandlers.ofString());
-        log.debug("getAuthToken: response={}", response);
-        log.debug("getAuthToken: body={}", response.body());
+        LOGGER.debug("getAuthToken: response={}", response);
+        LOGGER.debug("getAuthToken: body={}", response.body());
         if (response.statusCode() != 200) {
             throw new RuntimeException(MessageFormat.format("HTTP server returned status code {0} for request {1}",
                     response.statusCode(), request));
         }
         final AuthTokenDto authTokenDto = mapper.readValue(response.body(), AuthTokenDto.class);
-        log.debug("getAuthToken: authTokenDto={}", authTokenDto);
-        log.debug("getAuthToken: END");
+        LOGGER.debug("getAuthToken: authTokenDto={}", authTokenDto);
+        LOGGER.debug("getAuthToken: END");
         return authTokenDto.token;
     }
 }

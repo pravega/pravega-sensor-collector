@@ -24,9 +24,9 @@ import java.util.TimeZone;
 public class NetworkSamples implements Samples {
     private static final Logger log = LoggerFactory.getLogger(NetworkSamples.class);
 
-    private static final DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'");
+    private static final DateFormat DATE_FORMAT = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'");
     static {
-        dateFormat.setTimeZone(TimeZone.getTimeZone("UTC"));
+        DATE_FORMAT.setTimeZone(TimeZone.getTimeZone("UTC"));
     }
 
     // Timestamps as nanoseconds since 1970-01-01.
@@ -66,7 +66,7 @@ public class NetworkSamples implements Samples {
     }
 
     public void setLastTimestampFormatted() {
-        lastTimestampFormatted = dateFormat.format(new Date(lastTimestamp() / 1000 / 1000));
+        lastTimestampFormatted = DATE_FORMAT.format(new Date(lastTimestamp() / 1000 / 1000));
     }
 
     @Override

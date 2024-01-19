@@ -19,6 +19,7 @@ import java.util.concurrent.TimeUnit;
 
 /**
  * Read raw data from a device and send it to the memory queue.
+ *
  */
 public class DataCollectorService<R, S extends Samples> extends AbstractExecutionThreadService {
     private static final Logger LOGGER = LoggerFactory.getLogger(DataCollectorService.class);

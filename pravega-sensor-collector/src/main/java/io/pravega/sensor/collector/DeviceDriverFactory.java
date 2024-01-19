@@ -17,6 +17,7 @@ public class DeviceDriverFactory {
 
     /**
      * Instantiate a concrete subclass of DeviceDriver based on key/value properties.
+     * @param config
      */
     DeviceDriver create(DeviceDriverConfig config) {
         try {
