@@ -116,7 +116,7 @@ tasks.register('runLeapAPIMockServer', JavaExec) {
     main = "io.pravega.sensor.collector.leap.LeapAPIMock"
 }
 
-task createExtraRunApp(type: CreateStartScripts) {
+task createWatchdogApp(type: CreateStartScripts) {
     mainClass = "io.pravega.sensor.collector.watchdog.PscWatchdogApp"
     classpath = startScripts.classpath
     outputDir = startScripts.outputDir
@@ -126,7 +126,7 @@ task createExtraRunApp(type: CreateStartScripts) {
 
 applicationDistribution.into("bin") {
     duplicatesStrategy= DuplicatesStrategy.EXCLUDE
-    from(createExtraRunApp)
+    from(createWatchdogApp)
     fileMode = 0755
 }
 
