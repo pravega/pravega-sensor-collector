@@ -54,11 +54,13 @@ public class WatchDogService extends AbstractService {
         log.info("Starting WatchDog Service");
         monitor.startAsync();
         monitor.awaitTerminated();
+        notifyStarted();
     }
 
     @Override
     protected void doStop() {
         log.info("Stopping Watchdog Service");
+        notifyStopped();
     }
 
     /**
@@ -120,6 +122,7 @@ public class WatchDogService extends AbstractService {
         protected void doStart() {
             log.info("Starting WatchdogService");
             executor.scheduleAtFixedRate(this::process, 0, config.getWatchDogWatchInterval(), TimeUnit.SECONDS);
+            notifyStarted();
         }
 
         /**
@@ -167,6 +170,7 @@ public class WatchDogService extends AbstractService {
         @Override
         protected void doStop() {
             log.info("Stopping WatchdogSrevice");
+            notifyStopped();
         }
     }
 
