@@ -9,6 +9,7 @@
  */
 package io.pravega.sensor.collector.simple;
 
+import com.google.common.base.Preconditions;
 import io.pravega.sensor.collector.util.AutoRollback;
 import io.pravega.sensor.collector.util.TransactionCoordinator;
 import org.slf4j.Logger;
@@ -48,8 +49,8 @@ public class PersistentQueue implements AutoCloseable {
      */
     public PersistentQueue(Connection connection, TransactionCoordinator transactionCoordinator, long capacity) {
         try {
-            this.connection = connection;
-            this.transactionCoordinator = transactionCoordinator;
+            this.connection = Preconditions.checkNotNull(connection, "connection");
+            this.transactionCoordinator = Preconditions.checkNotNull(transactionCoordinator, "transactionCoordinator");
             final long initialSize = getDatabaseRecordCount();
             LOGGER.info("Persistent queue has {} elements.", initialSize);
             final int permits = (int) Long.max(Integer.MIN_VALUE, Long.min(Integer.MAX_VALUE, capacity - initialSize));
