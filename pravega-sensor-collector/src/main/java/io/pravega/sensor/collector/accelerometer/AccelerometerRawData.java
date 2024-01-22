@@ -9,6 +9,7 @@
  */
 package io.pravega.sensor.collector.accelerometer;
 
+import com.google.common.base.Preconditions;
 import org.apache.commons.codec.binary.Hex;
 
 /**
@@ -18,7 +19,7 @@ public class AccelerometerRawData {
     public final byte[] bytes;
 
     public AccelerometerRawData(byte[] bytes) {
-        this.bytes = bytes;
+        this.bytes = Preconditions.checkNotNull(bytes, "bytes");
     }
 
     @Override
