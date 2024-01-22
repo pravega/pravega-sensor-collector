@@ -116,6 +116,20 @@ tasks.register('runLeapAPIMockServer', JavaExec) {
     main = "io.pravega.sensor.collector.leap.LeapAPIMock"
 }
 
+task createExtraRunApp(type: CreateStartScripts) {
+    mainClass = "io.pravega.sensor.collector.watchdog.PscWatchdogApp"
+    classpath = startScripts.classpath
+    outputDir = startScripts.outputDir
+    applicationName = 'psc-watchdog'
+//    defaultJvmOpts = ["-Xms1024m", "-Xmx2048m"]
+}
+
+applicationDistribution.into("bin") {
+    duplicatesStrategy= DuplicatesStrategy.EXCLUDE
+    from(createExtraRunApp)
+    fileMode = 0755
+}
+
 tasks.withType(com.github.spotbugs.snom.SpotBugsTask) {
     reports {
         xml {

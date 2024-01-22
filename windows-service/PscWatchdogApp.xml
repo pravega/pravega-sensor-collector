@@ -1,0 +1,21 @@
+<service>
+    <id>watchdog1</id>
+    <name>PSCWatchdog</name>
+    <description>Watchdog Service for Pravega Senson COllector</description>
+    <executable>"C:/Program Files/Java/jdk-11/bin/java"</executable>
+    <arguments>-Xmx2048m -cp "PSCFiles\pravega-sensor-collector-0.2.18.jar io.pravega.sensor.collector.watchdog.PscWatchdogApp"</arguments>
+    <!--  -Djavax.net.debug=all -Djava.security.debug=all -->
+
+    <!-- old log files are truncated when service restarts. Can change logmode to append, roll-by-size and roll-by-time -->
+    <!-- <logmode>reset</logmode> -->
+
+    <log mode="roll-by-size">
+        <sizeThreshold>10240</sizeThreshold>
+        <keepFiles>10</keepFiles>
+    </log>
+
+    <env name="HOME" value="C:\Users\winuser" />
+    <env name="PSC_SERVICE_NAME" value="PravegaSensorCollector" />
+
+    <onfailure action="restart"/>
+</service>
