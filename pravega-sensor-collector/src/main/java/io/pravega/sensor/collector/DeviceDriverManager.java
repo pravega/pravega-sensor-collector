@@ -39,17 +39,20 @@ public class DeviceDriverManager extends AbstractService {
         LOGGER.info("Starting device drivers");
         final DeviceDriverFactory factory = new DeviceDriverFactory();
         drivers = configs.stream().map(factory::create).collect(Collectors.toList());
-        drivers.stream().forEach((driver) -> driver.startAsync());
-        drivers.stream().forEach((driver) -> driver.awaitRunning());
+        drivers.forEach(AbstractService::startAsync);
+        drivers.forEach(AbstractService::awaitRunning);
         LOGGER.info("All device drivers started successfully");
         notifyStarted();
     }
 
     @Override
     protected void doStop() {
-        drivers.stream().forEach((driver) -> driver.stopAsync());
-        drivers.stream().forEach((driver) -> driver.awaitTerminated());
+        LOGGER.info("Stopping all device drivers");
+        drivers.forEach(AbstractService::stopAsync);
+        drivers.forEach(AbstractService::awaitTerminated);
         drivers = null;
+        LOGGER.info("Stopped all device drivers");
+        notifyStopped();
     }
 
     /**
