@@ -123,9 +123,7 @@ public class TransactionStateSQLiteImpl  implements AutoCloseable, TransactionSt
                 deletePendingFileStatement.setString(1, fileName);
                 deletePendingFileStatement.setLong(2, beginOffset);
                 deletePendingFileStatement.execute();
-                if(transactionCoordinator!=null) {
-                    transactionCoordinator.addTransactionToCommit(txnId);
-                }
+                transactionCoordinator.addTransactionToCommit(txnId);
                 autoRollback.commit();
             }
         }
@@ -172,9 +170,7 @@ public class TransactionStateSQLiteImpl  implements AutoCloseable, TransactionSt
          */
         @Override
         public void deleteTransactionToCommit(Optional<UUID> txnId) {
-            if(transactionCoordinator!=null) {
-                transactionCoordinator.deleteTransactionToCommit(txnId);
-            }
+            transactionCoordinator.deleteTransactionToCommit(txnId);
         }
 
         /**

@@ -26,11 +26,6 @@ public class Parameters {
         return ENV_PREFIX;
     }
 
-    public static Map<String, String> getProperties() {
-        Map<String, String> map = new HashMap<>();
-        final String fileName = getPropertiesFileName();
-        return getProperties(fileName);
-    }
     /**
      * Combines properties from:
      *    1. properties file (if specified)
@@ -38,9 +33,10 @@ public class Parameters {
      *  Values in the system environment will override values in the properties file.
      *  It is intended that properties files only be used when developing in an IDE.
      */
-    public static Map<String, String> getProperties(final String fileName) {
+    public static Map<String, String> getProperties() {
         Map<String, String> map = new HashMap<>();
-        if (fileName != null && !fileName.isEmpty()) {
+        final String fileName = getPropertiesFileName();
+        if (!fileName.isEmpty()) {
             log.info("Reading properties from file {}", fileName);
             Properties properties = new Properties();
             try (FileInputStream inputStream = new FileInputStream(fileName)) {
