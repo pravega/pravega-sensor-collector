@@ -161,14 +161,14 @@ public abstract class FileIngestService extends DeviceDriver {
     }
 
     protected void deleteCompletedFiles() {
-        LOG.trace("deleteCompletedFiles: BEGIN");
+        LOG.debug("deleteCompletedFiles: BEGIN");
         try {
             processor.deleteCompletedFiles();
         } catch (Exception e) {
             LOG.error("deleteCompletedFiles: Delete file error", e);
             // Continue on any errors. We will retry on the next iteration.
         }
-        LOG.trace("deleteCompletedFiles: END");
+        LOG.debug("deleteCompletedFiles: END");
     }
 
     @Override
@@ -201,9 +201,11 @@ public abstract class FileIngestService extends DeviceDriver {
 
     @Override
     protected void doStop() {
-        LOG.info("doStop: Cancelling ingestion task and process file task");
+        LOG.info("doStop: Cancelling ingestion, process and delete file task");
         watchFileTask.cancel(false);
         processFileTask.cancel(false);
         deleteFileTask.cancel(false);
+        LOG.info("doStop: Cancelled ingestion, process and delete file task");
+        notifyStopped();
     }
 }
