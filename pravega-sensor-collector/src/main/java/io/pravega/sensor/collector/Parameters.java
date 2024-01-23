@@ -27,7 +27,6 @@ public class Parameters {
     }
 
     public static Map<String, String> getProperties() {
-        Map<String, String> map = new HashMap<>();
         final String fileName = getPropertiesFileName();
         return getProperties(fileName);
     }
