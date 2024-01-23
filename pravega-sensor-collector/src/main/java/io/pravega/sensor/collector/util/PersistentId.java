@@ -9,6 +9,7 @@
  */
 package io.pravega.sensor.collector.util;
 
+import com.google.common.base.Preconditions;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -24,6 +25,7 @@ public class PersistentId {
     private final UUID persistentId;
 
     public PersistentId(Connection connection) {
+        Preconditions.checkNotNull(connection, "connection");
         try {
             try (final Statement statement = connection.createStatement()) {
                 // Create table if needed.
