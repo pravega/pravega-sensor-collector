@@ -42,6 +42,7 @@ public abstract class FileIngestService extends DeviceDriver {
     private static final String EXACTLY_ONCE_KEY = "EXACTLY_ONCE";
     private static final String TRANSACTION_TIMEOUT_MINUTES_KEY = "TRANSACTION_TIMEOUT_MINUTES";
     private static final String MIN_TIME_IN_MILLIS_TO_UPDATE_FILE_KEY = "MIN_TIME_IN_MILLIS_TO_UPDATE_FILE";
+    private static final String DELETE_COMPLETED_FILES_INTERVAL_IN_MINUTES_KEY = "DELETE_COMPLETED_FILES_INTERVAL_IN_MINUTES";
 
     private static final int DEFAULT_SAMPLES_PER_EVENT_KEY = 100;
 
@@ -50,8 +51,9 @@ public abstract class FileIngestService extends DeviceDriver {
     private final FileProcessor processor;
     private final ScheduledExecutorService executor;
 
-    private ScheduledFuture<?> watchFiletask;
+    private ScheduledFuture<?> watchFileTask;
     private ScheduledFuture<?> processFileTask;
+    private ScheduledFuture<?> deleteFileTask;
 
     public FileIngestService(DeviceDriverConfig config) {
         super(config);
@@ -133,6 +135,10 @@ public abstract class FileIngestService extends DeviceDriver {
         return Long.parseLong(getProperty(MIN_TIME_IN_MILLIS_TO_UPDATE_FILE_KEY, "5000"));
     }
 
+    long getDeleteCompletedFilesIntervalInMinutes() {
+        return Long.parseLong(getProperty(DELETE_COMPLETED_FILES_INTERVAL_IN_MINUTES_KEY, "720"));
+    }
+
     protected void watchFiles() {
         LOG.trace("watchFiles: BEGIN");
         try {
@@ -154,9 +160,20 @@ public abstract class FileIngestService extends DeviceDriver {
         LOG.trace("processFiles: END");
     }
 
+    protected void deleteCompletedFiles() {
+        LOG.trace("deleteCompletedFiles: BEGIN");
+        try {
+            processor.deleteCompletedFiles();
+        } catch (Exception e) {
+            LOG.error("deleteCompletedFiles: Delete file error", e);
+            // Continue on any errors. We will retry on the next iteration.
+        }
+        LOG.trace("deleteCompletedFiles: END");
+    }
+
     @Override
     protected void doStart() {
-        watchFiletask = executor.scheduleAtFixedRate(
+        watchFileTask = executor.scheduleAtFixedRate(
                 this::watchFiles,
                 0,
                 getIntervalMs(),
@@ -171,13 +188,22 @@ public abstract class FileIngestService extends DeviceDriver {
                 0,
                 1,
                 TimeUnit.MILLISECONDS);
+
+
+        deleteFileTask = executor.scheduleAtFixedRate(
+                this::deleteCompletedFiles,
+                1,
+                getDeleteCompletedFilesIntervalInMinutes(),
+                TimeUnit.MINUTES);
+
         notifyStarted();
     }
 
     @Override
     protected void doStop() {
         LOG.info("doStop: Cancelling ingestion task and process file task");
-        watchFiletask.cancel(false);
+        watchFileTask.cancel(false);
         processFileTask.cancel(false);
+        deleteFileTask.cancel(false);
     }
 }
