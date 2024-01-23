@@ -18,7 +18,7 @@ public class NetworkRawData {
     public final List<Long> statisticValues;
 
     public NetworkRawData(long timestampNanos, List<Long> statisticValues) {
-        this.timestampNanos = Preconditions.checkNotNull(timestampNanos, "timestampNanos");
+        this.timestampNanos = timestampNanos;
         this.statisticValues = Preconditions.checkNotNull(statisticValues, "statisticValues");
     }
 
