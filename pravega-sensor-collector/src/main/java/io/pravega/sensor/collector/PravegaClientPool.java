@@ -25,7 +25,7 @@ public class PravegaClientPool implements AutoCloseable {
     private final Map<PravegaClientConfig, EventStreamClientFactory> eventStreamClientFactories = new HashMap<>();
 
     public synchronized ClientConfig getClientConfig(PravegaClientConfig config) {
-        final ClientConfig clientConfig = clientConfigs.get(Preconditions.checkNotNull(config, "pravegaClientConfig"));
+        final ClientConfig clientConfig = clientConfigs.get(Preconditions.checkNotNull(config, "config"));
         if (clientConfig != null) {
             log.info("Reusing client config for {}", config);
             return clientConfig;
@@ -37,7 +37,7 @@ public class PravegaClientPool implements AutoCloseable {
     }
 
     public synchronized EventStreamClientFactory getEventStreamClientFactory(PravegaClientConfig config) {
-        final EventStreamClientFactory factory = eventStreamClientFactories.get(Preconditions.checkNotNull(config, "pravegaClientConfig"));
+        final EventStreamClientFactory factory = eventStreamClientFactories.get(Preconditions.checkNotNull(config, "config"));
         if (factory != null) {
             log.info("Reusing client factory for {}", config);
             return factory;

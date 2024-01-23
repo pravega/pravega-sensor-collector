@@ -60,10 +60,10 @@ public abstract class FileProcessor {
     private final Path movedFilesDirectory;
 
     public FileProcessor(FileConfig config, TransactionStateDB state, EventWriter<byte[]> writer, TransactionCoordinator transactionCoordinator) {
-        this.config = Preconditions.checkNotNull(config, "fileConfig");
-        Preconditions.checkNotNull(config.stateDatabaseFileName, "fileConfig.stateDatabaseFileName");
-        this.state = Preconditions.checkNotNull(state, "transactionStateDB");
-        this.writer = Preconditions.checkNotNull(writer, "eventWriter");
+        this.config = Preconditions.checkNotNull(config, "config");
+        Preconditions.checkNotNull(config.stateDatabaseFileName, "config.stateDatabaseFileName");
+        this.state = Preconditions.checkNotNull(state, "state");
+        this.writer = Preconditions.checkNotNull(writer, "writer");
         this.transactionCoordinator = Preconditions.checkNotNull(transactionCoordinator, "transactionCoordinator");
         this.eventGenerator = Preconditions.checkNotNull(getEventGenerator(config), "eventGenerator");
         this.movedFilesDirectory = Paths.get(config.stateDatabaseFileName).getParent();

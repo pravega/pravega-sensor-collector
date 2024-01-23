@@ -22,7 +22,7 @@ public class DeviceDriverConfig {
     public DeviceDriverConfig(String instanceName, String className, Map<String, String> properties, DeviceDriverManager deviceDriverManager) {
         this.instanceName = Preconditions.checkNotNull(instanceName, "instanceName");
         this.className = Preconditions.checkNotNull(className, "className");
-        this.properties = Preconditions.checkNotNull(properties, "deviceDriverProperties");
+        this.properties = Preconditions.checkNotNull(properties, "properties");
         this.deviceDriverManager = Preconditions.checkNotNull(deviceDriverManager, "deviceDriverManager");
     }
 
