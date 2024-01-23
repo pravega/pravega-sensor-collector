@@ -9,6 +9,7 @@
  */
 package io.pravega.sensor.collector.util;
 
+import com.google.common.base.Preconditions;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -25,7 +26,7 @@ public class AutoRollback implements AutoCloseable {
     private boolean committed;
 
     public AutoRollback(Connection connection) {
-        this.connection = connection;
+        this.connection = Preconditions.checkNotNull(connection, "connection");
     }
 
     public void commit() throws SQLException {

@@ -9,6 +9,7 @@
  */
 package io.pravega.sensor.collector.util;
 
+import com.google.common.base.Preconditions;
 import io.pravega.client.stream.TxnFailedException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -65,8 +66,8 @@ public class TransactionCoordinator {
     private final EventWriter<byte[]> writer;
 
     public TransactionCoordinator(Connection connection, EventWriter<byte[]> writer) {
-        this.connection = connection;
-        this.writer = writer;
+        this.connection = Preconditions.checkNotNull(connection, "connection");
+        this.writer = Preconditions.checkNotNull(writer, "writer");
         try {
             try (final Statement statement = connection.createStatement()) {
                 statement.execute(
