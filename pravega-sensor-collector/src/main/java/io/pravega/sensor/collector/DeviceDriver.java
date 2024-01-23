@@ -31,7 +31,7 @@ public abstract class DeviceDriver extends AbstractService implements AutoClosea
     private static final String CREATE_SCOPE_KEY = "CREATE_SCOPE";
 
     public DeviceDriver(DeviceDriverConfig config) {
-        this.config = Preconditions.checkNotNull(config, "deviceDriverConfig");
+        this.config = Preconditions.checkNotNull(config, "config");
         LOGGER.info("Create Scope: {}", isCreateScope());
     }
 
