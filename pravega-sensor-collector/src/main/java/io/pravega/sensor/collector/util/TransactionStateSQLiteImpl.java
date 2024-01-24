@@ -10,6 +10,7 @@
 package io.pravega.sensor.collector.util;
 
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.base.Preconditions;
 import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.apache.commons.lang3.tuple.Pair;
 import org.slf4j.Logger;
@@ -35,8 +36,8 @@ public class TransactionStateSQLiteImpl  implements AutoCloseable, TransactionSt
         private final TransactionCoordinator transactionCoordinator;
 
         public TransactionStateSQLiteImpl(Connection connection, TransactionCoordinator transactionCoordinator) {
-            this.connection = connection;
-            this.transactionCoordinator = transactionCoordinator;
+            this.connection = Preconditions.checkNotNull(connection, "connection");
+            this.transactionCoordinator = Preconditions.checkNotNull(transactionCoordinator, "transactionCoordinator");
         }
 
         @Override

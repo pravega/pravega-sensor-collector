@@ -9,6 +9,7 @@
  *
  */
 package io.pravega.sensor.collector.stateful;
+import com.google.common.base.Preconditions;
 import com.google.common.util.concurrent.AbstractExecutionThreadService;
 
 import org.slf4j.Logger;
@@ -28,9 +29,9 @@ public class DataCollectorService<S> extends AbstractExecutionThreadService {
 
     public DataCollectorService(String instanceName, PersistentQueue persistentQueue,
             StatefulSensorDeviceDriver<S> driver) {
-        this.instanceName = instanceName;
-        this.persistentQueue = persistentQueue;
-        this.driver = driver;
+        this.instanceName = Preconditions.checkNotNull(instanceName, "instanceName");
+        this.persistentQueue = Preconditions.checkNotNull(persistentQueue, "persistentQueue");
+        this.driver = Preconditions.checkNotNull(driver, "driver");
     }
 
     @Override

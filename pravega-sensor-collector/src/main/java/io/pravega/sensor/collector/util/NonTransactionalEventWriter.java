@@ -9,6 +9,7 @@
  */
 package io.pravega.sensor.collector.util;
 
+import com.google.common.base.Preconditions;
 import io.pravega.client.stream.EventStreamWriter;
 import io.pravega.client.stream.Transaction;
 import io.pravega.client.stream.TxnFailedException;
@@ -27,7 +28,7 @@ public class NonTransactionalEventWriter<T> implements EventWriter<T> {
     private final EventStreamWriter<T> writer;
 
     public NonTransactionalEventWriter(EventStreamWriter<T> writer) {
-        this.writer = writer;
+        this.writer = Preconditions.checkNotNull(writer, "writer");
     }
 
     public void writeEvent(String routingKey, T event) {

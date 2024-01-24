@@ -9,6 +9,8 @@
  */
 package io.pravega.sensor.collector.simple;
 
+import com.google.common.base.Preconditions;
+
 import java.nio.charset.StandardCharsets;
 
 public class PersistentQueueElement {
@@ -19,8 +21,8 @@ public class PersistentQueueElement {
 
     public PersistentQueueElement(long id, byte[] bytes, String routingKey, long timestamp) {
         this.id = id;
-        this.bytes = bytes;
-        this.routingKey = routingKey;
+        this.bytes = Preconditions.checkNotNull(bytes, "bytes");
+        this.routingKey = Preconditions.checkNotNull(routingKey, "routingKey");
         this.timestamp = timestamp;
     }
 

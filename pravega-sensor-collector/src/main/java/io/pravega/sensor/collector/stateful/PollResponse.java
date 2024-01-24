@@ -11,6 +11,7 @@ package io.pravega.sensor.collector.stateful;
 
 import java.util.List;
 
+import com.google.common.base.Preconditions;
 import io.pravega.sensor.collector.simple.PersistentQueueElement;
 
 public class PollResponse<S> {
@@ -18,8 +19,8 @@ public class PollResponse<S> {
     public final S state;
 
     public PollResponse(List<PersistentQueueElement> events, S state) {
-        this.events = events;
-        this.state = state;
+        this.events = Preconditions.checkNotNull(events, "events");
+        this.state = Preconditions.checkNotNull(state, "state");
     }
 
     @Override
