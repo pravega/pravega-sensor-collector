@@ -1,3 +1,4 @@
+package io.pravega.sensor.collector.file;
 /**
  * Copyright (c) Dell Inc., or its subsidiaries. All Rights Reserved.
  *
@@ -7,7 +8,6 @@
  *
  *     http://www.apache.org/licenses/LICENSE-2.0
  */
-package io.pravega.sensor.collector.file;
 
 import com.google.common.io.CountingInputStream;
 import io.pravega.client.EventStreamClientFactory;
@@ -85,6 +85,7 @@ public abstract class FileProcessor {
                 EventWriterConfig.builder()
                         .enableConnectionPooling(true)
                         .transactionTimeoutTime((long) (config.transactionTimeoutMinutes * 60.0 * 1000.0))
+                        .enableLargeEvents(config.enableLargeEvent)
                         .build(),
                 config.exactlyOnce);
 
@@ -184,9 +185,13 @@ public abstract class FileProcessor {
         /* Check if transactions can be aborted.
          * Will fail with {@link TxnFailedException} if the transaction has already been committed or aborted.
          */
-        log.debug("processFile: Transaction status {} ", writer.getTransactionStatus());
-        if (writer.getTransactionStatus() == Transaction.Status.OPEN) {
-            writer.abort();
+        if (config.exactlyOnce) {
+            log.debug("processFile: Transaction status {} ", writer.getTransactionStatus());
+            if (writer.getTransactionStatus() == Transaction.Status.OPEN){
+                writer.abort();
+            }
+        } else {
+            log.debug("processFile: No need to check transaction status for non-transactional write.");
         }
 
         File pendingFile = new File(fileNameWithBeginOffset.fileName);
