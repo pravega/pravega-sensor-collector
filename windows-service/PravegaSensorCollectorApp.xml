@@ -18,7 +18,7 @@
 
   <!-- Use the below commented tag to load custom logback.xml -->
 
-  <!-- <arguments>-Xmx512m -Dlogback.configurationFile=logback.xml -jar "windows-service\PSCFiles\pravega-sensor-collector-0.2.15.jar"</arguments> -->
+  <!-- <arguments>-Xmx512m -Dlogback.configurationFile=.\logback.xml -jar "windows-service\PSCFiles\pravega-sensor-collector-0.2.15.jar"</arguments> -->
 
   <!-- old log files are truncated when service restarts. Can change logmode to append, roll-by-size and roll-by-time -->
   <logmode>reset</logmode>
