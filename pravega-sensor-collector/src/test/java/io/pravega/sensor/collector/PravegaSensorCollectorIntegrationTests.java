@@ -1,6 +1,12 @@
 package io.pravega.sensor.collector;
 
 import com.google.common.util.concurrent.Service;
+import io.pravega.client.ClientConfig;
+import io.pravega.client.EventStreamClientFactory;
+import io.pravega.client.admin.ReaderGroupManager;
+import io.pravega.client.admin.StreamManager;
+import io.pravega.client.stream.*;
+import io.pravega.client.stream.impl.UTF8StringSerializer;
 import io.pravega.sensor.collector.util.FileNameWithOffset;
 import io.pravega.sensor.collector.util.SQliteDBUtility;
 import io.pravega.sensor.collector.util.TransactionStateDB;
@@ -8,6 +14,7 @@ import io.pravega.sensor.collector.util.TransactionStateSQLiteImpl;
 import io.pravega.test.integration.utils.SetupUtils;
 
 import java.io.IOException;
+import java.net.URI;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -17,6 +24,7 @@ import java.sql.SQLException;
 import java.time.Duration;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
@@ -24,13 +32,14 @@ import org.junit.jupiter.api.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+@TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 public class PravegaSensorCollectorIntegrationTests {
     private static final Logger log = LoggerFactory.getLogger(PravegaSensorCollectorIntegrationTests.class);
-    private final SetupUtils setupUtils = new SetupUtils();
-    String fileName = "./src/test/resources/RawFileIngest-integration-test.properties";
-    Map<String, String> properties = Parameters.getProperties(fileName);
-    @BeforeEach
-    public void setup() {
+    private static final SetupUtils setupUtils = new SetupUtils();
+    static String fileName = "./src/test/resources/RawFileIngest-integration-test.properties";
+    static Map<String, String> properties = Parameters.getProperties(fileName);
+    @BeforeAll
+    public static void setup() {
         log.info("Setup");
         try {
             setupUtils.startAllServices();
@@ -43,8 +52,8 @@ public class PravegaSensorCollectorIntegrationTests {
         log.debug("Properties: {}", properties);
     }
 
-    @AfterEach
-    public void tearDown() {
+    @AfterAll
+    public static void tearDown() {
         log.info("TearDown");
         try {
             setupUtils.stopAllServices();
@@ -60,9 +69,91 @@ public class PravegaSensorCollectorIntegrationTests {
 
     }
 
+    @Test
+    @Timeout(value = 3, unit = TimeUnit.MINUTES)
+    @Order(1)
+    public void testPSCDataIntegration() {
+        try {
+            copyHelloWorldFile();
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+
+        final DeviceDriverManager deviceDriverManager = new DeviceDriverManager(properties);
+        Service startService = deviceDriverManager.startAsync();
+        try {
+            startService.awaitRunning(Duration.ofSeconds(30));
+            Thread.sleep(25000);
+        } catch (InterruptedException | TimeoutException e) {
+            throw new RuntimeException(e);
+        }
+        final Connection connection = SQliteDBUtility.createDatabase(properties.get("PRAVEGA_SENSOR_COLLECTOR_RAW1_DATABASE_FILE"));
+        final TransactionStateDB state = new TransactionStateSQLiteImpl(connection, null);
+
+        try {
+            List<FileNameWithOffset> completedFiles = state.getCompletedFileRecords();
+            Assertions.assertEquals(1, completedFiles.size());
+
+            URI controllerURI = setupUtils.getControllerUri();
+            String scope = properties.get("PRAVEGA_SENSOR_COLLECTOR_RAW1_SCOPE");
+            String streamName = properties.get("PRAVEGA_SENSOR_COLLECTOR_RAW1_STREAM");
+
+            StreamManager streamManager = StreamManager.create(controllerURI);
+
+            final String readerGroup = UUID.randomUUID().toString().replace("-", "");
+            final ReaderGroupConfig readerGroupConfig = ReaderGroupConfig.builder()
+                    .stream(Stream.of(scope, streamName))
+                    .build();
+            try (ReaderGroupManager readerGroupManager = ReaderGroupManager.withScope(scope, controllerURI)) {
+                readerGroupManager.createReaderGroup(readerGroup, readerGroupConfig);
+            }
+
+            try (EventStreamClientFactory clientFactory = EventStreamClientFactory.withScope(scope,
+                    ClientConfig.builder().controllerURI(controllerURI).build());
+                 EventStreamReader<String> reader = clientFactory.createReader("reader",
+                         readerGroup,
+                         new UTF8StringSerializer(),
+                         ReaderConfig.builder().build())) {
+                System.out.format("Reading all the events from %s/%s%n", scope, streamName);
+                EventRead<String> eventRead = null;
+                try {
+                    while ((eventRead = reader.readNextEvent(2000)).getEvent() != null) {
+                        String event = eventRead.getEvent();
+                        System.out.format("Read event: %s", event);
+                        Assertions.assertNotNull(event);
+                        Assertions.assertFalse(event.isEmpty());
+                        Assertions.assertEquals("Hello World.", event);
+                    }
+                } catch (ReinitializationRequiredException e) {
+                    //There are certain circumstances where the reader needs to be reinitialized
+                    e.printStackTrace();
+                }
+                System.out.format("No more events from %s/%s%n", scope, streamName);
+            }
+
+            Thread.sleep(50000);
+
+            Service stopService = deviceDriverManager.stopAsync();
+            stopService.awaitTerminated(Duration.ofSeconds(30));
+
+            // Till this time all the completed files should get deleted
+            completedFiles = state.getCompletedFileRecords();
+            Assertions.assertEquals(0, completedFiles.size());
+            connection.close();
+        } catch (SQLException | InterruptedException | TimeoutException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    public void copyHelloWorldFile() throws IOException {
+        Path sourcePath = Paths.get("../parquet-file-sample-data/test_file/hello-world.parquet");
+        Path targetPath = Paths.get("../parquet-file-sample-data/integration-test/hello-world.parquet");
+        Files.copy(sourcePath, targetPath, StandardCopyOption.REPLACE_EXISTING);
+    }
 
     @Test
     @Timeout(value = 3, unit = TimeUnit.MINUTES)
+    @Order(2)
     public void testRawFile() {
         try {
             copyFile();
