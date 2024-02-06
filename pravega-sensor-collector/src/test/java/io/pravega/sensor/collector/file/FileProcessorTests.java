@@ -15,6 +15,7 @@ import io.pravega.client.stream.TxnFailedException;
 import io.pravega.sensor.collector.file.rawfile.RawFileProcessor;
 import io.pravega.sensor.collector.util.*;
 import org.apache.commons.lang3.tuple.ImmutablePair;
+import org.junit.Assert;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -177,5 +178,38 @@ public class FileProcessorTests {
         sourcePath = Paths.get("../../pravega-sensor-collector/parquet-file-sample-data/test_file/sub3.parquet");
         targetPath = Paths.get("../../pravega-sensor-collector/parquet-file-sample-data/sub3.parquet");
         Files.copy(sourcePath, targetPath, StandardCopyOption.REPLACE_EXISTING);
+    }
+
+    @Test
+    public void testCreateRawFileProcessorWithNullConfig() {
+        Exception exception = Assert.assertThrows(NullPointerException.class, () -> new RawFileProcessor(null, state, transactionalEventWriter, transactionCoordinator, "test"));
+        Assert.assertTrue("config".equals(exception.getMessage()));
+;    }
+
+    @Test
+    public void testCreateRawFileProcessorWithNullState() {
+        Exception exception = Assert.assertThrows(NullPointerException.class, () -> new RawFileProcessor(config, null, transactionalEventWriter, transactionCoordinator, "test"));
+        Assert.assertTrue("state".equals(exception.getMessage()));
+    }
+
+    @Test
+    public void testCreateRawFileProcessorWithNullEventWriter() {
+        Exception exception = Assert.assertThrows(NullPointerException.class, () -> new RawFileProcessor(config, state, null, transactionCoordinator, "test"));
+        Assert.assertTrue("writer".equals(exception.getMessage()));
+    }
+
+    @Test
+    public void testCreateRawFileProcessorWithNullTransactionCordinator() {
+        Exception exception = Assert.assertThrows(NullPointerException.class, () -> new RawFileProcessor(config, state, transactionalEventWriter, null, "test"));
+        Assert.assertTrue("transactionCoordinator".equals(exception.getMessage()));
+    }
+
+    @Test
+    public void testCreateRawFileProcessorWithNullStateDatabaseFilenameInConfig() {
+        FileConfig newConfig = new FileConfig(null,"/opt/pravega-sensor-collector/Files/A","parquet","key12",
+                "stream1","{}",10, false,
+                true,20.0, 5000,"RawFileIngestService", true);
+        Exception exception = Assert.assertThrows(NullPointerException.class, () -> new RawFileProcessor(newConfig, state, transactionalEventWriter, transactionCoordinator, "test"));
+        Assert.assertTrue("config.stateDatabaseFileName".equals(exception.getMessage()));
     }
 }
