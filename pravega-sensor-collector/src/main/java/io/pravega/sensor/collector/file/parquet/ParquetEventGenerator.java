@@ -123,11 +123,12 @@ public class ParquetEventGenerator implements EventGenerator {
             parquetSchemas.put(schema, avroSchema);
         }
         else{
+            LOGGER.debug("Retrieving cached schema");
             avroSchema = parquetSchemas.get(schema);
         }
 
         double elapsedSec1 = (System.nanoTime() - timestamp1) / 1_000_000_000.0;
-        log.info("Time taken to process schema= {} sec ", elapsedSec1);
+        LOGGER.debug("Time taken to process schema= {} sec ", elapsedSec1);
         long timestamp2 = System.nanoTime();
 
         final AvroParquetReader.Builder<GenericRecord> builder = AvroParquetReader.<GenericRecord>builder(tempFilePath);
@@ -162,7 +163,7 @@ public class ParquetEventGenerator implements EventGenerator {
             nextSequenceNumber++;
         }
         double elapsedSec2 = (System.nanoTime() - timestamp2) / 1_000_000_000.0;
-        log.info("Time taken to read records and batch events= {} sec ", elapsedSec2);
+        LOGGER.info("Time taken to read records and batch events= {} sec ", elapsedSec2);
         final long endOffset = inputStream.getCount();
         reader.close();
         tempFile.delete();
