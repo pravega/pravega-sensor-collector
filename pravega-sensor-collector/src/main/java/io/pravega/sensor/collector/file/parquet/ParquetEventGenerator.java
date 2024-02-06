@@ -57,7 +57,7 @@ public class ParquetEventGenerator implements EventGenerator {
     private final int maxRecordsPerEvent;
     private final ObjectNode eventTemplate;
     private final ObjectMapper mapper;
-    private Map<MessageType, Schema> parquetSchemas = new HashMap<>();
+    private final Map<MessageType, Schema> parquetSchemas = new HashMap<>();
 
     public ParquetEventGenerator(String routingKey, int maxRecordsPerEvent, ObjectNode eventTemplate, ObjectMapper mapper) {
         this.routingKey = Preconditions.checkNotNull(routingKey, "routingKey");
