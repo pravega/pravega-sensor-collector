@@ -9,6 +9,7 @@
  */
 package io.pravega.sensor.collector;
 
+import com.google.common.base.Preconditions;
 import io.pravega.client.ClientConfig;
 import io.pravega.client.EventStreamClientFactory;
 import org.slf4j.Logger;
@@ -18,13 +19,13 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class PravegaClientPool implements AutoCloseable {
-    private static final Logger log = LoggerFactory.getLogger(DeviceDriverManager.class);
+    private static final Logger log = LoggerFactory.getLogger(PravegaClientPool.class);
 
     private final Map<PravegaClientConfig, ClientConfig> clientConfigs = new HashMap<>();
     private final Map<PravegaClientConfig, EventStreamClientFactory> eventStreamClientFactories = new HashMap<>();
 
     public synchronized ClientConfig getClientConfig(PravegaClientConfig config) {
-        final ClientConfig clientConfig = clientConfigs.get(config);
+        final ClientConfig clientConfig = clientConfigs.get(Preconditions.checkNotNull(config, "pravegaClientConfig"));
         if (clientConfig != null) {
             log.info("Reusing client config for {}", config);
             return clientConfig;
@@ -36,7 +37,7 @@ public class PravegaClientPool implements AutoCloseable {
     }
 
     public synchronized EventStreamClientFactory getEventStreamClientFactory(PravegaClientConfig config) {
-        final EventStreamClientFactory factory = eventStreamClientFactories.get(config);
+        final EventStreamClientFactory factory = eventStreamClientFactories.get(Preconditions.checkNotNull(config, "pravegaClientConfig"));
         if (factory != null) {
             log.info("Reusing client factory for {}", config);
             return factory;

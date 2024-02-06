@@ -10,12 +10,17 @@
 package io.pravega.sensor.collector.util;
 
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.base.Preconditions;
 import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.apache.commons.lang3.tuple.Pair;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.sql.*;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -25,14 +30,14 @@ import java.util.UUID;
  * Maintain state of pending and completed files in SQLite database.
 */
 public class TransactionStateSQLiteImpl  implements AutoCloseable, TransactionStateDB {
-        private static final Logger log = LoggerFactory.getLogger(TransactionStateSQLiteImpl.class);
+        private static final Logger LOGGER = LoggerFactory.getLogger(TransactionStateSQLiteImpl.class);
 
         private final Connection connection;
         private final TransactionCoordinator transactionCoordinator;
 
         public TransactionStateSQLiteImpl(Connection connection, TransactionCoordinator transactionCoordinator) {
-            this.connection = connection;
-            this.transactionCoordinator = transactionCoordinator;
+            this.connection = Preconditions.checkNotNull(connection, "connection");
+            this.transactionCoordinator = Preconditions.checkNotNull(transactionCoordinator, "transactionCoordinator");
         }
 
         @Override
@@ -66,7 +71,7 @@ public class TransactionStateSQLiteImpl  implements AutoCloseable, TransactionSt
          * @return ((file name, begin offset), sequence number) or null if there is no pending file
          */
         @Override
-        public Pair<FileNameWithOffset,Long> getNextPendingFileRecord() throws SQLException {
+        public Pair<FileNameWithOffset, Long> getNextPendingFileRecord() throws SQLException {
             try (final Statement statement = connection.createStatement();
                  final ResultSet rs = statement.executeQuery("select fileName, offset from PendingFiles order by id limit 1")) {
                 if (rs.next()) {

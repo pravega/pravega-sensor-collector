@@ -22,24 +22,24 @@ import java.util.List;
 import java.util.TimeZone;
 
 public class AccelerometerSamples implements Samples {
-    private static final Logger log = LoggerFactory.getLogger(AccelerometerSamples.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(AccelerometerSamples.class);
 
-    private static final DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'");
+    private static final DateFormat DATE_FORMAT = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'");
     static {
-        dateFormat.setTimeZone(TimeZone.getTimeZone("UTC"));
+        DATE_FORMAT.setTimeZone(TimeZone.getTimeZone("UTC"));
     }
 
     // Timestamps as nanoseconds since 1970-01-01.
     @JsonProperty("TimestampNanos")
-    final public List<Long> timestampNanos = new ArrayList<>();
+    public final List<Long> timestampNanos = new ArrayList<>();
     @JsonProperty("X")
-    final public List<Double> x = new ArrayList<>();
+    public final List<Double> x = new ArrayList<>();
     @JsonProperty("Y")
-    final public List<Double> y = new ArrayList<>();
+    public final List<Double> y = new ArrayList<>();
     @JsonProperty("Z")
-    final public List<Double> z = new ArrayList<>();
+    public final List<Double> z = new ArrayList<>();
     @JsonProperty("RemoteAddr")
-    final public String remoteAddr;
+    public final String remoteAddr;
     // The last timestamp formatted as a string.
     @JsonProperty("LastTimestampFormatted")
     public String lastTimestampFormatted;
@@ -50,14 +50,11 @@ public class AccelerometerSamples implements Samples {
 
     @Override
     public String toString() {
-        return "Samples{" +
-                "remoteAddr='" + remoteAddr + '\'' +
-                ", lastTimestampFormatted='" + lastTimestampFormatted + '\'' +
-                ", timestampNanos=" + timestampNanos +
-                ", x=" + x +
-                ", y=" + y +
-                ", z=" + z +
-                '}';
+        return "Samples{"
+                + "remoteAddr='" + remoteAddr + '\''
+                + ", lastTimestampFormatted='" + lastTimestampFormatted + '\''
+                + ", timestampNanos=" + timestampNanos + ", x="
+                + x + ", y=" + y + ", z=" + z + '}';
     }
 
     public long lastTimestamp() {
@@ -65,7 +62,7 @@ public class AccelerometerSamples implements Samples {
     }
 
     public void setLastTimestampFormatted() {
-        lastTimestampFormatted = dateFormat.format(new Date(lastTimestamp()/1000/1000));
+        lastTimestampFormatted = DATE_FORMAT.format(new Date(lastTimestamp() / 1000 / 1000));
     }
 
     @Override

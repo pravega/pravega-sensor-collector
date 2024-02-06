@@ -9,6 +9,7 @@
  */
 package io.pravega.sensor.collector.util;
 
+import com.google.common.base.Preconditions;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -19,17 +20,17 @@ import java.sql.Connection;
  * Based on https://stackoverflow.com/a/37122747/5890553.
  */
 public class AutoRollback implements AutoCloseable {
-    private static final Logger log = LoggerFactory.getLogger(AutoRollback.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(AutoRollback.class);
 
     private Connection connection;
     private boolean committed;
 
     public AutoRollback(Connection connection) {
-        this.connection = connection;
+        this.connection = Preconditions.checkNotNull(connection, "connection");
     }
 
     public void commit() throws SQLException {
-        log.debug("Committing transaction on connection {}", connection);
+        LOGGER.debug("Committing transaction on connection {}", connection);
         connection.commit();
         committed = true;
     }
@@ -37,7 +38,7 @@ public class AutoRollback implements AutoCloseable {
     @Override
     public void close() throws SQLException {
         if (!committed) {
-            log.warn("Rolling back transaction on connection {}", connection);
+            LOGGER.warn("Rolling back transaction on connection {}", connection);
             connection.rollback();
         }
     }

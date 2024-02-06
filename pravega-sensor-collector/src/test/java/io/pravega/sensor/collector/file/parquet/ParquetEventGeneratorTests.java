@@ -29,7 +29,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class ParquetEventGeneratorTests {
-    private static final Logger log = LoggerFactory.getLogger(ParquetEventGeneratorTests.class);
+    private static final Logger LOG = LoggerFactory.getLogger(ParquetEventGeneratorTests.class);
     
     @Test
     public void TestFile() throws IOException {

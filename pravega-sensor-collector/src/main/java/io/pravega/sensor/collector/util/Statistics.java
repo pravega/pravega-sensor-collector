@@ -17,7 +17,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public class Statistics {
-    private static final Logger log = LoggerFactory.getLogger(Statistics.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(Statistics.class);
 
     private final String description;
     private final Mean meanMs = new Mean();
@@ -45,7 +45,7 @@ public class Statistics {
 
     public void logStatistics() {
         final double meanFreqHz = 1000.0 / meanMs.getResult();
-        log.info(String.format("%s: meanFreqHz=%.3f, meanMs=%.3f, stdDevMs=%.3f, minMs=%.3f, maxMs=%.3f, count=%d",
+        LOGGER.info(String.format("%s: meanFreqHz=%.3f, meanMs=%.3f, stdDevMs=%.3f, minMs=%.3f, maxMs=%.3f, count=%d",
                 description, meanFreqHz, meanMs.getResult(), stdDevMs.getResult(), minMs.getResult(), maxMs.getResult(), count));
     }
 }

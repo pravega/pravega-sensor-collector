@@ -27,13 +27,13 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 public class AccelerometerDriver extends SimpleDeviceDriver<AccelerometerRawData, AccelerometerSamples> {
-    private static final Logger log = LoggerFactory.getLogger(AccelerometerDriver.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(AccelerometerDriver.class);
 
     private static final String CONFIG_DEVICE_FILE_KEY = "CONFIG_DEVICE_FILE";
     private static final String DATA_DEVICE_FILE_KEY = "DATA_DEVICE_FILE";
 
-    private final static int SAMPLES_PER_QUEUE_ELEMENT = 16;
-    private final static int BYTES_PER_SAMPLE = 16;
+    private static final int SAMPLES_PER_QUEUE_ELEMENT = 16;
+    private static final int BYTES_PER_SAMPLE = 16;
 
     // Scale for x, y, z.
     private final List<Double> scales;
@@ -45,8 +45,8 @@ public class AccelerometerDriver extends SimpleDeviceDriver<AccelerometerRawData
 
         final String sensorConfigurationDeviceFileName = getSensorConfigurationDeviceFileName();
         final String sensorDataDeviceFileName = getSensorDataDeviceFileName();
-        log.info("Sensor Configuration Device File: {}", sensorConfigurationDeviceFileName);
-        log.info("Sensor Data Device File: {}", sensorDataDeviceFileName);
+        LOGGER.info("Sensor Configuration Device File: {}", sensorConfigurationDeviceFileName);
+        LOGGER.info("Sensor Data Device File: {}", sensorDataDeviceFileName);
 
         try {
             // TODO: IIO device numbering may change after reboot. Need to scan file system to find desired device.
@@ -63,7 +63,7 @@ public class AccelerometerDriver extends SimpleDeviceDriver<AccelerometerRawData
                     throw new RuntimeException(e);
                 }
             }).collect(Collectors.toList());
-            log.info("scales={}", scales);
+            LOGGER.info("scales={}", scales);
             randomAccessFile = new RandomAccessFile(new File(sensorDataDeviceFileName), "r");
         } catch (Exception e) {
             throw new RuntimeException(e);

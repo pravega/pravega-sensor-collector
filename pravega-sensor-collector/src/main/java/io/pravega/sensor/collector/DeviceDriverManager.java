@@ -9,6 +9,7 @@
  */
 package io.pravega.sensor.collector;
 
+import com.google.common.base.Preconditions;
 import com.google.common.util.concurrent.AbstractService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -20,7 +21,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 public class DeviceDriverManager extends AbstractService {
-    private static final Logger log = LoggerFactory.getLogger(DeviceDriverManager.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(DeviceDriverManager.class);
 
     private static final String PREFIX = Parameters.getEnvPrefix();
     private static final String SEPARATOR = "_";
@@ -31,17 +32,17 @@ public class DeviceDriverManager extends AbstractService {
     private List<DeviceDriver> drivers;
 
     public DeviceDriverManager(Map<String, String> properties) {
-        configs = configFromProperties(PREFIX, SEPARATOR, properties);
+        configs = configFromProperties(PREFIX, SEPARATOR, Preconditions.checkNotNull(properties, "properties"));
     }
 
     @Override
     protected void doStart() {
-        log.info("Starting device drivers");
+        LOGGER.info("Starting device drivers");
         final DeviceDriverFactory factory = new DeviceDriverFactory();
         drivers = configs.stream().map(factory::create).collect(Collectors.toList());
         drivers.stream().forEach((driver) -> driver.startAsync());
         drivers.stream().forEach((driver) -> driver.awaitRunning());
-        log.info("All device drivers started successfully");
+        LOGGER.info("All device drivers started successfully");
         notifyStarted();
     }
 
@@ -75,11 +76,11 @@ public class DeviceDriverManager extends AbstractService {
             }
             return Stream.empty();
         }).collect(Collectors.toList());
-        log.debug("configFromProperties: instanceNames={}", instanceNames);
+        LOGGER.debug("configFromProperties: instanceNames={}", instanceNames);
         // Copy properties with prefix to keys without a prefix.
         final List<DeviceDriverConfig> config = instanceNames.stream().map((instanceName) -> {
             final String className = properties.get(prefix + instanceName + sep + CLASS_KEY);
-            assert(className != null);
+            assert (className != null);
             final Map<String, String> instanceProperties = new HashMap<>();
             properties.entrySet().stream().forEach((entry) -> {
                 final String key = entry.getKey();
@@ -92,7 +93,7 @@ public class DeviceDriverManager extends AbstractService {
             });
             return new DeviceDriverConfig(instanceName, className, instanceProperties, this);
         }).collect(Collectors.toList());
-        log.info("configFromProperties: config={}", config);
+        LOGGER.info("configFromProperties: config={}", config);
         return config;
     }
 

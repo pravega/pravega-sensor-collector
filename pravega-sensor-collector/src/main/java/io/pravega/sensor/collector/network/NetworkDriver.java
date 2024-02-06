@@ -32,7 +32,7 @@ import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 public class NetworkDriver extends SimpleDeviceDriver<NetworkRawData, NetworkSamples> {
-    private static final Logger log = LoggerFactory.getLogger(NetworkDriver.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(NetworkDriver.class);
 
     private static final String NETWORK_INTERFACE_KEY = "NETWORK_INTERFACE";
     private static final String STATISTICS_KEY = "STATISTICS";
@@ -50,9 +50,9 @@ public class NetworkDriver extends SimpleDeviceDriver<NetworkRawData, NetworkSam
         final String interfaceName = getInterfaceName();
         final List<String> statisticNames = getStatisticNames();
         final double samplesPerSec = getSamplesPerSec();
-        log.info("Network Interface: {}", interfaceName);
-        log.info("Statistics: {}", statisticNames);
-        log.info("Samples Per Sec: {}", samplesPerSec);
+        LOGGER.info("Network Interface: {}", interfaceName);
+        LOGGER.info("Statistics: {}", statisticNames);
+        LOGGER.info("Samples Per Sec: {}", samplesPerSec);
 
         final long bucketCapacity = 2;
         final long periodNanos = (long) (bucketCapacity * 1e9 / samplesPerSec);
@@ -60,13 +60,13 @@ public class NetworkDriver extends SimpleDeviceDriver<NetworkRawData, NetworkSam
                 .withNanosecondPrecision()
                 .addLimit(Bandwidth.simple(bucketCapacity, Duration.ofNanos(periodNanos)))
                 .build();
-        log.info("Token Bucket: {}", bucket);
+        LOGGER.info("Token Bucket: {}", bucket);
 
         if (samplesPerSec > 100.0) {
-            log.info("Using spin blocking for precise sampling");
+            LOGGER.info("Using spin blocking for precise sampling");
             blockingStrategy = new SpinBlockingStrategy();
         } else {
-            log.info("Using parking strategy for reduced CPU usage");
+            LOGGER.info("Using parking strategy for reduced CPU usage");
             blockingStrategy = UninterruptibleBlockingStrategy.PARKING;
         }
 
@@ -113,12 +113,12 @@ public class NetworkDriver extends SimpleDeviceDriver<NetworkRawData, NetworkSam
                 s.randomAccessFile.seek(0);
                 return Long.parseLong(s.randomAccessFile.readLine());
             } catch (Exception e) {
-                log.warn("Exception reading file", e);
+                LOGGER.warn("Exception reading file", e);
                 return 0L;
             }
         }).collect(Collectors.toList());
         final NetworkRawData networkRawData = new NetworkRawData(timestampNanos, statisticValues);
-        log.trace("networkRawData={}", networkRawData);
+        LOGGER.trace("networkRawData={}", networkRawData);
         return networkRawData;
     }
 
@@ -145,7 +145,7 @@ public class NetworkDriver extends SimpleDeviceDriver<NetworkRawData, NetworkSam
     @Override
     public byte[] serializeSamples(NetworkSamples samples) throws Exception {
         samples.setLastTimestampFormatted();
-        log.info("samples={}", samples);
+        LOGGER.info("samples={}", samples);
         return mapper.writeValueAsBytes(samples);
     }
 }

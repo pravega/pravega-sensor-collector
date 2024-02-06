@@ -9,6 +9,7 @@
  */
 package io.pravega.sensor.collector.util;
 
+import com.google.common.base.Preconditions;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -19,11 +20,12 @@ import java.sql.Statement;
 import java.util.UUID;
 
 public class PersistentId {
-    private static final Logger log = LoggerFactory.getLogger(PersistentId.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(PersistentId.class);
 
     private final UUID persistentId;
 
     public PersistentId(Connection connection) {
+        Preconditions.checkNotNull(connection, "connection");
         try {
             try (final Statement statement = connection.createStatement()) {
                 // Create table if needed.
@@ -46,7 +48,7 @@ public class PersistentId {
                         throw new SQLException("Unexpected query response");
                     }
                 }
-                log.info("persistentId={}", persistentId);
+                LOGGER.info("persistentId={}", persistentId);
             }
         } catch (SQLException e) {
             throw new RuntimeException(e);

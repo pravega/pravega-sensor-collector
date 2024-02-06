@@ -11,6 +11,7 @@ package io.pravega.sensor.collector.file.csvfile;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.google.common.base.Preconditions;
 import com.google.common.io.CountingInputStream;
 import io.pravega.sensor.collector.file.EventGenerator;
 import io.pravega.sensor.collector.util.PravegaWriterEvent;
@@ -33,7 +34,7 @@ import java.util.function.Consumer;
  * Generate Event from CSV file
  */
 public class CsvFileEventGenerator implements EventGenerator {
-    private static final Logger log = LoggerFactory.getLogger(CsvFileEventGenerator.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(CsvFileEventGenerator.class);
 
     private final String routingKey;
     private final int maxRecordsPerEvent;
@@ -41,10 +42,10 @@ public class CsvFileEventGenerator implements EventGenerator {
     private final ObjectMapper mapper;
 
     public CsvFileEventGenerator(String routingKey, int maxRecordsPerEvent, ObjectNode eventTemplate, ObjectMapper mapper) {
-        this.routingKey = routingKey;
+        this.routingKey = Preconditions.checkNotNull(routingKey, "routingKey");
         this.maxRecordsPerEvent = maxRecordsPerEvent;
         this.eventTemplate = eventTemplate;
-        this.mapper = mapper;
+        this.mapper = Preconditions.checkNotNull(mapper, "objectMapper");
     }
 
     public static CsvFileEventGenerator create(String routingKey, int maxRecordsPerEvent, String eventTemplateStr, String writerId) {
@@ -75,8 +76,7 @@ public class CsvFileEventGenerator implements EventGenerator {
         List<HashMap<String,Object>> eventBatch = new ArrayList<>();
         for (CSVRecord record : parser) {
             HashMap<String,Object> recordDataMap = new HashMap<String,Object>();
-            for(int i=0; i<record.size();i++)
-            {
+            for (int i=0; i<record.size();i++) {
                 recordDataMap.put(parser.getHeaderNames().get(i), convertValue(record.get(i)));
             }
             eventBatch.add(recordDataMap);

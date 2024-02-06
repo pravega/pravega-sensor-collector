@@ -10,6 +10,7 @@
 package io.pravega.sensor.collector.simple;
 
 import com.google.common.util.concurrent.AbstractExecutionThreadService;
+import io.pravega.keycloak.com.google.common.base.Preconditions;
 import io.pravega.sensor.collector.util.Statistics;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -31,10 +32,10 @@ public class MemoryQueueToPersistentQueueService<R, S extends Samples> extends A
     private final int samplesPerEvent;
 
     public MemoryQueueToPersistentQueueService(String instanceName, BlockingQueue<R> memoryQueue, PersistentQueue persistentQueue, SimpleDeviceDriver<R, S> driver, int samplesPerEvent) {
-        this.instanceName = instanceName;
-        this.memoryQueue = memoryQueue;
-        this.persistentQueue = persistentQueue;
-        this.driver = driver;
+        this.instanceName = Preconditions.checkNotNull(instanceName, "instanceName");
+        this.memoryQueue = Preconditions.checkNotNull(memoryQueue, "memoryQueue");
+        this.persistentQueue = Preconditions.checkNotNull(persistentQueue, "persistentQueue");
+        this.driver = Preconditions.checkNotNull(driver, "driver");
         this.samplesPerEvent = samplesPerEvent;
     }
 

@@ -9,6 +9,7 @@
  */
 package io.pravega.sensor.collector;
 
+import com.google.common.base.Preconditions;
 import io.pravega.client.ClientConfig;
 
 import java.net.URI;
@@ -22,8 +23,8 @@ public class PravegaClientConfig {
     private static final String PRAVEGA_CONTROLLER_URI_KEY = "PRAVEGA_CONTROLLER_URI";
 
     public PravegaClientConfig(URI controllerURI, String scopeName) {
-        this.controllerURI = controllerURI;
-        this.scopeName = scopeName;
+        this.controllerURI = Preconditions.checkNotNull(controllerURI, "controllerURI");
+        this.scopeName = Preconditions.checkNotNull(scopeName, "scopeName");
     }
 
     public PravegaClientConfig(Map<String, String> properties, String scopeName) {
@@ -48,11 +49,11 @@ public class PravegaClientConfig {
 
     @Override
     public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+        if (this == o) { return true; }
+        if (o == null || getClass() != o.getClass()) { return false; }
         PravegaClientConfig that = (PravegaClientConfig) o;
-        return controllerURI.equals(that.controllerURI) &&
-                scopeName.equals(that.scopeName);
+        return controllerURI.equals(that.controllerURI)
+                && scopeName.equals(that.scopeName);
     }
 
     @Override

@@ -18,9 +18,9 @@ import org.slf4j.LoggerFactory;
  * Ingestion service for raw file data.  
  */
 public class RawFileIngestService extends FileIngestService {
-    private static final Logger log = LoggerFactory.getLogger(RawFileIngestService.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(RawFileIngestService.class);
 
-    public RawFileIngestService(DeviceDriverConfig config){
+    public RawFileIngestService(DeviceDriverConfig config) {
         super(config);
     }
 }

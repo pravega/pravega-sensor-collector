@@ -28,7 +28,7 @@ import java.util.concurrent.LinkedBlockingQueue;
  * This is an abstract class that uses a memory queue and a SQLite persistent queue, and writes to a single Pravega stream.
  */
 public abstract class SimpleDeviceDriver<R, S extends Samples> extends DeviceDriver {
-    private static final Logger log = LoggerFactory.getLogger(SimpleDeviceDriver.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(SimpleDeviceDriver.class);
 
     private static final String MEMORY_QUEUE_CAPACITY_ELEMENTS_KEY = "MEMORY_QUEUE_CAPACITY_ELEMENTS";
 
@@ -43,6 +43,7 @@ public abstract class SimpleDeviceDriver<R, S extends Samples> extends DeviceDri
     private static final String DELAY_BETWEEN_WRITE_BATCHES_MS_KEY = "DELAY_BETWEEN_WRITE_BATCHES_MS";
     private static final String EXACTLY_ONCE_KEY = "EXACTLY_ONCE";
     private static final String TRANSACTION_TIMEOUT_MINUTES_KEY = "TRANSACTION_TIMEOUT_MINUTES";
+    private static final String ENABLE_LARGE_EVENT = "ENABLE_LARGE_EVENT";
 
     private final String routingKey;
     private final DataCollectorService<R, S> dataCollectorService;
@@ -56,14 +57,14 @@ public abstract class SimpleDeviceDriver<R, S extends Samples> extends DeviceDri
         super(config);
 
         final int memoryQueueCapacityElements = getMemoryQueueCapacityElements();
-        log.info("Memory Queue Capacity: {} elements", memoryQueueCapacityElements);
+        LOGGER.info("Memory Queue Capacity: {} elements", memoryQueueCapacityElements);
 
         final String persistentQueueFileName = getPersistentQueueFileName();
         final int persistentQueueCapacityEvents = getPersistentQueueCapacityEvents();
         final int samplesPerEvent = getSamplesPerEvent();
-        log.info("Persistent Queue File: {}", persistentQueueFileName);
-        log.info("Persistent Queue Capacity Events: {}", persistentQueueCapacityEvents);
-        log.info("Samples Per Event: {}", samplesPerEvent);
+        LOGGER.info("Persistent Queue File: {}", persistentQueueFileName);
+        LOGGER.info("Persistent Queue Capacity Events: {}", persistentQueueCapacityEvents);
+        LOGGER.info("Samples Per Event: {}", samplesPerEvent);
 
         final String scopeName = getScopeName();
         final String streamName = getStreamName();
@@ -72,12 +73,12 @@ public abstract class SimpleDeviceDriver<R, S extends Samples> extends DeviceDri
         final long delayBetweenWriteBatchesMs = getDelayBetweenWriteBatchesMs();
         final boolean exactlyOnce = getExactlyOnce();
         final double transactionTimeoutMinutes = getTransactionTimeoutMinutes();
-        log.info("Stream: {}/{}", scopeName, streamName);
-        log.info("Routing Key: {}", routingKey);
-        log.info("Max Events Per Write Batch: {}", maxEventsPerWriteBatch);
-        log.info("Delay Between Write Batches: {} ms", delayBetweenWriteBatchesMs);
-        log.info("Exactly Once: {}", exactlyOnce);
-        log.info("Transaction Timeout: {} minutes", transactionTimeoutMinutes);
+        LOGGER.info("Stream: {}/{}", scopeName, streamName);
+        LOGGER.info("Routing Key: {}", routingKey);
+        LOGGER.info("Max Events Per Write Batch: {}", maxEventsPerWriteBatch);
+        LOGGER.info("Delay Between Write Batches: {} ms", delayBetweenWriteBatchesMs);
+        LOGGER.info("Exactly Once: {}", exactlyOnce);
+        LOGGER.info("Transaction Timeout: {} minutes", transactionTimeoutMinutes);
 
         final BlockingQueue<R> memoryQueue = new LinkedBlockingQueue<>(memoryQueueCapacityElements);
 
@@ -88,7 +89,7 @@ public abstract class SimpleDeviceDriver<R, S extends Samples> extends DeviceDri
         final Connection connection = PersistentQueue.createDatabase(getPersistentQueueFileName());
 
         final String writerId = new PersistentId(connection).getPersistentId().toString();
-        log.info("Writer ID: {}", writerId);
+        LOGGER.info("Writer ID: {}", writerId);
 
         clientFactory = getEventStreamClientFactory(scopeName);
 
@@ -101,6 +102,7 @@ public abstract class SimpleDeviceDriver<R, S extends Samples> extends DeviceDri
                     .enableConnectionPooling(true)
                     .retryAttempts(Integer.MAX_VALUE)
                     .transactionTimeoutTime((long) (transactionTimeoutMinutes * 60.0 * 1000.0))
+                    .enableLargeEvents(getLargeEventEnable())
                     .build(),
             exactlyOnce);
 
@@ -128,7 +130,7 @@ public abstract class SimpleDeviceDriver<R, S extends Samples> extends DeviceDri
     }
 
     int getPersistentQueueCapacityEvents() {
-        return Integer.parseInt(getProperty(PERSISTENT_QUEUE_CAPACITY_EVENTS_KEY, Integer.toString(1000*1000)));
+        return Integer.parseInt(getProperty(PERSISTENT_QUEUE_CAPACITY_EVENTS_KEY, Integer.toString(1000 * 1000)));
     }
 
     int getSamplesPerEvent() {
@@ -153,6 +155,10 @@ public abstract class SimpleDeviceDriver<R, S extends Samples> extends DeviceDri
 
     boolean getExactlyOnce() {
         return Boolean.parseBoolean(getProperty(EXACTLY_ONCE_KEY, Boolean.toString(true)));
+    }
+
+    boolean getLargeEventEnable() {
+        return Boolean.parseBoolean(getProperty(ENABLE_LARGE_EVENT, Boolean.toString(false)));
     }
 
     /**

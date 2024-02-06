@@ -12,6 +12,7 @@ package io.pravega.sensor.collector.file.rawfile;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.google.common.base.Preconditions;
 import com.google.common.io.CountingInputStream;
 import io.pravega.sensor.collector.file.EventGenerator;
 import io.pravega.sensor.collector.util.PravegaWriterEvent;
@@ -30,16 +31,16 @@ import java.util.function.Consumer;
  * Generate Event from RAW file
  */
 public class RawEventGenerator implements EventGenerator {
-    private static final Logger log = LoggerFactory.getLogger(RawEventGenerator.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(RawEventGenerator.class);
 
     private final String routingKey;
     private final ObjectNode eventTemplate;
     private final ObjectMapper mapper;
 
     public RawEventGenerator(String routingKey, ObjectNode eventTemplate, ObjectMapper mapper) {
-        this.routingKey = routingKey;
+        this.routingKey = Preconditions.checkNotNull(routingKey, "routingKey");
         this.eventTemplate = eventTemplate;
-        this.mapper = mapper;
+        this.mapper = Preconditions.checkNotNull(mapper, "objectMapper");
     }
 
     public static RawEventGenerator create(String routingKey, String eventTemplateStr, String writerId) {
@@ -66,19 +67,19 @@ public class RawEventGenerator implements EventGenerator {
      */
     public Pair<Long, Long> generateEventsFromInputStream(CountingInputStream inputStream, long firstSequenceNumber, Consumer<PravegaWriterEvent> consumer) throws IOException {
         long nextSequenceNumber = firstSequenceNumber;
-        try{    
+        try {
             BufferedInputStream bis = new BufferedInputStream(inputStream);
             byte[] byteArray = IOUtils.toByteArray(bis);
 
             if (byteArray.length > 0) {         //non-empty file
                 consumer.accept(new PravegaWriterEvent(routingKey, nextSequenceNumber, byteArray));
                 nextSequenceNumber++;
-            }			        
+            }
             final long endOffset = inputStream.getCount();
             return new ImmutablePair<>(nextSequenceNumber, endOffset);
-        } catch (Exception e){
-            log.error("Exception = {}",e);
+        } catch (Exception e) {
+            LOGGER.error("Exception = {}", e);
             throw e;
         }
-    }   
+    }
 }

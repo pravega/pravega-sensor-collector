@@ -19,10 +19,10 @@ import org.slf4j.LoggerFactory;
  * Ingestion service for parquet file data.  
  */
 public class ParquetFileIngestService extends FileIngestService {
-    private static final Logger log = LoggerFactory.getLogger(ParquetFileIngestService.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(ParquetFileIngestService.class);
 
 
-    public ParquetFileIngestService(DeviceDriverConfig config){
+    public ParquetFileIngestService(DeviceDriverConfig config) {
         super(config);
 
     }

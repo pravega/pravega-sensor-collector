@@ -21,10 +21,10 @@ import static org.junit.Assert.assertEquals;
 public class PravegaClientConfigTests {
 
     @Test
-    public void testConstructorWithValues(){
+    public void testConstructorWithValues() {
         URI uri = URI.create("tcp://localhost:9090");
         String scopeName = "testScope";
-        PravegaClientConfig conf = new PravegaClientConfig(uri,scopeName);
+        PravegaClientConfig conf = new PravegaClientConfig(uri, scopeName);
         assertEquals(scopeName, conf.getScopeName());
         assertEquals(uri, conf.toClientConfig().getControllerURI());
 
