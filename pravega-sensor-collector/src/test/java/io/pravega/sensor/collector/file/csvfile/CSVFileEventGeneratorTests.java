@@ -14,7 +14,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.io.CountingInputStream;
 import io.pravega.sensor.collector.file.EventGenerator;
-import io.pravega.sensor.collector.file.rawfile.RawFileProcessor;
 import io.pravega.sensor.collector.util.PravegaWriterEvent;
 import org.apache.commons.lang3.tuple.Pair;
 import org.junit.Assert;
