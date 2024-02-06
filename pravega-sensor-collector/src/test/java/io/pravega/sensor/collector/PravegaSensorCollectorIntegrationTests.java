@@ -22,6 +22,7 @@ import java.nio.file.StandardCopyOption;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.time.Duration;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -32,15 +33,15 @@ import org.junit.jupiter.api.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-@TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 public class PravegaSensorCollectorIntegrationTests {
     private static final Logger log = LoggerFactory.getLogger(PravegaSensorCollectorIntegrationTests.class);
-    private static final SetupUtils setupUtils = new SetupUtils();
+    private final SetupUtils setupUtils = new SetupUtils();
     static String fileName = "./src/test/resources/RawFileIngest-integration-test.properties";
-    static Map<String, String> properties = Parameters.getProperties(fileName);
-    @BeforeAll
-    public static void setup() {
+    Map<String, String> properties = null;
+    @BeforeEach
+    public void setup() {
         log.info("Setup");
+        properties = Parameters.getProperties(fileName);
         try {
             setupUtils.startAllServices();
 
@@ -52,8 +53,8 @@ public class PravegaSensorCollectorIntegrationTests {
         log.debug("Properties: {}", properties);
     }
 
-    @AfterAll
-    public static void tearDown() {
+    @AfterEach
+    public void tearDown() {
         log.info("TearDown");
         try {
             setupUtils.stopAllServices();
@@ -66,18 +67,23 @@ public class PravegaSensorCollectorIntegrationTests {
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
-
+        properties = null;
     }
 
     @Test
     @Timeout(value = 3, unit = TimeUnit.MINUTES)
-    @Order(1)
     public void testPSCDataIntegration() {
         try {
             copyHelloWorldFile();
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
+        URI controllerURI = setupUtils.getControllerUri();
+        String scope = "test-psc-data-integration";
+        String streamName ="test-psc-data-integration-stream";
+
+        properties.put("PRAVEGA_SENSOR_COLLECTOR_RAW1_SCOPE",scope);
+        properties.put("PRAVEGA_SENSOR_COLLECTOR_RAW1_STREAM",streamName);
 
         final DeviceDriverManager deviceDriverManager = new DeviceDriverManager(properties);
         Service startService = deviceDriverManager.startAsync();
@@ -94,42 +100,7 @@ public class PravegaSensorCollectorIntegrationTests {
             List<FileNameWithOffset> completedFiles = state.getCompletedFileRecords();
             Assertions.assertEquals(1, completedFiles.size());
 
-            URI controllerURI = setupUtils.getControllerUri();
-            String scope = properties.get("PRAVEGA_SENSOR_COLLECTOR_RAW1_SCOPE");
-            String streamName = properties.get("PRAVEGA_SENSOR_COLLECTOR_RAW1_STREAM");
-
-            StreamManager streamManager = StreamManager.create(controllerURI);
-
-            final String readerGroup = UUID.randomUUID().toString().replace("-", "");
-            final ReaderGroupConfig readerGroupConfig = ReaderGroupConfig.builder()
-                    .stream(Stream.of(scope, streamName))
-                    .build();
-            try (ReaderGroupManager readerGroupManager = ReaderGroupManager.withScope(scope, controllerURI)) {
-                readerGroupManager.createReaderGroup(readerGroup, readerGroupConfig);
-            }
-
-            try (EventStreamClientFactory clientFactory = EventStreamClientFactory.withScope(scope,
-                    ClientConfig.builder().controllerURI(controllerURI).build());
-                 EventStreamReader<String> reader = clientFactory.createReader("reader",
-                         readerGroup,
-                         new UTF8StringSerializer(),
-                         ReaderConfig.builder().build())) {
-                System.out.format("Reading all the events from %s/%s%n", scope, streamName);
-                EventRead<String> eventRead = null;
-                try {
-                    while ((eventRead = reader.readNextEvent(2000)).getEvent() != null) {
-                        String event = eventRead.getEvent();
-                        System.out.format("Read event: %s", event);
-                        Assertions.assertNotNull(event);
-                        Assertions.assertFalse(event.isEmpty());
-                        Assertions.assertEquals("Hello World.", event);
-                    }
-                } catch (ReinitializationRequiredException e) {
-                    //There are certain circumstances where the reader needs to be reinitialized
-                    e.printStackTrace();
-                }
-                System.out.format("No more events from %s/%s%n", scope, streamName);
-            }
+            validateStreamData(controllerURI, scope, streamName, new String(Files.readAllBytes(Paths.get("../parquet-file-sample-data/test_file/hello-world.parquet"))));
 
             Thread.sleep(50000);
 
@@ -140,8 +111,43 @@ public class PravegaSensorCollectorIntegrationTests {
             completedFiles = state.getCompletedFileRecords();
             Assertions.assertEquals(0, completedFiles.size());
             connection.close();
-        } catch (SQLException | InterruptedException | TimeoutException e) {
+        } catch (SQLException | InterruptedException | TimeoutException | IOException e) {
             throw new RuntimeException(e);
+        }
+    }
+
+    private static void validateStreamData(URI controllerURI, String scope, String streamName, String content) {
+        StreamManager streamManager = StreamManager.create(controllerURI);
+
+        final String readerGroup = UUID.randomUUID().toString().replace("-", "");
+        final ReaderGroupConfig readerGroupConfig = ReaderGroupConfig.builder()
+                .stream(Stream.of(scope, streamName))
+                .build();
+        try (ReaderGroupManager readerGroupManager = ReaderGroupManager.withScope(scope, controllerURI)) {
+            readerGroupManager.createReaderGroup(readerGroup, readerGroupConfig);
+        }
+
+        try (EventStreamClientFactory clientFactory = EventStreamClientFactory.withScope(scope,
+                ClientConfig.builder().controllerURI(controllerURI).build());
+             EventStreamReader<String> reader = clientFactory.createReader("reader",
+                     readerGroup,
+                     new UTF8StringSerializer(),
+                     ReaderConfig.builder().build())) {
+            System.out.format("Reading all the events from %s/%s%n", scope, streamName);
+            EventRead<String> eventRead = null;
+            try {
+                while ((eventRead = reader.readNextEvent(2000)).getEvent() != null) {
+                    String event = eventRead.getEvent();
+                    System.out.format("Read event: %s", event);
+                    Assertions.assertNotNull(event);
+                    Assertions.assertFalse(event.isEmpty());
+                    Assertions.assertEquals(content, event);
+                }
+            } catch (ReinitializationRequiredException e) {
+                //There are certain circumstances where the reader needs to be reinitialized
+                e.printStackTrace();
+            }
+            System.out.format("No more events from %s/%s%n", scope, streamName);
         }
     }
 
@@ -153,7 +159,6 @@ public class PravegaSensorCollectorIntegrationTests {
 
     @Test
     @Timeout(value = 3, unit = TimeUnit.MINUTES)
-    @Order(2)
     public void testRawFile() {
         try {
             copyFile();
