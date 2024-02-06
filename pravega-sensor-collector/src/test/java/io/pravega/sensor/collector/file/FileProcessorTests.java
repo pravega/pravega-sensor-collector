@@ -11,6 +11,9 @@ package io.pravega.sensor.collector.file;
 
 import com.google.common.collect.ImmutableList;
 import io.pravega.client.EventStreamClientFactory;
+import io.pravega.client.stream.EventWriterConfig;
+import io.pravega.client.stream.Serializer;
+import io.pravega.client.stream.TransactionalEventStreamWriter;
 import io.pravega.client.stream.TxnFailedException;
 import io.pravega.sensor.collector.file.rawfile.RawFileProcessor;
 import io.pravega.sensor.collector.util.*;
@@ -35,8 +38,7 @@ import java.util.List;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.Mockito.doNothing;
-import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.*;
 
 
 public class FileProcessorTests {
@@ -59,13 +61,16 @@ public class FileProcessorTests {
     @Mock
     private EventStreamClientFactory clientFactory;
 
+    @Mock
+    TransactionalEventStreamWriter transactionalEventStreamWriter;
+
 
     @BeforeEach
     protected void setup() {
         MockitoAnnotations.initMocks(this);
         String stateDatabaseFileName = ":memory:";
         config = new FileConfig("./psc.db","/opt/pravega-sensor-collector/Files/A","parquet","key12",
-                "stream1","{}",10, false,
+                "stream1","{}",10, true,
                 true,20.0, 5000,"RawFileIngestService", true);
     }
 
@@ -98,6 +103,7 @@ public class FileProcessorTests {
      */
     @Test
     public void getEmptyNextFileSet() throws Exception {
+        when(clientFactory.createTransactionalEventWriter(anyString(), anyString(), any(Serializer.class), any(EventWriterConfig.class))).thenReturn(transactionalEventStreamWriter);
        FileProcessor fileProcessor = FileProcessor.create(config, clientFactory);
         fileProcessor.processFiles();
     }

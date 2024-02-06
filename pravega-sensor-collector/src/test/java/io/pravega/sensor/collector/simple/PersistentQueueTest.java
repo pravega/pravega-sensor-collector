@@ -1,6 +1,5 @@
-package io.pravega.sensor.collector.file.simple;
+package io.pravega.sensor.collector.simple;
 
-import io.pravega.sensor.collector.simple.PersistentQueue;
 import org.junit.Assert;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
