@@ -13,6 +13,7 @@ package io.pravega.sensor.collector.file.parquet;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.io.CountingInputStream;
+import io.pravega.keycloak.com.google.common.base.Preconditions;
 import io.pravega.sensor.collector.file.EventGenerator;
 import io.pravega.sensor.collector.util.PravegaWriterEvent;
 import org.apache.avro.Schema;
@@ -57,10 +58,10 @@ public class ParquetEventGenerator implements EventGenerator {
     private final ObjectMapper mapper;
 
     public ParquetEventGenerator(String routingKey, int maxRecordsPerEvent, ObjectNode eventTemplate, ObjectMapper mapper) {
-        this.routingKey = routingKey;
+        this.routingKey = Preconditions.checkNotNull(routingKey, "routingKey");
         this.maxRecordsPerEvent = maxRecordsPerEvent;
         this.eventTemplate = eventTemplate;
-        this.mapper = mapper;
+        this.mapper = Preconditions.checkNotNull(mapper, "objectMapper");
     }
 
     public static ParquetEventGenerator create(String routingKey, int maxRecordsPerEvent, String eventTemplateStr, String writerId) {

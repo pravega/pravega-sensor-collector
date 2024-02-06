@@ -9,6 +9,7 @@
  */
 package io.pravega.sensor.collector.stateful;
 
+import io.pravega.keycloak.com.google.common.base.Preconditions;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -25,7 +26,7 @@ public class ReadingState {
     private static final Logger LOGGER = LoggerFactory.getLogger(ReadingState.class);
     public final Connection connection;
     public ReadingState(Connection connection) {
-        this.connection = connection;
+        this.connection = Preconditions.checkNotNull(connection, "connection");
         try {
             try (final Statement statement = connection.createStatement()) {
                 statement.execute("create table if not exists LastReadingState (" +

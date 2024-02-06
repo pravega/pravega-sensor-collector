@@ -12,6 +12,7 @@ package io.pravega.sensor.collector.util;
 import io.pravega.client.stream.Transaction;
 import io.pravega.client.stream.TransactionalEventStreamWriter;
 import io.pravega.client.stream.TxnFailedException;
+import io.pravega.keycloak.com.google.common.base.Preconditions;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -29,7 +30,7 @@ public class TransactionalEventWriter<T> implements EventWriter<T> {
     private Transaction<T> currentTxn = null;
 
     public TransactionalEventWriter(TransactionalEventStreamWriter<T> writer) {
-        this.writer = writer;
+        this.writer = Preconditions.checkNotNull(writer, "writer");
     }
 
     public void writeEvent(String routingKey, T event) throws TxnFailedException {

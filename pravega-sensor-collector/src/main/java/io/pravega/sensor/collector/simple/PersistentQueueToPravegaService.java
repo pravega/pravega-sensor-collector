@@ -10,6 +10,7 @@
 package io.pravega.sensor.collector.simple;
 
 import com.google.common.util.concurrent.AbstractExecutionThreadService;
+import io.pravega.keycloak.com.google.common.base.Preconditions;
 import io.pravega.sensor.collector.util.EventWriter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -31,9 +32,9 @@ public class PersistentQueueToPravegaService extends AbstractExecutionThreadServ
     private final long delayBetweenWriteBatchesMs;
 
     public PersistentQueueToPravegaService(String instanceName, PersistentQueue persistentQueue, EventWriter<byte[]> writer, int maxEventsPerWriteBatch, long delayBetweenWriteBatchesMs) {
-        this.instanceName = instanceName;
-        this.persistentQueue = persistentQueue;
-        this.writer = writer;
+        this.instanceName = Preconditions.checkNotNull(instanceName, "instanceName");
+        this.persistentQueue = Preconditions.checkNotNull(persistentQueue, "persistentQueue");
+        this.writer = Preconditions.checkNotNull(writer, "writer");
         this.maxEventsPerWriteBatch = maxEventsPerWriteBatch;
         this.delayBetweenWriteBatchesMs = delayBetweenWriteBatchesMs;
     }

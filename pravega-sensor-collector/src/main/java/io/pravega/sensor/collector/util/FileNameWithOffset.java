@@ -9,6 +9,8 @@
  */
 package io.pravega.sensor.collector.util;
 
+import io.pravega.keycloak.com.google.common.base.Preconditions;
+
 import java.util.Objects;
 
 /**
@@ -25,7 +27,7 @@ public class FileNameWithOffset implements Comparable<FileNameWithOffset> {
     public final long offset;
 
     public FileNameWithOffset(String fileName, long offset) {
-        this.fileName = fileName;
+        this.fileName = Preconditions.checkNotNull(fileName, "fileName");
         this.offset = offset;
     }
 
