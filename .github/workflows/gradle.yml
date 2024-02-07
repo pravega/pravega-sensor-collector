@@ -1,5 +1,5 @@
 #
-# Copyright Pravega Authors.
+# Copyright (c) Dell Inc., or its subsidiaries. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -7,45 +7,14 @@
 #
 #     http://www.apache.org/licenses/LICENSE-2.0
 #
-# Unless required by applicable law or agreed to in writing, software
-# distributed under the License is distributed on an "AS IS" BASIS,
-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-# See the License for the specific language governing permissions and
-# limitations under the License.
-#
 name: build
 
-# Set up when this workflow will run.
-on:
-  push:
-    branches:
-      - master                 # On every push to the master branch.
-      - 'r[0-9]+.[0-9]+'       # On every push to a release branch.
-  pull_request:                # On every pull request, regardless of source/target branch.
-  release:
-    types:
-      - published              # On every published release.
+on: [push, pull_request, workflow_dispatch]
+  # workflow_dispatch should make manually triggered ci/cd possible
+  # workflow file (like this) with `workflow_dispatch` after on should exist on the **master** or default branch,
+  # or there will be no ui for a manual trigger. https://github.community/t/workflow-dispatch-event-not-working/128856/2
 
-# Define a few constants that are shared across all the jobs.
-env:
-  GLOBAL_CACHE_PATH: |
-    ~/.gradle
-    ~/.m2
-  GLOBAL_CACHE_KEY: gradle-m2-java-11
-  GLOBAL_CACHE_RESTORE_KEYS: |
-    gradle-m2-java-
-    gradle-m2
-  # We cache the class files, resources and build output. This is generated on the build job and reused in dependent jobs.
-  # If there are subsequent builds this includes test execution.
-  BUILD_CACHE_PATH: |
-    .gradle
-    ./bin
-    **/bin
-    **/build
-
-  REPORTS_LOCATIONS: |
-    ./*/build/reports ./*/*/build/reports ./*/*/*/build/reports ./*/*/*/*/build/reports
-
+  #
   # Set 'GRADLE_OPTS' to pass additional custom parameters to each ./gradlew invocation in this workflow.
   # Example '--info' or '--debug'.
   #GRADLE_OPTS: --info
