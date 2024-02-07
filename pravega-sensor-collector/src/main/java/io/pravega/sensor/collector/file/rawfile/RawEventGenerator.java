@@ -12,6 +12,7 @@ package io.pravega.sensor.collector.file.rawfile;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.google.common.base.Preconditions;
 import com.google.common.io.CountingInputStream;
 import io.pravega.sensor.collector.file.EventGenerator;
 import io.pravega.sensor.collector.util.PravegaWriterEvent;
@@ -37,9 +38,9 @@ public class RawEventGenerator implements EventGenerator {
     private final ObjectMapper mapper;
 
     public RawEventGenerator(String routingKey, ObjectNode eventTemplate, ObjectMapper mapper) {
-        this.routingKey = routingKey;
+        this.routingKey = Preconditions.checkNotNull(routingKey, "routingKey");
         this.eventTemplate = eventTemplate;
-        this.mapper = mapper;
+        this.mapper = Preconditions.checkNotNull(mapper, "objectMapper");
     }
 
     public static RawEventGenerator create(String routingKey, String eventTemplateStr, String writerId) {

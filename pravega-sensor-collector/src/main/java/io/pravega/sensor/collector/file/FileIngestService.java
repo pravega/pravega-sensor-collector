@@ -43,6 +43,7 @@ public abstract class FileIngestService extends DeviceDriver {
     private static final String TRANSACTION_TIMEOUT_MINUTES_KEY = "TRANSACTION_TIMEOUT_MINUTES";
     private static final String MIN_TIME_IN_MILLIS_TO_UPDATE_FILE_KEY = "MIN_TIME_IN_MILLIS_TO_UPDATE_FILE";
     private static final String DELETE_COMPLETED_FILES_INTERVAL_IN_SECONDS_KEY = "DELETE_COMPLETED_FILES_INTERVAL_IN_SECONDS";
+    private static final String ENABLE_LARGE_EVENT = "ENABLE_LARGE_EVENT";
 
     private static final int DEFAULT_SAMPLES_PER_EVENT_KEY = 100;
 
@@ -69,7 +70,8 @@ public abstract class FileIngestService extends DeviceDriver {
                 getExactlyOnce(),
                 getTransactionTimeoutMinutes(),
                 getMinTimeInMillisToUpdateFile(),
-                config.getClassName());
+                config.getClassName(),
+                getLargeEventEnable());
         LOG.info("File Ingest Config: {}", fileSequenceConfig);
         final String scopeName = getScopeName();
         LOG.info("Scope: {}", scopeName);
@@ -137,6 +139,10 @@ public abstract class FileIngestService extends DeviceDriver {
 
     long getDeleteCompletedFilesIntervalInSeconds() {
         return Long.parseLong(getProperty(DELETE_COMPLETED_FILES_INTERVAL_IN_SECONDS_KEY, "43200"));
+    }
+
+    boolean getLargeEventEnable() {
+        return Boolean.parseBoolean(getProperty(ENABLE_LARGE_EVENT, Boolean.toString(false)));
     }
 
     protected void watchFiles() {

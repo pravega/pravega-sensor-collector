@@ -10,6 +10,7 @@
 package io.pravega.sensor.collector.simple;
 
 import com.google.common.util.concurrent.AbstractExecutionThreadService;
+import io.pravega.keycloak.com.google.common.base.Preconditions;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -28,9 +29,9 @@ public class DataCollectorService<R, S extends Samples> extends AbstractExecutio
     private final SimpleDeviceDriver<R, S> driver;
 
     public DataCollectorService(String instanceName, BlockingQueue<R> memoryQueue, SimpleDeviceDriver<R, S> driver) {
-        this.instanceName = instanceName;
-        this.memoryQueue = memoryQueue;
-        this.driver = driver;
+        this.instanceName = Preconditions.checkNotNull(instanceName, "instanceName");
+        this.memoryQueue = Preconditions.checkNotNull(memoryQueue, "memoryQueue");
+        this.driver = Preconditions.checkNotNull(driver, "driver");
     }
 
     @Override

@@ -9,6 +9,9 @@
  */
 package io.pravega.sensor.collector.file.rawfile;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.io.CountingInputStream;
 import io.pravega.sensor.collector.file.EventGenerator;
 import io.pravega.sensor.collector.util.PravegaWriterEvent;
@@ -55,4 +58,20 @@ public class RawEventGeneratorTests {
         Assert.assertEquals(rawfileStr.length(), (long) nextSequenceNumberAndOffset.getRight());
     }
 
+
+    @Test
+    public void testCreateRawEventGeneratorWithNullRoutingKey() throws JsonProcessingException {
+        ObjectMapper objectMapper = new ObjectMapper();
+        ObjectNode objectNode = (ObjectNode) objectMapper.readTree("{}");
+        Exception exception = Assert.assertThrows(NullPointerException.class, () -> new RawEventGenerator(null, objectNode, objectMapper));
+        Assert.assertTrue("routingKey".equals(exception.getMessage()));
+    }
+
+    @Test
+    public void testCreateRawEventGeneratorWithNullObjectMapper() throws JsonProcessingException {
+        ObjectMapper objectMapper = new ObjectMapper();
+        ObjectNode objectNode = (ObjectNode) objectMapper.readTree("{}");
+        Exception exception = Assert.assertThrows(NullPointerException.class, () -> new RawEventGenerator("routing-key", objectNode, null));
+        Assert.assertTrue("objectMapper".equals(exception.getMessage()));
+    }
 }
