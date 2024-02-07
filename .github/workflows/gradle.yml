@@ -72,28 +72,27 @@ jobs:
         with:
           distribution: 'zulu'
           java-version: '11' # major or semver Java version will be acceptable, see https://github.com/marketplace/actions/setup-java-jdk#basic
-
-    - name: Clean
+      - name: Clean
         if: ${{ startsWith(github.ref, 'refs/heads/') }}
         run: ./gradlew clean ${{env.GRADLE_OPTS}}
-        - name: Compile & Checkstyle
-          run: ./gradlew jar compileTest checkstyleMain checkstyleTest --parallel ${{env.GRADLE_OPTS}}
-        - name: Build
-          run: ./scripts/build-installer.sh
+      - name: Compile & Checkstyle
+        run: ./gradlew jar compileTest checkstyleMain checkstyleTest --parallel ${{env.GRADLE_OPTS}}
+      - name: Build
+        run: ./scripts/build-installer.sh
 
-        - name: Set env
-          if: github.event_name == 'push' && contains(github.ref, 'refs/tags/')
-          run: echo "RELEASE_VERSION=${GITHUB_REF#refs/*/}" >> $GITHUB_ENV
+      - name: Set env
+        if: github.event_name == 'push' && contains(github.ref, 'refs/tags/')
+        run: echo "RELEASE_VERSION=${GITHUB_REF#refs/*/}" >> $GITHUB_ENV
 
-        - name: Release
-          if: github.event_name == 'push' && contains(github.ref, 'refs/tags/')
-          uses: softprops/action-gh-release@v1
-          env:
-            GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          with:
-            files: ./pravega-sensor-collector/build/distributions/pravega-sensor-collector-*.tgz
-            draft: true
-            name: pravega-sensor-collector ${{ env.RELEASE_VERSION }}
+      - name: Release
+        if: github.event_name == 'push' && contains(github.ref, 'refs/tags/')
+        uses: softprops/action-gh-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          files: ./pravega-sensor-collector/build/distributions/pravega-sensor-collector-*.tgz
+          draft: true
+          name: pravega-sensor-collector ${{ env.RELEASE_VERSION }}
 # Uncomment these two lines if you need ssh access to debug a build.
 #      - name: Setup upterm session
 #        uses: lhotari/action-upterm@v1
