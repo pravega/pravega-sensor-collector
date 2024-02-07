@@ -22,7 +22,6 @@ import java.nio.file.StandardCopyOption;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.time.Duration;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -71,7 +70,7 @@ public class PravegaSensorCollectorIntegrationTests {
     }
 
     @Test
-    @Timeout(value = 3, unit = TimeUnit.MINUTES)
+    @Timeout(value = 1, unit = TimeUnit.MINUTES)
     public void testPSCDataIntegration() {
         try {
             copyHelloWorldFile();
@@ -89,7 +88,7 @@ public class PravegaSensorCollectorIntegrationTests {
         Service startService = deviceDriverManager.startAsync();
         try {
             startService.awaitRunning(Duration.ofSeconds(30));
-            Thread.sleep(25000);
+            Thread.sleep(12000);
         } catch (InterruptedException | TimeoutException e) {
             throw new RuntimeException(e);
         }
@@ -102,10 +101,10 @@ public class PravegaSensorCollectorIntegrationTests {
 
             validateStreamData(controllerURI, scope, streamName, new String(Files.readAllBytes(Paths.get("../parquet-file-sample-data/test_file/hello-world.parquet"))));
 
-            Thread.sleep(50000);
+            Thread.sleep(5000);
 
             Service stopService = deviceDriverManager.stopAsync();
-            stopService.awaitTerminated(Duration.ofSeconds(30));
+            stopService.awaitTerminated(Duration.ofSeconds(10));
 
             // Till this time all the completed files should get deleted
             completedFiles = state.getCompletedFileRecords();
@@ -158,7 +157,7 @@ public class PravegaSensorCollectorIntegrationTests {
     }
 
     @Test
-    @Timeout(value = 3, unit = TimeUnit.MINUTES)
+    @Timeout(value = 1, unit = TimeUnit.MINUTES)
     public void testRawFile() {
         try {
             copyFile();
@@ -170,7 +169,7 @@ public class PravegaSensorCollectorIntegrationTests {
         Service startService = deviceDriverManager.startAsync();
         try {
             startService.awaitRunning(Duration.ofSeconds(30));
-            Thread.sleep(25000);
+            Thread.sleep(15000);
         } catch (InterruptedException | TimeoutException e) {
             throw new RuntimeException(e);
         }
@@ -181,10 +180,10 @@ public class PravegaSensorCollectorIntegrationTests {
             List<FileNameWithOffset> completedFiles = state.getCompletedFileRecords();
             Assertions.assertEquals(3, completedFiles.size());
 
-            Thread.sleep(50000);
+            Thread.sleep(5000);
 
             Service stopService = deviceDriverManager.stopAsync();
-            stopService.awaitTerminated(Duration.ofSeconds(30));
+            stopService.awaitTerminated(Duration.ofSeconds(10));
 
             // Till this time all the completed files should get deleted
             completedFiles = state.getCompletedFileRecords();
