@@ -91,7 +91,7 @@ jobs:
       - name: Compile & Checkstyle
         run: ./gradlew jar compileTest checkstyleMain checkstyleTest --parallel ${{env.GRADLE_OPTS}}
       - name: Tar Reports
-        run: tar --use-compress-program zstd -cf reports-${{github.job}}.tzst `echo ${{env.REPORTS_LOCATIONS}}`
+        run: tar --use-compress-program zstd -cf reports-${{github.job}}.tzst `echo ${{env.REPORTS_LOCATIONS}}` `echo $pwd`
       - name: Upload Reports
         uses: actions/upload-artifact@v2
         with:
