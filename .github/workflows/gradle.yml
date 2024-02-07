@@ -44,7 +44,7 @@ env:
     **/build
 
   REPORTS_LOCATIONS: |
-    ./*/build/reports ./*/*/build/reports ./*/*/*/build/reports
+    ./*/build/reports ./*/*/build/reports ./*/*/*/build/reports ./*/*/*/*/build/reports
 
   # Set 'GRADLE_OPTS' to pass additional custom parameters to each ./gradlew invocation in this workflow.
   # Example '--info' or '--debug'.
