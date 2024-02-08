@@ -9,6 +9,7 @@
  */
 package io.pravega.sensor.collector;
 
+import org.junit.Assert;
 import org.junit.jupiter.api.Test;
 
 import java.net.URI;
@@ -66,6 +67,19 @@ public class PravegaClientConfigTests {
 
         assertEquals(configFile1, configFile2);
         assertEquals(configFile1.hashCode(), configFile2.hashCode());
+    }
+
+    @Test
+    public void testCreatePravegaClientConfigWithNullControllerURI() {
+        URI uri = null;
+        Exception exception = Assert.assertThrows(NullPointerException.class, () ->  new PravegaClientConfig(uri, "testScope"));
+        Assert.assertTrue("controllerURI".equals(exception.getMessage()));
+    }
+
+    @Test
+    public void testCreatePravegaClientConfigWithNullScopeName() {
+        Exception exception = Assert.assertThrows(NullPointerException.class, () ->  new PravegaClientConfig(URI.create("tcp://localhost:9090"), null));
+        Assert.assertTrue("scopeName".equals(exception.getMessage()));
     }
 
 }

@@ -7,16 +7,16 @@
  *
  *     http://www.apache.org/licenses/LICENSE-2.0
  */
-package io.pravega.sensor.collector;
+package io.pravega.sensor.collector.util;
 
 import org.junit.Assert;
 import org.junit.jupiter.api.Test;
 
-public class DeviceDriverManagerTest {
+public class FileNameWithOffsetTest {
 
     @Test
-    public void testCreateDeviceDriverManagerWithNullProperties() {
-        Exception exception = Assert.assertThrows(NullPointerException.class, () ->  new DeviceDriverManager(null));
-        Assert.assertTrue("properties".equals(exception.getMessage()));
+    public void testCreateFileNameWithOffsetWithNullFileName() {
+        Exception exception = Assert.assertThrows(NullPointerException.class, () -> new FileNameWithOffset(null, 0));
+        Assert.assertTrue("fileName".equals(exception.getMessage()));
     }
 }

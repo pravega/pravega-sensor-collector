@@ -10,6 +10,7 @@
 package io.pravega.sensor.collector.network;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.google.common.base.Preconditions;
 import io.pravega.sensor.collector.simple.Samples;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -45,8 +46,8 @@ public class NetworkSamples implements Samples {
     public String lastTimestampFormatted;
 
     public NetworkSamples(String remoteAddr, String interfaceName) {
-        this.remoteAddr = remoteAddr;
-        this.interfaceName = interfaceName;
+        this.remoteAddr = Preconditions.checkNotNull(remoteAddr, "remoteAddr");
+        this.interfaceName = Preconditions.checkNotNull(interfaceName, "interfaceName");
     }
 
     @Override

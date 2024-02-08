@@ -12,6 +12,7 @@ package io.pravega.sensor.collector.file.parquet;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.io.CountingInputStream;
+import io.pravega.keycloak.com.google.common.base.Preconditions;
 import io.pravega.sensor.collector.file.EventGenerator;
 import io.pravega.sensor.collector.util.PravegaWriterEvent;
 import org.apache.avro.Schema;
@@ -40,6 +41,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Map;
 import java.util.List;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
@@ -54,12 +56,13 @@ public class ParquetEventGenerator implements EventGenerator {
     private final int maxRecordsPerEvent;
     private final ObjectNode eventTemplate;
     private final ObjectMapper mapper;
+    private final Map<MessageType, Schema> parquetSchemas = new HashMap<>();
 
     public ParquetEventGenerator(String routingKey, int maxRecordsPerEvent, ObjectNode eventTemplate, ObjectMapper mapper) {
-        this.routingKey = routingKey;
+        this.routingKey = Preconditions.checkNotNull(routingKey, "routingKey");
         this.maxRecordsPerEvent = maxRecordsPerEvent;
         this.eventTemplate = eventTemplate;
-        this.mapper = mapper;
+        this.mapper = Preconditions.checkNotNull(mapper, "objectMapper");
     }
 
     public static ParquetEventGenerator create(String routingKey, int maxRecordsPerEvent, String eventTemplateStr, String writerId) {
@@ -94,24 +97,40 @@ public class ParquetEventGenerator implements EventGenerator {
         IOUtils.copy(inputStream, outputStream);
         outputStream.close();
         Path tempFilePath = new Path(tempFile.toString());
-        Configuration conf = new Configuration();
-        MessageType schema = ParquetFileReader.readFooter(HadoopInputFile.fromPath(tempFilePath, conf), ParquetMetadataConverter.NO_FILTER).getFileMetaData().getSchema();
-        
-        //Modifying field names in extracted schema (removing special characters) 
-        List<Type> fields = schema.getFields().stream()
-                                .map(field -> new PrimitiveType(field.getRepetition(),  
-                                                PrimitiveType.PrimitiveTypeName.valueOf(((PrimitiveType) field).getPrimitiveTypeName().toString()),
-                                                field.getName()
-                                .replaceAll("[^A-Za-z0-9_]+", "_")))
-                                .collect(Collectors.toList());
-        MessageType modifiedSchema = new MessageType(schema.getName(), fields);
-        Schema avroSchema = new AvroSchemaConverter(conf).convert(modifiedSchema);
 
-        // Add original field names as aliases to avroSchema
-        for (int i = 0; i < modifiedSchema.getFieldCount(); i++) {
-            String originalFieldName = schema.getFields().get(i).getName();
-            avroSchema.getFields().get(i).addAlias(originalFieldName);
+        long timestamp1 = System.nanoTime();
+
+        Configuration conf = new Configuration();
+        MessageType schema = ParquetFileReader.readFooter(HadoopInputFile.fromPath(tempFilePath, conf),ParquetMetadataConverter.NO_FILTER).getFileMetaData().getSchema();
+        Schema avroSchema;
+
+        if(!parquetSchemas.containsKey(schema)){
+            //Modifying field names in extracted schema (removing special characters) 
+            List<Type> fields = schema.getFields().stream()
+                                    .map(field -> new PrimitiveType(field.getRepetition(),  
+                                                    PrimitiveType.PrimitiveTypeName.valueOf(((PrimitiveType) field).getPrimitiveTypeName().toString()),
+                                                    field.getName()
+                                    .replaceAll("[^A-Za-z0-9_]+", "_")))
+                                    .collect(Collectors.toList());
+            MessageType modifiedSchema = new MessageType(schema.getName(), fields);
+            avroSchema = new AvroSchemaConverter(conf).convert(modifiedSchema);
+
+            // Add original field names as aliases to avroSchema
+            for (int i = 0; i < modifiedSchema.getFieldCount(); i++) {
+                String originalFieldName = schema.getFields().get(i).getName();
+                avroSchema.getFields().get(i).addAlias(originalFieldName);
+            }
+            
+            parquetSchemas.put(schema, avroSchema);
         }
+        else{
+            LOGGER.debug("Retrieving cached schema");
+            avroSchema = parquetSchemas.get(schema);
+        }
+
+        double elapsedSec1 = (System.nanoTime() - timestamp1) / 1_000_000_000.0;
+        LOGGER.debug("Time taken to process schema= {} sec ", elapsedSec1);
+        long timestamp2 = System.nanoTime();
 
         final AvroParquetReader.Builder<GenericRecord> builder = AvroParquetReader.<GenericRecord>builder(tempFilePath);
         AvroReadSupport.setAvroReadSchema(conf, avroSchema);        
@@ -125,9 +144,9 @@ public class ParquetEventGenerator implements EventGenerator {
             HashMap<String, Object> dataMap = new HashMap<String, Object>();
             for (Schema.Field field : record.getSchema().getFields()) {
                 String key = field.name();
-                Object value;
-                value = record.get(key);
-                dataMap.put(key, value);
+                Object value = record.get(key);
+                dataMap.put(key,value);
+
             }
             eventBatch.add(dataMap);
             numRecordsInEvent++;
@@ -144,7 +163,10 @@ public class ParquetEventGenerator implements EventGenerator {
             consumer.accept(new PravegaWriterEvent(routingKey, nextSequenceNumber, batchJsonEvent));
             nextSequenceNumber++;
         }
+        double elapsedSec2 = (System.nanoTime() - timestamp2) / 1_000_000_000.0;
+        LOGGER.info("Time taken to read records and batch events= {} sec ", elapsedSec2);
         final long endOffset = inputStream.getCount();
+        reader.close();
         tempFile.delete();
         return new ImmutablePair<>(nextSequenceNumber, endOffset);
     }

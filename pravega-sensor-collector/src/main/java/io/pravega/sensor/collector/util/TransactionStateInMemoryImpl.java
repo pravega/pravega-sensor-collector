@@ -27,9 +27,9 @@ public class TransactionStateInMemoryImpl extends TransactionStateSQLiteImpl {
         super(connection, transactionCoordinator);
     }
     @VisibleForTesting
-    public static TransactionStateInMemoryImpl create(String fileName) {
+    public static TransactionStateInMemoryImpl create(String fileName, EventWriter writer) {
         final Connection connection = SQliteDBUtility.createDatabase(fileName);
-        final TransactionCoordinator transactionCoordinator = new TransactionCoordinator(connection, null);
+        final TransactionCoordinator transactionCoordinator = new TransactionCoordinator(connection, writer);
         return new TransactionStateInMemoryImpl(connection, transactionCoordinator);
     }
 

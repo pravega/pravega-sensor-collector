@@ -12,11 +12,16 @@ package io.pravega.sensor.collector.util;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import org.apache.commons.lang3.tuple.ImmutablePair;
+import org.junit.Assert;
 import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.mockito.Mock;
+import org.mockito.MockitoAnnotations;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.HashSet;
 import java.util.List;
@@ -25,10 +30,21 @@ public class TransactionStateSQLiteImplTests {
 
     private static final Logger log = LoggerFactory.getLogger(TransactionStateSQLiteImplTests.class);
 
+    @Mock
+    protected Connection mockConnection;
+
+    @Mock
+    private EventWriter writer;
+
+    @BeforeEach
+    public void setUp() throws SQLException {
+        MockitoAnnotations.initMocks(this);
+    }
+
     @Test
     public void pendingFilesTest() throws SQLException {
         final String stateDatabaseFileName = ":memory:";
-        final TransactionStateDB state = TransactionStateInMemoryImpl.create(stateDatabaseFileName);
+        final TransactionStateDB state = TransactionStateInMemoryImpl.create(stateDatabaseFileName, writer);
         Assertions.assertNull(state.getNextPendingFileRecord());
         state.addPendingFileRecords(ImmutableList.of(new FileNameWithOffset("file1.csv", 0L)));
         Assertions.assertEquals(new ImmutablePair<>(new FileNameWithOffset("file1.csv", 0L), 0L), state.getNextPendingFileRecord());
@@ -41,7 +57,7 @@ public class TransactionStateSQLiteImplTests {
     @Test
     public void completedFilesTest() throws SQLException {
         final String stateDatabaseFileName = ":memory:";
-        final TransactionStateInMemoryImpl state = TransactionStateInMemoryImpl.create(stateDatabaseFileName);
+        final TransactionStateInMemoryImpl state = TransactionStateInMemoryImpl.create(stateDatabaseFileName, writer);
         Assertions.assertNull(state.getNextPendingFileRecord());
         state.addPendingFileRecords(ImmutableList.of(new FileNameWithOffset("file1.csv", 0L)));
         Assertions.assertEquals(new ImmutablePair<>(new FileNameWithOffset("file1.csv", 0L), 0L), state.getNextPendingFileRecord());
@@ -59,7 +75,7 @@ public class TransactionStateSQLiteImplTests {
     @Test
     public void processFilesTest() throws SQLException {
         final String stateDatabaseFileName = ":memory:";
-        final TransactionStateInMemoryImpl state = TransactionStateInMemoryImpl.create(stateDatabaseFileName);
+        final TransactionStateInMemoryImpl state = TransactionStateInMemoryImpl.create(stateDatabaseFileName, writer);
         Assertions.assertNull(state.getNextPendingFileRecord());
         // Find 3 new files.
         state.addPendingFileRecords(ImmutableList.of(new FileNameWithOffset("file2.csv", 0L)));
@@ -104,5 +120,18 @@ public class TransactionStateSQLiteImplTests {
         // Delete completed file.
         state.deleteCompletedFileRecord("file3.csv");
         Assertions.assertTrue(state.getCompletedFileRecords().isEmpty());
+    }
+
+    @Test
+    public void testCreateTransactionStateSQLiteImplWithNullConnection() {
+        Exception exception = Assert.assertThrows(NullPointerException.class, () -> new TransactionStateSQLiteImpl(null, null));
+        Assert.assertTrue("connection".equals(exception.getMessage()));
+    }
+
+    @Test
+    public void testCreateTransactionStateSQLiteImplWithNullTransactionCoordinator() {
+        MockitoAnnotations.initMocks(this);
+        Exception exception = Assert.assertThrows(NullPointerException.class, () -> new TransactionStateSQLiteImpl(mockConnection, null));
+        Assert.assertTrue("transactionCoordinator".equals(exception.getMessage()));
     }
 }

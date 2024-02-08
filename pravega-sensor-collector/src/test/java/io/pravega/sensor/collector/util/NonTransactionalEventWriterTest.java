@@ -7,16 +7,16 @@
  *
  *     http://www.apache.org/licenses/LICENSE-2.0
  */
-package io.pravega.sensor.collector;
+package io.pravega.sensor.collector.util;
 
 import org.junit.Assert;
 import org.junit.jupiter.api.Test;
 
-public class DeviceDriverManagerTest {
+public class NonTransactionalEventWriterTest {
 
     @Test
-    public void testCreateDeviceDriverManagerWithNullProperties() {
-        Exception exception = Assert.assertThrows(NullPointerException.class, () ->  new DeviceDriverManager(null));
-        Assert.assertTrue("properties".equals(exception.getMessage()));
+    public void testCreateNonTransactionalEventWriterWithNull() {
+        Exception exception = Assert.assertThrows(NullPointerException.class, () -> new NonTransactionalEventWriter(null));
+        Assert.assertTrue("writer".equals(exception.getMessage()));
     }
 }

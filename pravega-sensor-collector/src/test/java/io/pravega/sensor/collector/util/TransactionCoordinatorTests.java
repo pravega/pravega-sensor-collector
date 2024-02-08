@@ -10,6 +10,7 @@
 package io.pravega.sensor.collector.util;
 
 import io.pravega.client.stream.TxnFailedException;
+import org.junit.Assert;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
@@ -274,6 +275,18 @@ public class TransactionCoordinatorTests {
         // Assert
         String expectedMessage = "Other Runtime Exception";
         assertEquals(expectedMessage, exception.getMessage(), "Exception message mismatch");
+    }
+
+    @Test
+    public void testCreateTransactionCoordinatorWithNullConnection() {
+        Exception exception = Assert.assertThrows(NullPointerException.class, () -> new TransactionCoordinator(null, eventWriter));
+        Assert.assertTrue("connection".equals(exception.getMessage()));
+    }
+
+    @Test
+    public void testCreateTransactionCoordinatorWithNullWriter() {
+        Exception exception = Assert.assertThrows(NullPointerException.class, () -> new TransactionCoordinator(mockConnection, null));
+        Assert.assertTrue("writer".equals(exception.getMessage()));
     }
 }
 

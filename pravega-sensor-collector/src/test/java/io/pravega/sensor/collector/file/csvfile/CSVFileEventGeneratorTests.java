@@ -9,10 +9,14 @@
  */
 package io.pravega.sensor.collector.file.csvfile;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.io.CountingInputStream;
 import io.pravega.sensor.collector.file.EventGenerator;
 import io.pravega.sensor.collector.util.PravegaWriterEvent;
 import org.apache.commons.lang3.tuple.Pair;
+import org.junit.Assert;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
@@ -116,5 +120,22 @@ public class CSVFileEventGeneratorTests {
         LOG.info("events={}", events);
         Assertions.assertEquals(103L, (long) nextSequenceNumberAndOffset.getLeft());
         Assertions.assertEquals(csvStr.length(), (long) nextSequenceNumberAndOffset.getRight());
+    }
+
+
+    @Test
+    public void testCreateCsvFileEventGeneratorWithNullRoutingKey() throws JsonProcessingException {
+        ObjectMapper objectMapper = new ObjectMapper();
+        ObjectNode objectNode = (ObjectNode) objectMapper.readTree("{}");
+        Exception exception = Assert.assertThrows(NullPointerException.class, () -> new CsvFileEventGenerator(null, 1, objectNode, objectMapper));
+        Assert.assertTrue("routingKey".equals(exception.getMessage()));
+    }
+
+    @Test
+    public void testCreateCsvFileEventGeneratorWithNullObjectMapper() throws JsonProcessingException {
+        ObjectMapper objectMapper = new ObjectMapper();
+        ObjectNode objectNode = (ObjectNode) objectMapper.readTree("{}");
+        Exception exception = Assert.assertThrows(NullPointerException.class, () -> new CsvFileEventGenerator("routing-key", 1, objectNode, null));
+        Assert.assertTrue("objectMapper".equals(exception.getMessage()));
     }
 }

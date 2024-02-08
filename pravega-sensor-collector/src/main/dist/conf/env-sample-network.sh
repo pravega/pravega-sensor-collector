@@ -10,7 +10,7 @@
 export pravega_client_auth_method=Bearer
 export pravega_client_auth_loadDynamic=true
 export KEYCLOAK_SERVICE_ACCOUNT_FILE=/opt/pravega-sensor-collector/conf/keycloak.json
-export JAVA_OPTS="-Xmx512m"
+export JAVA_OPTS="-Xmx512m -Dlogback.configurationFile=/opt/pravega-sensor-collector/bin/logback.xml"
 export PRAVEGA_SENSOR_COLLECTOR_NET1_CLASS=io.pravega.sensor.collector.network.NetworkDriver
 export PRAVEGA_SENSOR_COLLECTOR_NET1_NETWORK_INTERFACE=ens33
 export PRAVEGA_SENSOR_COLLECTOR_NET1_MEMORY_QUEUE_CAPACITY_ELEMENTS=10000

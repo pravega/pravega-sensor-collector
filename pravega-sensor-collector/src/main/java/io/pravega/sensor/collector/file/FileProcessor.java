@@ -1,3 +1,4 @@
+package io.pravega.sensor.collector.file;
 /**
  * Copyright (c) Dell Inc., or its subsidiaries. All Rights Reserved.
  *
@@ -7,7 +8,6 @@
  *
  *     http://www.apache.org/licenses/LICENSE-2.0
  */
-package io.pravega.sensor.collector.file;
 
 import com.google.common.io.CountingInputStream;
 import io.pravega.client.EventStreamClientFactory;
@@ -15,6 +15,7 @@ import io.pravega.client.stream.EventWriterConfig;
 import io.pravega.client.stream.Transaction;
 import io.pravega.client.stream.TxnFailedException;
 import io.pravega.client.stream.impl.ByteArraySerializer;
+import io.pravega.keycloak.com.google.common.base.Preconditions;
 import io.pravega.sensor.collector.util.EventWriter;
 import io.pravega.sensor.collector.util.FileNameWithOffset;
 import io.pravega.sensor.collector.util.FileUtils;
@@ -59,11 +60,12 @@ public abstract class FileProcessor {
     private final Path movedFilesDirectory;
 
     public FileProcessor(FileConfig config, TransactionStateDB state, EventWriter<byte[]> writer, TransactionCoordinator transactionCoordinator) {
-        this.config = config;
-        this.state = state;
-        this.writer = writer;
-        this.transactionCoordinator = transactionCoordinator;
-        this.eventGenerator = getEventGenerator(config);
+        this.config = Preconditions.checkNotNull(config, "config");
+        Preconditions.checkNotNull(config.stateDatabaseFileName, "config.stateDatabaseFileName");
+        this.state = Preconditions.checkNotNull(state, "state");
+        this.writer = Preconditions.checkNotNull(writer, "writer");
+        this.transactionCoordinator = Preconditions.checkNotNull(transactionCoordinator, "transactionCoordinator");
+        this.eventGenerator = Preconditions.checkNotNull(getEventGenerator(config), "eventGenerator");
         this.movedFilesDirectory = Paths.get(config.stateDatabaseFileName).getParent();
     }
 
@@ -83,6 +85,7 @@ public abstract class FileProcessor {
                 EventWriterConfig.builder()
                         .enableConnectionPooling(true)
                         .transactionTimeoutTime((long) (config.transactionTimeoutMinutes * 60.0 * 1000.0))
+                        .enableLargeEvents(config.enableLargeEvent)
                         .build(),
                 config.exactlyOnce);
 
@@ -189,9 +192,13 @@ public abstract class FileProcessor {
         /* Check if transactions can be aborted.
          * Will fail with {@link TxnFailedException} if the transaction has already been committed or aborted.
          */
-        log.debug("processFile: Transaction status {} ", writer.getTransactionStatus());
-        if (writer.getTransactionStatus() == Transaction.Status.OPEN) {
-            writer.abort();
+        if (config.exactlyOnce) {
+            log.debug("processFile: Transaction status {} ", writer.getTransactionStatus());
+            if (writer.getTransactionStatus() == Transaction.Status.OPEN){
+                writer.abort();
+            }
+        } else {
+            log.debug("processFile: No need to check transaction status for non-transactional write.");
         }
 
         File pendingFile = new File(fileNameWithBeginOffset.fileName);

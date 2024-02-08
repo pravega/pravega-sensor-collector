@@ -9,6 +9,8 @@
  */
 package io.pravega.sensor.collector.util;
 
+import com.google.common.base.Preconditions;
+
 /**
  * Event generated from file and its sequence number
  */
@@ -18,9 +20,9 @@ public class PravegaWriterEvent {
     public final byte[] bytes;
 
     public PravegaWriterEvent(String routingKey, long sequenceNumber, byte[] bytes) {
-        this.routingKey = routingKey;
+        this.routingKey = Preconditions.checkNotNull(routingKey, "routingKey");
         this.sequenceNumber = sequenceNumber;
-        this.bytes = bytes;
+        this.bytes = Preconditions.checkNotNull(bytes, "bytes");
     }
 
     @Override

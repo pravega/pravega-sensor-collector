@@ -9,6 +9,8 @@
  */
 package io.pravega.sensor.collector.network;
 
+import com.google.common.base.Preconditions;
+
 import java.io.RandomAccessFile;
 
 public class NetworkStatisticFile {
@@ -19,8 +21,8 @@ public class NetworkStatisticFile {
     public final RandomAccessFile randomAccessFile;
 
     public NetworkStatisticFile(String interfaceName, String statisticName, RandomAccessFile randomAccessFile) {
-        this.interfaceName = interfaceName;
-        this.statisticName = statisticName;
-        this.randomAccessFile = randomAccessFile;
+        this.interfaceName = Preconditions.checkNotNull(interfaceName, "interfaceName");
+        this.statisticName = Preconditions.checkNotNull(statisticName, "statisticName");
+        this.randomAccessFile = Preconditions.checkNotNull(randomAccessFile, "randomAccessFile");
     }
 }

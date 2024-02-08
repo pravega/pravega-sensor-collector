@@ -37,6 +37,7 @@ abstract public class StatefulSensorDeviceDriver<S> extends DeviceDriver {
     private static final String DELAY_BETWEEN_WRITE_BATCHES_MS_KEY = "DELAY_BETWEEN_WRITE_BATCHES_MS";
     private static final String EXACTLY_ONCE_KEY = "EXACTLY_ONCE";
     private static final String TRANSACTION_TIMEOUT_MINUTES_KEY = "TRANSACTION_TIMEOUT_MINUTES";
+    private static final String ENABLE_LARGE_EVENT = "ENABLE_LARGE_EVENT";
 
     private final String routingKey;
     private final DataCollectorService<S> dataCollectorService;
@@ -85,6 +86,7 @@ abstract public class StatefulSensorDeviceDriver<S> extends DeviceDriver {
                     .enableConnectionPooling(true)
                     .retryAttempts(Integer.MAX_VALUE)
                     .transactionTimeoutTime((long) (transactionTimeoutMinutes * 60.0 * 1000.0))
+                    .enableLargeEvents(getLargeEventEnable())
                     .build(),
             exactlyOnce);
 
@@ -139,6 +141,10 @@ abstract public class StatefulSensorDeviceDriver<S> extends DeviceDriver {
 
     String getStreamName() {
         return getProperty(STREAM_KEY);
+    }
+
+    boolean getLargeEventEnable() {
+        return Boolean.parseBoolean(getProperty(ENABLE_LARGE_EVENT, Boolean.toString(false)));
     }
 
     @Override
