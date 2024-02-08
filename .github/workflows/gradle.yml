@@ -9,7 +9,7 @@
 #
 name: build
 
-on: [push, pull_request_target, workflow_dispatch]
+on: [push, pull_request, workflow_dispatch]
   # workflow_dispatch should make manually triggered ci/cd possible
   # workflow file (like this) with `workflow_dispatch` after on should exist on the **master** or default branch,
   # or there will be no ui for a manual trigger. https://github.community/t/workflow-dispatch-event-not-working/128856/2
