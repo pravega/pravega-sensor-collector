@@ -97,6 +97,8 @@ jobs:
           java-version: '11'
       - name: Unit tests
         run: ./gradlew test --parallel ${{env.GRADLE_OPTS}}
+      - name: Tar Reports
+        run: tar --use-compress-program zstd -cf reports-${{github.job}}.tzst `echo ${{env.REPORTS_LOCATIONS}}`
       - name: Upload Reports
         if: always()
         uses: actions/upload-artifact@v2
