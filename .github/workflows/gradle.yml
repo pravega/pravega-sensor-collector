@@ -104,6 +104,8 @@ jobs:
         run: pwd
       - name: LS
         run: ls
+      - name: LS PSC
+        run: ls pravega-sensor-collector
       - name: Tar Reports
         run: tar --use-compress-program zstd -cf reports-${{github.job}}.tzst `echo ${{env.REPORTS_LOCATIONS}}`
       - name: Upload Reports
