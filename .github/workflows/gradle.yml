@@ -46,7 +46,7 @@ env:
     **/build
 
   REPORTS_LOCATIONS: |
-    ./*/build/reports ./*/*/build/reports ./*/*/*/build/reports
+    pravega-sensor-collector/build/reports
 
 jobs:
   build:
