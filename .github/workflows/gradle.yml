@@ -45,6 +45,9 @@ env:
     **/bin
     **/build
 
+  REPORTS_LOCATIONS: |
+    ./*/build/reports ./*/*/build/reports ./*/*/*/build/reports
+
 jobs:
   build:
     name: Build
