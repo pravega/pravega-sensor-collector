@@ -28,6 +28,23 @@ on: [push, pull_request, workflow_dispatch]
 #
 # Finally, a "snapshot" job is triggered only for pushes (commits) to master and release branches, which publishes all
 # artifacts to a public repository.
+
+env:
+  GLOBAL_CACHE_PATH: |
+    ~/.gradle
+    ~/.m2
+  GLOBAL_CACHE_KEY: gradle-m2-java-11
+  GLOBAL_CACHE_RESTORE_KEYS: |
+    gradle-m2-java-
+    gradle-m2
+  # We cache the class files, resources and build output. This is generated on the build job and reused in dependent jobs.
+  # If there are subsequent builds this includes test execution.
+  BUILD_CACHE_PATH: |
+    .gradle
+    ./bin
+    **/bin
+    **/build
+
 jobs:
   build:
     name: Build
