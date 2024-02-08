@@ -28,7 +28,7 @@ public class DeviceDriverTest {
 
     @Test
     public void testCreateLeapDriverWithNullConfig() {
-        Exception exception = Assert.assertThrows(NullPointerException.class, () ->  new LeapDriver(null));
+        Exception exception = Assert.assertThrows(NullPointerException.class, () -> new LeapDriver(null));
         Assert.assertTrue("config".equals(exception.getMessage()));
     }
 
