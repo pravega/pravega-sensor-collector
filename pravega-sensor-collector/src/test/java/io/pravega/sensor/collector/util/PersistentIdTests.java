@@ -9,6 +9,7 @@
  */
 package io.pravega.sensor.collector.util;
 
+import org.junit.Assert;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
@@ -43,5 +44,11 @@ public class PersistentIdTests {
         } finally {
             new File(fileName).delete();
         }
+    }
+
+    @Test
+    public void testCreatePersistentIdWithNullConnection() {
+        Exception exception = Assert.assertThrows(NullPointerException.class, () -> new PersistentId(null));
+        Assert.assertTrue("connection".equals(exception.getMessage()));
     }
 }
