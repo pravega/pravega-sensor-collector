@@ -95,21 +95,6 @@ jobs:
         with:
           distribution: 'temurin'
           java-version: '11'
-      - name: Gradle & Maven Cache
-        uses: actions/cache@v2.1.0
-      - uses: actions/setup-java@v2
-        with:
-          path: ${{env.GLOBAL_CACHE_PATH}}
-          key: 'gradle-m2-java-11'
-          restore-keys: ${{env.GLOBAL_CACHE_RESTORE_KEYS}}
-      - name: Build Output Cache
-        uses: actions/cache@v2.1.0
-        with:
-          path: ${{env.BUILD_CACHE_PATH}}
-          key: ${{github.ref}}-${{github.run_id}}-${{github.job}}
-          restore-keys: |
-            ${{github.ref}}-${{github.run_id}}
-            ${{github.ref}}
       - name: Unit tests
         run: ./gradlew test shared:protocol:test shared:security:test common:test test:testcommon:test --parallel ${{env.GRADLE_OPTS}}
       - name: Upload Reports
@@ -153,20 +138,6 @@ jobs:
         with:
           distribution: 'temurin'
           java-version: '11'
-      - name: Gradle & Maven Cache
-        uses: actions/cache@v2.1.0
-        with:
-          path: ${{env.GLOBAL_CACHE_PATH}}
-          key: 'gradle-m2-java-11'
-          restore-keys: ${{env.GLOBAL_CACHE_RESTORE_KEYS}}
-      - name: Build Output Cache
-        uses: actions/cache@v2.1.0
-        with:
-          path: ${{env.BUILD_CACHE_PATH}}
-          key: ${{github.ref}}-${{github.run_id}}-${{github.job}}
-          restore-keys: |
-            ${{github.ref}}-${{github.run_id}}
-            ${{github.ref}}
       - name: Assemble
         run: ./gradlew assemble --parallel ${{env.GRADLE_OPTS}}
       - name: Publish to GitHub Packages
