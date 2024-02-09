@@ -162,19 +162,13 @@ test {
     finalizedBy jacocoTestReport // report is always generated after tests run
 }
 
-jacocoTestReport {
-    dependsOn test // tests are required to run before generating the report
-}
-
 jacoco {
     toolVersion = "0.8.9"
-    reportsDirectory = layout.buildDirectory.dir('customJacocoReportDir')
 }
 
 jacocoTestReport {
     reports {
-        xml.required = false
+        xml.required = true
         csv.required = false
-        html.outputLocation = layout.buildDirectory.dir('jacocoHtml')
     }
 }
