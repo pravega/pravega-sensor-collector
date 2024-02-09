@@ -37,7 +37,7 @@ public class TransactionStateSQLiteImpl  implements AutoCloseable, TransactionSt
 
         public TransactionStateSQLiteImpl(Connection connection, TransactionCoordinator transactionCoordinator) {
             this.connection = Preconditions.checkNotNull(connection, "connection");
-            this.transactionCoordinator = Preconditions.checkNotNull(transactionCoordinator, "transactionCoordinator");
+            this.transactionCoordinator = transactionCoordinator;
         }
 
         @Override
