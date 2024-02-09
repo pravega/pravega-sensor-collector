@@ -13,8 +13,6 @@ import com.google.common.util.concurrent.AbstractService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.Map;
-
 
 /**
  * Watchdog service for Pravega Sensor Collector(PSC).

@@ -89,7 +89,7 @@ class PSCWatchdogMonitor extends AbstractService implements Monitor {
 
     @Override
     protected void doStart() {
-        log.info("Starting WatchdogMonitor {}",config.getWatchDogWatchInterval());
+        log.info("Starting WatchdogMonitor {}", config.getWatchDogWatchInterval());
         executor.scheduleAtFixedRate(this::process, 0, config.getWatchDogWatchInterval(), TimeUnit.SECONDS);
         notifyStarted();
     }

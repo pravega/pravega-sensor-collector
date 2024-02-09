@@ -60,6 +60,8 @@ dependencies {
     implementation "com.github.vladimir-bukhtoyarov:bucket4j-core:${bucket4jVersion}"
     implementation "org.eclipse.milo:sdk-client:${miloVersion}"
     implementation "com.google.code.gson:gson:${gsonVersion}"
+    implementation "com.google.auto.service:auto-service:${autoServiceVersion}"
+    annotationProcessor "com.google.auto.service:auto-service:${autoServiceVersion}"
 
     implementation "org.apache.parquet:parquet-avro:${parquetVersion}"
     implementation "org.apache.parquet:parquet-hadoop:${parquetVersion}"
@@ -121,6 +123,13 @@ task createWatchdogApp(type: CreateStartScripts) {
     classpath = startScripts.classpath
     outputDir = startScripts.outputDir
     applicationName = 'psc-watchdog'
+    doLast {
+        // Modify startup script to source the configuration file (env.sh).
+        unixScript.text = unixScript.text
+                .replace(
+                        'DEFAULT_JVM_OPTS=""',
+                        'DEFAULT_JVM_OPTS=""\n\n# Source configuration file\n[ -f "${CONF_FILE}" ] && . "${CONF_FILE}"')
+    }
 //    defaultJvmOpts = ["-Xms1024m", "-Xmx2048m"]
 }
 

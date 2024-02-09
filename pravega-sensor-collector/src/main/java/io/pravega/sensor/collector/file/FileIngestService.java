@@ -13,6 +13,9 @@ import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import io.pravega.client.EventStreamClientFactory;
 import io.pravega.sensor.collector.DeviceDriver;
 import io.pravega.sensor.collector.DeviceDriverConfig;
+import io.pravega.sensor.collector.metrics.MetricNames;
+import io.pravega.sensor.collector.metrics.MetricPublisher;
+import io.pravega.sensor.collector.metrics.MetricsStore;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -48,8 +51,8 @@ public abstract class FileIngestService extends DeviceDriver {
     private static final int DEFAULT_SAMPLES_PER_EVENT_KEY = 100;
 
     private static final int DEFAULT_INTERVAL_MS_KEY = 10000;
-
     private final FileProcessor processor;
+    private final MetricPublisher metricPublisher;
     private final ScheduledExecutorService executor;
 
     private ScheduledFuture<?> watchFileTask;
@@ -78,6 +81,7 @@ public abstract class FileIngestService extends DeviceDriver {
         createStream(scopeName, getStreamName());
         final EventStreamClientFactory clientFactory = getEventStreamClientFactory(scopeName);
         processor = FileProcessor.create(fileSequenceConfig, clientFactory);
+        metricPublisher = new MetricPublisher(config);
         ThreadFactory namedThreadFactory = new ThreadFactoryBuilder().setNameFormat(
                 FileIngestService.class.getSimpleName() + "-" + config.getInstanceName() + "-%d").build();
         executor = Executors.newScheduledThreadPool(1, namedThreadFactory);
@@ -150,6 +154,7 @@ public abstract class FileIngestService extends DeviceDriver {
         try {
             processor.watchFiles();
         } catch (Exception e) {
+            MetricsStore.getMetric(MetricNames.PSC_EXCEPTIONS).update(e.getClass().getName());
             LOG.error("watchFiles: watch file error", e);
             // Continue on any errors. We will retry on the next iteration.
         }
@@ -160,6 +165,7 @@ public abstract class FileIngestService extends DeviceDriver {
         try {
             processor.processFiles();
         } catch (Exception e) {
+            MetricsStore.getMetric(MetricNames.PSC_EXCEPTIONS).update(e.getClass().getName());
             LOG.error("processFiles: Process file error", e);
             // Continue on any errors. We will retry on the next iteration.
         }
@@ -179,6 +185,7 @@ public abstract class FileIngestService extends DeviceDriver {
 
     @Override
     protected void doStart() {
+        metricPublisher.startAsync();
         watchFileTask = executor.scheduleAtFixedRate(
                 this::watchFiles,
                 0,

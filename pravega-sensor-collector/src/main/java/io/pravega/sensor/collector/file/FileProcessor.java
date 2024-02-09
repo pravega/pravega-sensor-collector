@@ -16,6 +16,8 @@ import io.pravega.client.stream.Transaction;
 import io.pravega.client.stream.TxnFailedException;
 import io.pravega.client.stream.impl.ByteArraySerializer;
 import io.pravega.keycloak.com.google.common.base.Preconditions;
+import io.pravega.sensor.collector.metrics.MetricNames;
+import io.pravega.sensor.collector.metrics.MetricsStore;
 import io.pravega.sensor.collector.util.EventWriter;
 import io.pravega.sensor.collector.util.FileNameWithOffset;
 import io.pravega.sensor.collector.util.FileUtils;
@@ -33,16 +35,16 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
-import java.nio.file.Paths;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.sql.Connection;
-import java.util.List;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Set;
 import java.util.HashSet;
-import java.util.UUID;
+import java.util.List;
 import java.util.Optional;
+import java.util.Set;
+import java.util.UUID;
 import java.util.concurrent.atomic.AtomicLong;
 
 /**
@@ -58,6 +60,8 @@ public abstract class FileProcessor {
     private final TransactionCoordinator transactionCoordinator;
     private final EventGenerator eventGenerator;
     private final Path movedFilesDirectory;
+    private final AtomicLong completedFiles;
+    private final AtomicLong bytesProcessed;
 
     public FileProcessor(FileConfig config, TransactionStateDB state, EventWriter<byte[]> writer, TransactionCoordinator transactionCoordinator) {
         this.config = Preconditions.checkNotNull(config, "config");
@@ -67,6 +71,8 @@ public abstract class FileProcessor {
         this.transactionCoordinator = Preconditions.checkNotNull(transactionCoordinator, "transactionCoordinator");
         this.eventGenerator = Preconditions.checkNotNull(getEventGenerator(config), "eventGenerator");
         this.movedFilesDirectory = Paths.get(config.stateDatabaseFileName).getParent();
+        this.completedFiles = new AtomicLong();
+        this.bytesProcessed = new AtomicLong();
     }
 
     public static FileProcessor create(
@@ -234,6 +240,8 @@ public abstract class FileProcessor {
             }
             log.debug("processFile: Adding completed file: {}",  fileNameWithBeginOffset.fileName);
             state.addCompletedFileRecord(fileNameWithBeginOffset.fileName, fileNameWithBeginOffset.offset, endOffset, nextSequenceNumber, txnId);
+            MetricsStore.getMetric(MetricNames.PSC_FILES_PROCESSED_GAUGE).update(this.completedFiles.incrementAndGet());
+            MetricsStore.getMetric(MetricNames.PSC_BYTES_PROCESSED_GAUGE).update(this.bytesProcessed.addAndGet(numOfBytes.get()));
             // Add to completed file list only if commit is successfull else it will be taken care as part of recovery
             if (txnId.isPresent()) {
                 Transaction.Status status = writer.getTransactionStatus(txnId.get());
