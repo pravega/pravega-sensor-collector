@@ -38,3 +38,17 @@ subprojects {
         }
     }
 }
+
+plugins.withId('jacoco') {
+    jacoco {
+        toolVersion = "0.8.9"
+    }
+    jacocoTestReport {
+        reports {
+            xml.enabled true
+            html.enabled false
+        }
+    }
+
+    test { finalizedBy jacocoTestReport }
+}
