@@ -7,7 +7,7 @@ You may obtain a copy of the License at
 
     http://www.apache.org/licenses/LICENSE-2.0
 -->
-# Pravega Sensor Collector
+# Pravega-sensor-collector [![Build Status](https://github.com/pravega/pravega-sensor-collector/workflows/build/badge.svg?branch=master)](https://github.com/pravega/pravega-sensor-collector/actions?query=branch%3Amaster) [![codecov](https://codecov.io/gh/pravega/pravega-sensor-collector/branch/master/graph/badge.svg?token=6xOvaR0sIa)](https://codecov.io/gh/pravega/pravega-sensor-collector) [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://www.apache.org/licenses/LICENSE-2.0) [![Version](https://img.shields.io/github/release/pravega/pravega-sensor-collector.svg)](https://github.com/pravega/pravega-sensor-collector/releases) [![CII Best Practices](https://bestpractices.coreinfrastructure.org/projects/4178/badge)](https://bestpractices.coreinfrastructure.org/projects/4178)
 
 Pravega Sensor Collector collects data from sensors and ingests the data into
 [Pravega](https://www.pravega.io/) streams.
