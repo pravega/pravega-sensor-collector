@@ -140,7 +140,7 @@ spotbugs {
 checkstyle {
     toolVersion = checkstyleVersion
     configFile = file("$rootDir/config/checkstyle.xml")
-    ignoreFailures = true
+    ignoreFailures = false
     configProperties = [importControlFile: "$rootDir/config/import-control.xml",
                         suppressionsFile: "$rootDir/config/suppressions.xml"]
     checkstyleMain {
