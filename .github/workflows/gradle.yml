@@ -69,6 +69,8 @@ jobs:
         run: ./gradlew clean ${{env.GRADLE_OPTS}}
       - name: Compile & Checkstyle
         run: ./gradlew jar compileTest checkstyleMain checkstyleTest --parallel ${{env.GRADLE_OPTS}}
+      - name: Spotbugs
+        run: ./gradlew spotbugsMain spotbugsTest
       - name: Tar Reports
         run: tar --use-compress-program zstd -cf reports-${{github.job}}.tzst `echo ${{env.REPORTS_LOCATIONS}}`
       - name: Upload Reports
