@@ -37,7 +37,7 @@ public class TransactionStateSQLiteImpl  implements AutoCloseable, TransactionSt
 
         public TransactionStateSQLiteImpl(Connection connection, TransactionCoordinator transactionCoordinator) {
             this.connection = Preconditions.checkNotNull(connection, "connection");
-            this.transactionCoordinator = Preconditions.checkNotNull(transactionCoordinator, "transactionCoordinator");
+            this.transactionCoordinator = transactionCoordinator;
         }
 
         @Override
@@ -124,7 +124,9 @@ public class TransactionStateSQLiteImpl  implements AutoCloseable, TransactionSt
                 deletePendingFileStatement.setString(1, fileName);
                 deletePendingFileStatement.setLong(2, beginOffset);
                 deletePendingFileStatement.execute();
-                transactionCoordinator.addTransactionToCommit(txnId);
+                if(transactionCoordinator!=null) {
+                    transactionCoordinator.addTransactionToCommit(txnId);
+                }
                 autoRollback.commit();
             }
         }
@@ -163,35 +165,38 @@ public class TransactionStateSQLiteImpl  implements AutoCloseable, TransactionSt
         addCompletedFileRecord(fileName, beginOffset, endOffset, newNextSequenceNumber, Optional.empty());
     }
 
-    /**
-     * Delete record from TransactionsToCommit table.
-     *
-     * @param  txnId transaction id
-     */
-    @Override
-    public void deleteTransactionToCommit(Optional<UUID> txnId) {
-        transactionCoordinator.deleteTransactionToCommit(txnId);
-    }
 
-    /**
-     * Get a list of files from completedFiles table.
-     *
-     * @return list of file name and end offset (file size)
-     */
-    @Override
-    public List<FileNameWithOffset> getCompletedFileRecords() throws SQLException {
-        try (final Statement statement = connection.createStatement();
-             final ResultSet rs = statement.executeQuery("select fileName, offset from completedFiles")) {
-            final List<FileNameWithOffset> files = new ArrayList<>();
-            while (rs.next()) {
-                final FileNameWithOffset fileNameWithOffset = new FileNameWithOffset(rs.getString("fileName"), rs.getLong("offset"));
-                files.add(fileNameWithOffset);
+        /**
+         * Delete record from TransactionsToCommit table
+         *
+         * @param  txnId transaction id
+         */
+        @Override
+        public void deleteTransactionToCommit(Optional<UUID> txnId) {
+            if(transactionCoordinator!=null) {
+                transactionCoordinator.deleteTransactionToCommit(txnId);
             }
-            return files;
-        } finally {
-            connection.commit();
         }
-    }
+
+        /**
+         * Get a list of files from completedFiles table
+         *
+         * @return list of file name and end offset (file size)
+         */
+        @Override
+        public List<FileNameWithOffset> getCompletedFileRecords() throws SQLException {
+            try (final Statement statement = connection.createStatement();
+                 final ResultSet rs = statement.executeQuery("select fileName, offset from completedFiles")) {
+                final List<FileNameWithOffset> files = new ArrayList<>();
+                while (rs.next()) {
+                    final FileNameWithOffset fileNameWithOffset = new FileNameWithOffset(rs.getString("fileName"), rs.getLong("offset"));
+                    files.add(fileNameWithOffset);
+                }
+                return files;
+            } finally {
+                connection.commit();
+            }
+        }
 
     /**
      * Delete completed file record from completedFiles table for given file name.

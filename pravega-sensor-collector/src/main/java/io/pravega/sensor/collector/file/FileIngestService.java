@@ -42,7 +42,7 @@ public abstract class FileIngestService extends DeviceDriver {
     private static final String EXACTLY_ONCE_KEY = "EXACTLY_ONCE";
     private static final String TRANSACTION_TIMEOUT_MINUTES_KEY = "TRANSACTION_TIMEOUT_MINUTES";
     private static final String MIN_TIME_IN_MILLIS_TO_UPDATE_FILE_KEY = "MIN_TIME_IN_MILLIS_TO_UPDATE_FILE";
-    private static final String DELETE_COMPLETED_FILES_INTERVAL_IN_MINUTES_KEY = "DELETE_COMPLETED_FILES_INTERVAL_IN_MINUTES";
+    private static final String DELETE_COMPLETED_FILES_INTERVAL_IN_SECONDS_KEY = "DELETE_COMPLETED_FILES_INTERVAL_IN_SECONDS";
     private static final String ENABLE_LARGE_EVENT = "ENABLE_LARGE_EVENT";
 
     private static final int DEFAULT_SAMPLES_PER_EVENT_KEY = 100;
@@ -138,8 +138,8 @@ public abstract class FileIngestService extends DeviceDriver {
         return Long.parseLong(getProperty(MIN_TIME_IN_MILLIS_TO_UPDATE_FILE_KEY, "5000"));
     }
 
-    long getDeleteCompletedFilesIntervalInMinutes() {
-        return Long.parseLong(getProperty(DELETE_COMPLETED_FILES_INTERVAL_IN_MINUTES_KEY, "720"));
+    long getDeleteCompletedFilesIntervalInSeconds() {
+        return Long.parseLong(getProperty(DELETE_COMPLETED_FILES_INTERVAL_IN_SECONDS_KEY, "43200"));
     }
 
     boolean getLargeEventEnable() {
@@ -169,14 +169,14 @@ public abstract class FileIngestService extends DeviceDriver {
     }
 
     protected void deleteCompletedFiles() {
-        LOG.trace("deleteCompletedFiles: BEGIN");
+        LOG.debug("deleteCompletedFiles: BEGIN");
         try {
             processor.deleteCompletedFiles();
         } catch (Exception e) {
             LOG.error("deleteCompletedFiles: Delete file error", e);
             // Continue on any errors. We will retry on the next iteration.
         }
-        LOG.trace("deleteCompletedFiles: END");
+        LOG.debug("deleteCompletedFiles: END");
     }
 
     @Override
@@ -201,17 +201,19 @@ public abstract class FileIngestService extends DeviceDriver {
         deleteFileTask = executor.scheduleAtFixedRate(
                 this::deleteCompletedFiles,
                 1,
-                getDeleteCompletedFilesIntervalInMinutes(),
-                TimeUnit.MINUTES);
+                getDeleteCompletedFilesIntervalInSeconds(),
+                TimeUnit.SECONDS);
 
         notifyStarted();
     }
 
     @Override
     protected void doStop() {
-        LOG.info("doStop: Cancelling ingestion task and process file task");
+        LOG.info("doStop: Cancelling ingestion, process and delete file task");
         watchFileTask.cancel(false);
         processFileTask.cancel(false);
         deleteFileTask.cancel(false);
+        LOG.info("doStop: Cancelled ingestion, process and delete file task");
+        notifyStopped();
     }
 }
