@@ -246,9 +246,7 @@ If the TLS Certificate Authority (CA) used by Pravega is not trusted by a well-k
     ```
     OR
     ```
-    kubectl get secret pravega-controller-tls -n nautilus-pravega -o jsonpath="{.data.tls\.crt}" | base64 --decode > ~/pravega.crt
-    kubectl get secret keycloak-tls -n nautilus-system -o jsonpath="{.data.tls\.crt}" | base64 --decode > ~/keycloak.crt
-    kubectl get secret pravega-tls -n nautilus-pravega -o jsonpath="{.data.tls\.crt}" | base64 --decode > ~/pravegaAll.crt
+    kubectl get cabundle sdp-default -n nautilus-system -o jsonpath="{.spec.certificates.sdp}" > ~/tlsCA-sdp.crt
     ```
 2. On the target system, add the CA certificate to the operating system.
     ```shell
