@@ -53,7 +53,7 @@ import java.util.stream.Collectors;
 import static org.eclipse.milo.opcua.stack.core.types.builtin.unsigned.Unsigned.uint;
 import static org.eclipse.milo.opcua.stack.core.util.ConversionUtil.toList;
 
-public class OpcUaClientDriver extends SimpleMemorylessDriver<OpcUaRawData> {
+public final class OpcUaClientDriver extends SimpleMemorylessDriver<OpcUaRawData> {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(OpcUaClientDriver.class);
     private static final Gson JSON_PARSER = new Gson();

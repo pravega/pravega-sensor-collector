@@ -34,7 +34,7 @@ public class ParquetEventGeneratorTests {
     private static final Logger LOG = LoggerFactory.getLogger(ParquetEventGeneratorTests.class);
     
     @Test
-    public void TestFile() throws IOException {
+    public void testFile() throws IOException {
         final EventGenerator eventGenerator = ParquetEventGenerator.create("routingKey1",100);
         final List<FileNameWithOffset> files = FileUtils.getDirectoryListing("../parquet-file-sample-data","parquet", Paths.get("."), 5000);
         File parquetData= new File(files.get(0).fileName);

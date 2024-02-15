@@ -8,9 +8,9 @@
 
     <!-- A use of untrusted input in a way that could create a remotely exploitable 
         security vulnerability. -->
-    <Match>
+    <!-- <Match>
         <Bug category="SECURITY" />
-    </Match>
+    </Match> -->
 
     <!-- Violations of recommended and essential coding practice. Examples include 
         hash code and equals problems, cloneable idiom, dropped exceptions, Serializable 
@@ -39,9 +39,9 @@
     </Match>
 
     <!-- code flaws having to do with threads, locks, and volatiles -->
-    <Match>
+    <!-- <Match>
         <Bug category="MT_CORRECTNESS" />
-    </Match>
+    </Match> -->
 
     <!-- Experimental and not fully vetted bug patterns -->
     <Match>

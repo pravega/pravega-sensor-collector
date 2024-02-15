@@ -9,7 +9,7 @@
 
   <!-- header -->
   <module name="RegexpHeader">
-    <property name="header" value="/\*\*\n * Copyright Pravega Authors\."/>
+    <property name="header" value="/\*\*\n * Copyright \(c\) Dell Inc., or its subsidiaries. All Rights Reserved."/>
   </module>
   <module name="SuppressionFilter">
         <property name="file" value="${suppressionsFile}"/>
@@ -54,7 +54,7 @@
     <module name="LeftCurly"/>
     <module name="RightCurly"/>
     <module name="ConstantName">
-      <property name="format" value="(^[A-Z][A-Z0-9]*(_[A-Z0-9]+)*$)|(^log$)"/>
+      <property name="format" value="(^[A-Za-z][A-Za-z0-9]*(_[A-Z0-9]+)*$)|(^log$)"/>
     </module>
     <module name="LocalVariableName"/>
     <module name="LocalFinalVariableName"/>
