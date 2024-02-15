@@ -33,7 +33,7 @@ import static java.sql.Connection.TRANSACTION_SERIALIZABLE;
 /**
  * A persistent queue that uses a SQLite database on disk.
  */
-public class PersistentQueue implements AutoCloseable {
+public final class PersistentQueue implements AutoCloseable {
     private static final Logger LOGGER = LoggerFactory.getLogger(PersistentQueue.class);
 
     /**

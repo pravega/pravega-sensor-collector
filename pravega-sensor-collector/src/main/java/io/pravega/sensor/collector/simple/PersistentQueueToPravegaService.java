@@ -88,12 +88,4 @@ public class PersistentQueueToPravegaService extends AbstractExecutionThreadServ
         }
     }
 
-    /**
-     * Inject a failure before commit for testing.
-     */
-    protected void injectCommitFailure() {
-        if (Math.random() < 0.1) {
-            throw new RuntimeException("injectCommitFailure: Commit failure test exception");
-        }
-    }
 }

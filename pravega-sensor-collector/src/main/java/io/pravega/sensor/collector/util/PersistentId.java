@@ -19,7 +19,7 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.UUID;
 
-public class PersistentId {
+public final class PersistentId {
     private static final Logger LOGGER = LoggerFactory.getLogger(PersistentId.class);
 
     private final UUID persistentId;

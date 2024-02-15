@@ -34,6 +34,12 @@ public class FileUtils {
     public static final String COMPLETED_FILES = "Completed_Files";
 
     /**
+     * Gets directory listings.
+     *
+     * @param fileSpec
+     * @param fileExtension
+     * @param movedFilesDirectory
+     * @param minTimeInMillisToUpdateFile
      * @return list of file name and file size in bytes
      * Handle the below cases
      *  1. If given file path does not exist then log the message and continue

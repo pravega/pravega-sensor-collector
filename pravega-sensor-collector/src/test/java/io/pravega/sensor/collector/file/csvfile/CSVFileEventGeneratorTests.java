@@ -48,7 +48,7 @@ public class CSVFileEventGeneratorTests {
     }
 
     @Test
-    public void Test3by3() throws IOException {
+    public void test3by3() throws IOException {
         final EventGenerator eventGenerator = CsvFileEventGenerator.create("routingKey1", 3);
         final String csvStr =
                 "\"Time\",\"X\",\"Y\",\"Z\",\"IN_PROGRESS\"\n"
@@ -64,7 +64,7 @@ public class CSVFileEventGeneratorTests {
     }
 
     @Test
-    public void Test1by3() throws IOException {
+    public void test1by3() throws IOException {
         final EventGenerator eventGenerator = CsvFileEventGenerator.create("routingKey1", 3);
         final String csvStr =
                 "\"Time\",\"X\",\"Y\",\"Z\",\"IN_PROGRESS\"\n"
@@ -78,7 +78,7 @@ public class CSVFileEventGeneratorTests {
     }
 
     @Test
-    public void Test0by3() throws IOException {
+    public void test0by3() throws IOException {
         final EventGenerator eventGenerator = CsvFileEventGenerator.create("routingKey1", 3);
         final String csvStr =
                 "\"Time\",\"X\",\"Y\",\"Z\",\"IN_PROGRESS\"\n";
@@ -91,7 +91,7 @@ public class CSVFileEventGeneratorTests {
     }
 
     @Test
-    public void TestEmptyFile() throws IOException {
+    public void testEmptyFile() throws IOException {
         final EventGenerator eventGenerator = CsvFileEventGenerator.create("routingKey1", 3);
         final String csvStr = "";
         final CountingInputStream inputStream = new CountingInputStream(new ByteArrayInputStream(csvStr.getBytes(StandardCharsets.UTF_8)));
