@@ -14,21 +14,6 @@ on: [push, pull_request, workflow_dispatch]
   # workflow file (like this) with `workflow_dispatch` after on should exist on the **master** or default branch,
   # or there will be no ui for a manual trigger. https://github.community/t/workflow-dispatch-event-not-working/128856/2
 
-  #
-  # Set 'GRADLE_OPTS' to pass additional custom parameters to each ./gradlew invocation in this workflow.
-  # Example '--info' or '--debug'.
-#GRADLE_OPTS: --info
-
-# The workflow begins with a compilation and static analysis job that also caches the build output and source code,
-# followed by a number of parallel test jobs (which make use of that cached artifacts).
-#
-# Once the build job and all the test jobs complete successfully, a final (no-op) job ("build_and_test_complete") will
-# automatically complete. This job must NOT be renamed as the GitHub Pravega Repository gates merges into master on
-# this step passing.
-#
-# Finally, a "snapshot" job is triggered only for pushes (commits) to master and release branches, which publishes all
-# artifacts to a public repository.
-
 env:
   REPORTS_LOCATIONS: |
     pravega-sensor-collector/build/reports
