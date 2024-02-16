@@ -107,10 +107,10 @@ public class MetricConfig {
     // Static factory
     public static MetricConfig getMetricConfigFrom(DeviceDriverConfig ddrConfig) {
         MetricConfig metricConfig = new MetricConfig();
-        String instanceName = ddrConfig.getProperties().getOrDefault("PSC_INSTANCE_NAME", "");;
+        String pscId = ddrConfig.getProperties().getOrDefault("PSC_ID", "");
         metricConfig.setFileWriterIntervalSeconds(Integer.parseInt(ddrConfig.getProperties().getOrDefault(METRIC_FILE_WRITER_INTERVAL_SECONDS.getName(), METRIC_FILE_WRITER_INTERVAL_SECONDS.getDefaultValue())));
         metricConfig.setStreamWriterIntervalSeconds(Integer.parseInt(ddrConfig.getProperties().getOrDefault(METRIC_STREAM_WRITER_INTERVAL_SECONDS.getName(), METRIC_STREAM_WRITER_INTERVAL_SECONDS.getDefaultValue())));
-        metricConfig.setMetricStream(ddrConfig.getProperties().getOrDefault(METRIC_STREAM_NAME.getName() + "_" + instanceName, METRIC_STREAM_NAME.getDefaultValue() + "_" + instanceName));
+        metricConfig.setMetricStream(ddrConfig.getProperties().getOrDefault(METRIC_STREAM_NAME.getName() + pscId, METRIC_STREAM_NAME.getDefaultValue() + pscId));
         metricConfig.setControllerURI(URI.create(ddrConfig.getProperties().getOrDefault(METRIC_CONTROLLER_URI.getName(), METRIC_CONTROLLER_URI.getDefaultValue())));
         metricConfig.setMetricsScope(METRIC_SCOPE_NAME.getDefaultValue());
         metricConfig.setMetricFilePath(METRIC_FILE_PATH.getDefaultValue());

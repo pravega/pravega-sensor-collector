@@ -56,6 +56,7 @@ public class MetricPublisher extends AbstractService {
      */
     private void doStartWriters() {
         this.writers.forEach( writer -> writer.startAsync());
+        this.writers.forEach( writer -> writer.awaitRunning());
     }
 
     @Override

@@ -240,8 +240,8 @@ public abstract class FileProcessor {
             }
             log.debug("processFile: Adding completed file: {}",  fileNameWithBeginOffset.fileName);
             state.addCompletedFileRecord(fileNameWithBeginOffset.fileName, fileNameWithBeginOffset.offset, endOffset, nextSequenceNumber, txnId);
-            MetricsStore.getMetric(MetricNames.PSC_FILES_PROCESSED_GAUGE).update(this.completedFiles.incrementAndGet());
-            MetricsStore.getMetric(MetricNames.PSC_BYTES_PROCESSED_GAUGE).update(this.bytesProcessed.addAndGet(numOfBytes.get()));
+            MetricsStore.getMetric(MetricNames.PSC_FILES_PROCESSED_GAUGE).updateWith(1L);
+            MetricsStore.getMetric(MetricNames.PSC_BYTES_PROCESSED_GAUGE).updateWith(numOfBytes.get());
             // Add to completed file list only if commit is successfull else it will be taken care as part of recovery
             if (txnId.isPresent()) {
                 Transaction.Status status = writer.getTransactionStatus(txnId.get());
@@ -279,6 +279,7 @@ public abstract class FileProcessor {
                  */
                 if (Files.deleteIfExists(filePath) || Files.notExists(Paths.get(file.fileName))) {
                     state.deleteCompletedFileRecord(file.fileName);
+                    MetricsStore.getMetric(MetricNames.PSC_FILES_DELETED_GAUGE).updateWith(1L);
                     log.debug("deleteCompletedFiles: Deleted File default name:{}, and it's completed file name:{}.", file.fileName, filePath);
                 } else {
                     /**
@@ -288,6 +289,7 @@ public abstract class FileProcessor {
                     log.warn("deleteCompletedFiles: File {} doesn't exists in completed directory but still exist in default ingestion directory.", filePath);
                 }
             } catch (Exception e) {
+                MetricsStore.getMetric(MetricNames.PSC_EXCEPTIONS).updateWith(e.getClass().getName());
                 log.warn("Unable to delete ingested file default name:{}, and it's completed file name:{}, error: {}.", file.fileName, filePath, e.getMessage());
                 log.warn("Deletion will be retried on the next iteration.");
                 // We can continue on this error. Deletion will be retried on the next iteration.

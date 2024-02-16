@@ -96,7 +96,6 @@ class PSCWatchdogMonitor extends AbstractService implements Monitor {
 
     /**
      * Restart PSC. Handle Platforms.
-     * TODO: use a Manager that determines platform and have separate platform specific implementations.
      * @throws IOException in case of any exception.
      */
     private void restartPSC() throws IOException {
@@ -110,9 +109,6 @@ class PSCWatchdogMonitor extends AbstractService implements Monitor {
         }
     }
 
-    /**
-     * TODO: Make this part of the Monitor interface.
-     */
     private void process() {
         log.debug("process called");
         Path path = Paths.get(config.getWatchdogFileMonitorPath());

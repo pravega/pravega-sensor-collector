@@ -12,6 +12,7 @@ public class MetricsStore {
             .put(MetricNames.PSC_FILES_PROCESSED_GAUGE, new Gauge())
             .put(MetricNames.PSC_FILES_DELETED_GAUGE, new Gauge())
             .put(MetricNames.PSC_BYTES_PROCESSED_GAUGE, new Gauge())
+            .put(MetricNames.PSC_EXCEPTIONS, new ExceptionMeter())
             .build();
 
     public static Metric getMetric(String metricName) {
@@ -29,5 +30,12 @@ public class MetricsStore {
         ObjectMapper mapper = new ObjectMapper();
         return mapper.writerWithDefaultPrettyPrinter()
                 .writeValueAsString(metricStore);
+    }
+
+    public static void clearMetrics() {
+        metricStore.get(MetricNames.PSC_FILES_PROCESSED_GAUGE).clear();
+        metricStore.get(MetricNames.PSC_FILES_DELETED_GAUGE).clear();
+        metricStore.get(MetricNames.PSC_BYTES_PROCESSED_GAUGE).clear();
+        metricStore.get(MetricNames.PSC_EXCEPTIONS).clear();
     }
 }

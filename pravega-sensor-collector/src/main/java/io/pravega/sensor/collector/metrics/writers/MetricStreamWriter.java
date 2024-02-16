@@ -6,7 +6,6 @@ import com.google.common.annotations.VisibleForTesting;
 import com.google.common.util.concurrent.AbstractService;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import io.pravega.sensor.collector.metrics.MetricConfig;
-import io.pravega.sensor.collector.metrics.MetricNames;
 import io.pravega.sensor.collector.metrics.MetricsStore;
 import io.pravega.sensor.collector.metrics.PravegaClient;
 import org.slf4j.Logger;
@@ -51,18 +50,19 @@ public class MetricStreamWriter extends AbstractService implements MetricWriter 
             String jsonMetrics = MetricsStore.getMetricsAsJson();
             this.client.writeEvent("", jsonMetrics);
             log.info("Published metric blob to Pravega Stream {}", config.getMetricStream());
+            MetricsStore.clearMetrics();
         } catch (JsonProcessingException jpe) {
             // Just log . do not stop the scheduler
             log.error("Error fetching metrics as json string {}", jpe);
         } catch (Exception ioe) {
             // Just log . do not stop the scheduler
-            log.error("Error writing metrics file at {}", ioe);
+            log.error("Error sending metrics to Pravega. Exception {}", ioe);
         }
     }
 
     @Override
     public void doStart() {
-        log.info("Starting MetricStreamWriter {}");
+        log.info("Starting MetricStreamWriter.");
         this.client = initalizePravegaClient();
         executor.scheduleAtFixedRate(this::writeMetric, 0, config.getStreamWriterIntervalSeconds(), TimeUnit.SECONDS);
         notifyStarted();
@@ -70,7 +70,7 @@ public class MetricStreamWriter extends AbstractService implements MetricWriter 
 
     @Override
     public void doStop() {
-        log.info("Stopping Watchdog monitor.");
+        log.info("Stopping MetricStreamWriter.");
         executor.shutdown();
         this.client.close();
         notifyStopped();

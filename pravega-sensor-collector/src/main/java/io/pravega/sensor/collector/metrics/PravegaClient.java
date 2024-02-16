@@ -8,6 +8,8 @@ import io.pravega.client.stream.EventWriterConfig;
 import io.pravega.client.stream.ScalingPolicy;
 import io.pravega.client.stream.StreamConfiguration;
 import io.pravega.client.stream.impl.UTF8StringSerializer;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.net.URI;
 
@@ -16,6 +18,8 @@ import java.net.URI;
  * to Pravega.
  */
 public class PravegaClient {
+
+    private final Logger log = LoggerFactory.getLogger(PravegaClient.class);
     private final String scope;
     private final String streamName;    
     private final URI controllerURI;
@@ -36,6 +40,7 @@ public class PravegaClient {
     }
 
     private EventStreamWriter<String> initializeWriter() {
+        log.info("Initializing writer with {} {} {}", this.scope, this.streamName, this.controllerURI.toString());
         StreamManager streamManager = StreamManager.create(controllerURI);
         final boolean scopeIsNew = streamManager.createScope(scope);
 
