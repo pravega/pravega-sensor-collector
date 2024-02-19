@@ -56,6 +56,7 @@ public final class PersistentId {
     }
 
     /**
+     * Returns a persistent UUID that identifies this database instance.
      * @return A persistent UUID that identifies this database instance.
      */
     public UUID getPersistentId() {

@@ -1,4 +1,3 @@
-
 /**
  * Copyright (c) Dell Inc., or its subsidiaries. All Rights Reserved.
  *
@@ -28,7 +27,7 @@ import java.io.IOException;
 import java.util.function.Consumer;
 
 /**
- * Generate Event from RAW file
+ * Generate Event from RAW file.
  */
 public class RawEventGenerator implements EventGenerator {
     private static final Logger LOGGER = LoggerFactory.getLogger(RawEventGenerator.class);
@@ -60,10 +59,12 @@ public class RawEventGenerator implements EventGenerator {
 
 
     /**
-     * Convert File to byteArray
+     * Convert File to byteArray.
      * @param inputStream
      * @param firstSequenceNumber
+     * @param consumer
      * @return next sequence number, end offset
+     * @throws IOException
      */
     public Pair<Long, Long> generateEventsFromInputStream(CountingInputStream inputStream, long firstSequenceNumber, Consumer<PravegaWriterEvent> consumer) throws IOException {
         long nextSequenceNumber = firstSequenceNumber;
