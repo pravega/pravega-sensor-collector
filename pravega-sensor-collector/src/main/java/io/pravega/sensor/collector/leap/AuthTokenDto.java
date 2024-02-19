@@ -23,12 +23,12 @@ public class AuthTokenDto {
     public AuthTokenDto() {
     }
 
-    public AuthTokenDto(String userId, String displayName, String token, List<String> roles, Integer expires_in) {
+    public AuthTokenDto(String userId, String displayName, String token, List<String> roles, Integer expiresIn) {
         this.userId = userId;
         this.displayName = displayName;
         this.token = token;
         this.roles = roles;
-        this.expires_in = expires_in;
+        this.expires_in = expiresIn;
     }
 
     @Override

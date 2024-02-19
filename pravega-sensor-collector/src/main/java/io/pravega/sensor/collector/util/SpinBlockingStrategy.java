@@ -19,6 +19,6 @@ public class SpinBlockingStrategy implements UninterruptibleBlockingStrategy {
     @Override
     public void parkUninterruptibly(long nanosToPark) {
         final long endNanos = System.nanoTime() + nanosToPark;
-        while (endNanos - System.nanoTime() > 0);
+        while (endNanos - System.nanoTime() > 0) { }
     }
 }

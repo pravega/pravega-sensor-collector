@@ -122,9 +122,8 @@ public class FileUtils {
 
         if (fileEntry.offset <= 0) {
             LOGGER.warn("isValidFile: Empty file {} can not be processed", fileEntry.fileName);
-        }
-        // If extension is null, ingest all files
-        else if (fileExtension.isEmpty() || fileExtension.equals(fileEntry.fileName.substring(fileEntry.fileName.lastIndexOf(".") + 1))) {
+        } else if (fileExtension.isEmpty() || fileExtension.equals(fileEntry.fileName.substring(fileEntry.fileName.lastIndexOf(".") + 1))) {
+            // If extension is null, ingest all files
             return true;
         } else {
             LOGGER.warn("isValidFile: File format {} is not supported ", fileEntry.fileName);

@@ -14,6 +14,7 @@
     <suppress checks="RegexpHeader" files="io/pravega/sensor/collector/accelerometer/README.md" />
     <suppress checks="FileTabCharacter" files="io/pravega/sensor/collector/accelerometer/README.md" />
     <suppress checks="RegexpHeader" files="pravega-sensor-collector/src/main/resources/logback.xml" />
+    <suppress checks="MemberName" files="io/pravega/sensor/collector/leap/AuthTokenDto.java" />
 
 </suppressions>
 
