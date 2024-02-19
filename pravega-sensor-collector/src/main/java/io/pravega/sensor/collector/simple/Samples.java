@@ -15,16 +15,19 @@ import java.util.List;
 
 public interface Samples {
     /**
+     * Returns the number of samples.
      * @return the number of samples
      */
     int size();
 
     /**
+     * Returns the list of sample timestamps as nanoseconds since 1970-01-01.
      * @return the list of sample timestamps as nanoseconds since 1970-01-01
      */
     List<Long> getTimestampNanos();
 
     /**
+     * Returns the maximum timestamp as nanoseconds since 1970-01-01.
      * @return the maximum timestamp as nanoseconds since 1970-01-01
      */
     @JsonIgnore

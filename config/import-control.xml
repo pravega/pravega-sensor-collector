@@ -47,6 +47,7 @@
     <allow pkg="com.azure.storage.common" />
     <allow pkg="com.azure.core.http" />
     <allow pkg="reactor.core.publisher" />
+    <allow pkg="org.eclipse.milo.opcua" />
     <subpackage name="storage.s3">
         <allow pkg="software.amazon.awssdk"/>
     </subpackage>

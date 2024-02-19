@@ -41,8 +41,12 @@ public class FileNameWithOffset implements Comparable<FileNameWithOffset> {
 
     @Override
     public boolean equals(Object o) {
-        if (this == o) { return true; }
-        if (o == null || getClass() != o.getClass()) { return false; }
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
         FileNameWithOffset that = (FileNameWithOffset) o;
         return offset == that.offset
                 && Objects.equals(fileName, that.fileName);

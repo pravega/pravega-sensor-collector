@@ -45,7 +45,11 @@ public final class PersistentQueue implements AutoCloseable {
     private final Semaphore semaphore;
 
     /**
+     * Construct a PersistentQueue with specifief connection, transactionCoordinator and capacity.
+     * @param connection
+     * @param transactionCoordinator
      * @param capacity Maximum number of elements that can be queued.
+     * @throws RuntimeException
      */
     public PersistentQueue(Connection connection, TransactionCoordinator transactionCoordinator, long capacity) {
         try {
@@ -63,7 +67,9 @@ public final class PersistentQueue implements AutoCloseable {
     }
 
     /**
+     * Creates database connection.
      * @param fileName Name of SQLite database file.
+     * @throws RuntimeException
      */
     public static Connection createDatabase(String fileName) {
         try {
@@ -92,6 +98,10 @@ public final class PersistentQueue implements AutoCloseable {
 
     /**
      * Add an element. Blocks until there is enough capacity.
+     * @param element
+     * @throws SQLException
+     * @throws InterruptedException
+     * @throws IllegalArgumentException
      */
     public void add(PersistentQueueElement element) throws SQLException, InterruptedException {
         if (element.id != 0) {
@@ -118,6 +128,10 @@ public final class PersistentQueue implements AutoCloseable {
     /**
      * Adds an element to the queue without committing. Blocks until there is enough
      * capacity.
+     * @param element
+     * @throws SQLException
+     * @throws InterruptedException
+     * @throws IllegalArgumentException
      */
     public void addWithoutCommit(PersistentQueueElement element) throws SQLException, InterruptedException {
         if (element.id != 0) {
@@ -141,6 +155,8 @@ public final class PersistentQueue implements AutoCloseable {
 
     /**
      * Retrieve up to limit elements. Does not remove elements.
+     * @param limit
+     * @throws SQLException
      */
     public synchronized List<PersistentQueueElement> peek(long limit) throws SQLException {
         try (final Statement statement = connection.createStatement();
@@ -160,6 +176,9 @@ public final class PersistentQueue implements AutoCloseable {
      * Remove elements from the queue. Before this method is called, it is expected
      * that the elements have been written to Pravega in the Pravega transaction
      * txnId, flushed, but not committed.
+     * @param elements
+     * @param txnId
+     * @throws SQLException
      */
     public synchronized void remove(List<PersistentQueueElement> elements, Optional<UUID> txnId) throws SQLException {
         if (!elements.isEmpty()) {

@@ -66,11 +66,6 @@ public class TransactionalEventWriter<T> implements EventWriter<T> {
             currentTxn = null;
         }
     }
-    private boolean canCommitTransaction(UUID txnId) {
-        Transaction.Status transactionStatus = writer.getTxn(txnId).checkStatus();
-        LOGGER.info("canCommitTransaction: Status of Transaction id {} is {}", txnId, transactionStatus);
-        return transactionStatus == Transaction.Status.OPEN;
-    }
 
     public void commit(UUID txnId) throws TxnFailedException {
         /*Check the transaction status before committing transaction
@@ -79,6 +74,12 @@ public class TransactionalEventWriter<T> implements EventWriter<T> {
             LOGGER.info("commit: committing transaction {}", txnId);
             writer.getTxn(txnId).commit();
         }
+    }
+
+    private boolean canCommitTransaction(UUID txnId) {
+        Transaction.Status transactionStatus = writer.getTxn(txnId).checkStatus();
+        LOGGER.info("canCommitTransaction: Status of Transaction id {} is {}", txnId, transactionStatus);
+        return transactionStatus == Transaction.Status.OPEN;
     }
 
     public void abort() {
@@ -95,6 +96,7 @@ public class TransactionalEventWriter<T> implements EventWriter<T> {
         }
         return null;
     }
+
     public Transaction.Status getTransactionStatus(UUID txnId) {
         return writer.getTxn(txnId).checkStatus();
     }

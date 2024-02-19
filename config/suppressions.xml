@@ -11,5 +11,9 @@
     <suppress files="[\\/]generated[\\/]" checks="[a-zA-Z0-9]*"/>
     <suppress files="\.pem" checks="[a-zA-Z0-9]*"/>
     <suppress files="passwd" checks="[a-zA-Z0-9]*"/>
+    <suppress checks="RegexpHeader" files="io/pravega/sensor/collector/accelerometer/README.md" />
+    <suppress checks="FileTabCharacter" files="io/pravega/sensor/collector/accelerometer/README.md" />
+    <suppress checks="RegexpHeader" files="pravega-sensor-collector/src/main/resources/logback.xml" />
+
 </suppressions>
 

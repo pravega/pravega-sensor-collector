@@ -73,7 +73,7 @@ public class DeviceDriverManager extends AbstractService {
      */
     private List<DeviceDriverConfig> configFromProperties(String prefix, String sep, Map<String, String> properties) {
         // Find instance names.
-        final List<String> instanceNames = properties.keySet().stream().flatMap((key) -> {
+        final List<String> instanceNames = properties.keySet().stream().flatMap(key -> {
             if (key.startsWith(prefix) && key.endsWith(sep + CLASS_KEY)) {
                 return Stream.of(key.substring(prefix.length(), key.length() - CLASS_KEY.length() - sep.length()));
             }
@@ -81,11 +81,11 @@ public class DeviceDriverManager extends AbstractService {
         }).collect(Collectors.toList());
         LOGGER.debug("configFromProperties: instanceNames={}", instanceNames);
         // Copy properties with prefix to keys without a prefix.
-        final List<DeviceDriverConfig> config = instanceNames.stream().map((instanceName) -> {
+        final List<DeviceDriverConfig> config = instanceNames.stream().map(instanceName -> {
             final String className = properties.get(prefix + instanceName + sep + CLASS_KEY);
-            assert (className != null);
+            assert className != null;
             final Map<String, String> instanceProperties = new HashMap<>();
-            properties.entrySet().stream().forEach((entry) -> {
+            properties.entrySet().stream().forEach(entry -> {
                 final String key = entry.getKey();
                 final String instancePrefix = prefix + instanceName + sep;
                 if (key.startsWith(instancePrefix)) {

@@ -19,10 +19,10 @@ import java.util.UUID;
 public interface TransactionStateDB {
 
     /**
-     * Add file name and begin offset to PendingFiles table
+     * Add file name and begin offset to PendingFiles table.
      *
-     *  @param files      List of file name with Offset.
-     *
+     * @param files      List of file name with Offset.
+     * @throws SQLException
      */
     public void addPendingFileRecords(List<FileNameWithOffset> files) throws SQLException;
 

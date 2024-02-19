@@ -110,6 +110,7 @@ public abstract class SimpleMemorylessDriver<R> extends DeviceDriver {
 
     /**
      * Reads raw data (byte arrays) from a sensor.
+     * @throws Exception
      */
     abstract public List<R> readRawData() throws Exception;
 
@@ -121,12 +122,16 @@ public abstract class SimpleMemorylessDriver<R> extends DeviceDriver {
     abstract public byte[] getEvent(R rawData);
 
     /**
-     * Get timestamp value sourced from server for the particular Raw data object
+     * Get timestamp value sourced from server for the particular Raw data object.
      *
      * @param rawData : Object to fetch timestamp from
      * @return timestamp in Unix Epoch format
      */
     abstract public long getTimestamp(R rawData);
+
+    public String getRoutingKey() {
+        return routingKey;
+    }
 
     private String getRoutingKey(String defaultVal) {
         return getProperty(ROUTING_KEY_KEY, defaultVal);
@@ -138,11 +143,6 @@ public abstract class SimpleMemorylessDriver<R> extends DeviceDriver {
 
     boolean getLargeEventEnable() {
         return Boolean.parseBoolean(getProperty(ENABLE_LARGE_EVENT, Boolean.toString(false)));
-    }
-
-
-    public String getRoutingKey() {
-        return routingKey;
     }
 
 }
