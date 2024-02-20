@@ -29,7 +29,7 @@ public class ParquetFileProcessorTests extends FileProcessorTests {
      */
     @Test
     public void generateEventForParquetTests() throws Exception {
-        FileProcessor fileProcessor = new ParquetFileProcessor(config, state, transactionalEventWriter,transactionCoordinator, "test");
+        FileProcessor fileProcessor = new ParquetFileProcessor(config, state, transactionalEventWriter, transactionCoordinator, "test");
         fileProcessor.processNewFiles();
         Mockito.verify(state, Mockito.times(1)).getNextPendingFileRecord();
     }

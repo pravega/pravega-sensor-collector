@@ -35,9 +35,9 @@ public class ParquetEventGeneratorTests {
     
     @Test
     public void testFile() throws IOException {
-        final EventGenerator eventGenerator = ParquetEventGenerator.create("routingKey1",100);
-        final List<FileNameWithOffset> files = FileUtils.getDirectoryListing("../parquet-file-sample-data","parquet", Paths.get("."), 5000);
-        File parquetData= new File(files.get(0).fileName);
+        final EventGenerator eventGenerator = ParquetEventGenerator.create("routingKey1", 100);
+        final List<FileNameWithOffset> files = FileUtils.getDirectoryListing("../parquet-file-sample-data", "parquet", Paths.get("."), 5000);
+        File parquetData = new File(files.get(0).fileName);
 
         final CountingInputStream inputStream = new CountingInputStream(new FileInputStream(parquetData));
         final List<PravegaWriterEvent> events = new ArrayList<>();
