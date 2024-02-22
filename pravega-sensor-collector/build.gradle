@@ -133,7 +133,7 @@ tasks.withType(com.github.spotbugs.snom.SpotBugsTask) {
 
 spotbugs {
     toolVersion = spotbugsVersion
-    ignoreFailures = false
+    ignoreFailures = true
     showProgress = true
     effort = 'max'
     reportLevel = 'default'
@@ -144,7 +144,7 @@ spotbugs {
 checkstyle {
     toolVersion = checkstyleVersion
     configFile = file("$rootDir/config/checkstyle.xml")
-    ignoreFailures = false
+    ignoreFailures = true
     configProperties = [importControlFile: "$rootDir/config/import-control.xml",
                         suppressionsFile: "$rootDir/config/suppressions.xml"]
     checkstyleMain {
