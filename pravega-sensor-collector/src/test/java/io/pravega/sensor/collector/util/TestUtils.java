@@ -16,11 +16,14 @@ import java.util.stream.Stream;
  */
 public final class TestUtils {
 
-
     private static final Logger LOGGER = LoggerFactory.getLogger(TestUtils.class);
     private static final String CLASS_KEY = "CLASS";
     protected DeviceDriverConfig config;
 
+    /*
+    * Utility method that returns a list of DeviceDriverConfig instances from key/value properties.
+    * It removes the prefix read from properties file.
+    * */
     public static Map<String, String> configFromProperties(String prefix, String sep, Map<String, String> properties) {
         Map<String, String> instanceProperties = new HashMap<>();
         // Find instance names.

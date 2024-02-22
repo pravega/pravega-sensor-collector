@@ -24,7 +24,7 @@ import java.util.Map;
 * Test class for FileIngestService
 */
 public class FileIngestServiceTest {
-    
+
     private static final String PREFIX = Parameters.getEnvPrefix();
     private static final String SEPARATOR = "_";
     protected DeviceDriverConfig config;
