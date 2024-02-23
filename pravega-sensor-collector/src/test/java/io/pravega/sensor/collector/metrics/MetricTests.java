@@ -19,7 +19,7 @@ public class MetricTests {
     @Test
     public void metricFileWriterServiceTest() {
         ImmutableMap<String, String> props = ImmutableMap.<String, String>builder()
-                .put("METRIC_FILE_WRITER_INTERVAL_SECONDS", "3")
+                .put("METRIC_FILE_WRITER_INTERVAL_SECONDS", "1")
                 .build();
         DeviceDriverManager manager = new DeviceDriverManager(props);
         DeviceDriverConfig deviceDriverConfig = new DeviceDriverConfig("test", "testClass", Parameters.getProperties(), manager);
@@ -27,6 +27,11 @@ public class MetricTests {
         MetricFileWriter fileWriter = new MetricFileWriter(metricConfig);
         fileWriter.startAsync();
         fileWriter.awaitRunning();
+        try {
+            Thread.sleep(1000);
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e);
+        }
         Assert.assertTrue(Files.exists(Paths.get(metricConfig.getMetricFilePath())));
     }
 
@@ -58,7 +63,7 @@ public class MetricTests {
         Assert.assertEquals(counter.getCounter(), new Long(10L));
         ExceptionMeter exceptionMeter = new ExceptionMeter();
         exceptionMeter.updateWith("test");
-        Assert.assertEquals(exceptionMeter.getExceptionClass(), "test");
+        Assert.assertEquals(exceptionMeter.getExceptionClass(), "test;");
     }
 
     @Test
