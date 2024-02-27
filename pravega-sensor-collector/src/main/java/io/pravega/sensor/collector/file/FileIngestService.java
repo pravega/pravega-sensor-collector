@@ -24,6 +24,7 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 /**
  * Ingestion service with common implementation logic for all files.
@@ -220,6 +221,11 @@ public abstract class FileIngestService extends DeviceDriver {
         watchFileTask.cancel(false);
         processFileTask.cancel(false);
         deleteFileTask.cancel(false);
+        try {
+            metricPublisher.stopAsync().awaitTerminated(30, TimeUnit.SECONDS);
+        }  catch (TimeoutException e) {
+            LOG.warn("Timed out stopping MetricPublisher {}", e);
+        }
         LOG.info("doStop: Cancelled ingestion, process and delete file task");
         notifyStopped();
     }
