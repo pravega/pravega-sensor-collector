@@ -1,3 +1,12 @@
+/**
+ * Copyright (c) Dell Inc., or its subsidiaries. All Rights Reserved.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ */
 package io.pravega.sensor.collector.metrics;
 
 import com.google.common.base.Preconditions;
@@ -13,10 +22,18 @@ public interface Metric<T> {
      * value by adding the passed value.
      * @param T value to add.
      */
-    void updateWith(T t);
+    void incrementBy(T t);
+
+    /**
+     * Clears/resets the underlying data type/structure
+     * stored by the Metric implementations.
+     */
     void clear();
 }
 
+/**
+ *  Representation of Counter Metric.
+ */
 class Counter implements Metric<Long> {
     private Long counter = 0L;
     private String metricType = "COUNTER";
@@ -29,17 +46,20 @@ class Counter implements Metric<Long> {
         return metricType;
     }
 
-    public void updateWith(Long value) {
+    public synchronized void incrementBy(Long value) {
         Preconditions.checkArgument(value > 0, "value needs to be positive");
         this.counter += value;
     }
 
     @Override
-    public void clear() {
+    public synchronized void clear() {
         this.counter = 0L;
     }
 }
 
+/**
+ * Representation of Gauge Metric.
+ */
 class Gauge implements Metric<Long> {
     private Long gauge = 0L;
     private String metricType = "GAUGE";
@@ -51,19 +71,22 @@ class Gauge implements Metric<Long> {
         return metricType;
     }
 
-    public void updateWith(Long value) {
+    public synchronized void incrementBy(Long value) {
         Preconditions.checkArgument(value > 0, "value needs to be positive");
         this.gauge += value;
     }
 
     @Override
-    public void clear() {
+    public synchronized void clear() {
         this.gauge = 0L;
     }
 
 }
 
-
+/**
+ * Metric class to represent a meter
+ * storing exception strings.
+ */
 class ExceptionMeter implements Metric<String> {
     private final StringBuilder exceptionClass = new StringBuilder();
     private final String metricType = "METER";
@@ -77,13 +100,13 @@ class ExceptionMeter implements Metric<String> {
         return metricType;
     }
 
-    public void updateWith(String value) {
+    public synchronized void incrementBy(String value) {
         Preconditions.checkArgument(value != null, "value needs to be non-null");
         this.exceptionClass.append(value + SEPARATOR);
     }
 
     @Override
-    public void clear() {
+    public synchronized void clear() {
         this.exceptionClass.setLength(0);
     }
 }

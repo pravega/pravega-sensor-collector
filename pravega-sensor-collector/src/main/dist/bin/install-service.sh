@@ -8,7 +8,6 @@
 #
 #     http://www.apache.org/licenses/LICENSE-2.0
 #
-#TODO: split this into 2 functions, start-watchdog and start-psc
 set -x
 ROOT_DIR=$(readlink -f $(dirname $0)/..)
 SERVICE_NAME=${SERVICE_NAME:-$(basename ${ROOT_DIR})}

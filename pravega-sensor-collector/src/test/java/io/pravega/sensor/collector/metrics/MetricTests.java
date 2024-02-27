@@ -56,13 +56,13 @@ public class MetricTests {
     @Test
     public void testMetricTypes() {
         Gauge guage = new Gauge();
-        guage.updateWith(10L);
+        guage.incrementBy(10L);
         Assert.assertEquals(guage.getGauge(), new Long(10L));
         Counter counter = new Counter();
-        counter.updateWith(10L);
+        counter.incrementBy(10L);
         Assert.assertEquals(counter.getCounter(), new Long(10L));
         ExceptionMeter exceptionMeter = new ExceptionMeter();
-        exceptionMeter.updateWith("test");
+        exceptionMeter.incrementBy("test");
         Assert.assertEquals(exceptionMeter.getExceptionClass(), "test;");
     }
 

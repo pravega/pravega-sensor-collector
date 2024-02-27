@@ -154,7 +154,7 @@ public abstract class FileIngestService extends DeviceDriver {
         try {
             processor.watchFiles();
         } catch (Exception e) {
-            MetricsStore.getMetric(MetricNames.PSC_EXCEPTIONS).updateWith(e.getClass().getName());
+            MetricsStore.getMetric(MetricNames.PSC_EXCEPTIONS).incrementBy(e.getClass().getName());
             LOG.error("watchFiles: watch file error", e);
             // Continue on any errors. We will retry on the next iteration.
         }
@@ -165,7 +165,7 @@ public abstract class FileIngestService extends DeviceDriver {
         try {
             processor.processFiles();
         } catch (Exception e) {
-            MetricsStore.getMetric(MetricNames.PSC_EXCEPTIONS).updateWith(e.getClass().getName());
+            MetricsStore.getMetric(MetricNames.PSC_EXCEPTIONS).incrementBy(e.getClass().getName());
             LOG.error("processFiles: Process file error", e);
             // Continue on any errors. We will retry on the next iteration.
         }
@@ -177,7 +177,7 @@ public abstract class FileIngestService extends DeviceDriver {
         try {
             processor.deleteCompletedFiles();
         } catch (Exception e) {
-            MetricsStore.getMetric(MetricNames.PSC_EXCEPTIONS).updateWith(e.getClass().getName());
+            MetricsStore.getMetric(MetricNames.PSC_EXCEPTIONS).incrementBy(e.getClass().getName());
             LOG.error("deleteCompletedFiles: Delete file error", e);
             // Continue on any errors. We will retry on the next iteration.
         }
