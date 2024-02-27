@@ -31,7 +31,7 @@ import java.util.Map;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
-public class NetworkDriver extends SimpleDeviceDriver<NetworkRawData, NetworkSamples> {
+public final class NetworkDriver extends SimpleDeviceDriver<NetworkRawData, NetworkSamples> {
     private static final Logger LOGGER = LoggerFactory.getLogger(NetworkDriver.class);
 
     private static final String NETWORK_INTERFACE_KEY = "NETWORK_INTERFACE";

@@ -46,7 +46,10 @@ dependencies {
 
     implementation "io.pravega:pravega-client:${pravegaVersion}",
             "io.pravega:pravega-common:${pravegaVersion}",
-            "commons-cli:commons-cli:${commonsCLIVersion}"
+            "commons-cli:commons-cli:${commonsCLIVersion}",
+            "io.pravega:pravega-standalone:${pravegaVersion}",
+            "io.pravega:pravega-test-integration:${pravegaVersion}"
+
 
     if (includePravegaCredentials.toBoolean()) {
         implementation "io.pravega:pravega-keycloak-client:${pravegaCredentialsVersion}"
@@ -70,7 +73,7 @@ dependencies {
     testImplementation "org.junit.jupiter:junit-jupiter-api:${junitVersion}"
     testImplementation "org.junit.vintage:junit-vintage-engine:${junitVersion}"
     testRuntimeOnly "org.junit.jupiter:junit-jupiter-engine:${junitVersion}"
-    testImplementation "org.junit.platform:junit-platform-launcher"
+    testImplementation "org.junit.platform:junit-platform-launcher:${junitPlatformVersion}"
 
     testImplementation "org.mockito:mockito-core:${mockitoVersion}"
 
@@ -107,6 +110,7 @@ startScripts {
 }
 
 shadowJar{
+    zip64 true
     archiveBaseName = 'pravega-sensor-collector'
     archiveClassifier = ''
 }

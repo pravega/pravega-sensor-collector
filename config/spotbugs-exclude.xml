@@ -29,9 +29,52 @@
     <Match> <!-- does not work from JDK11 onwards https://github.com/spotbugs/spotbugs/issues/756 -->
         <Bug pattern="RCN_REDUNDANT_NULLCHECK_OF_NONNULL_VALUE" />
     </Match>
+    <Match> <!-- does not work from JDK11 onwards https://github.com/spotbugs/spotbugs/issues/756 -->
+        <Bug pattern="NP_NULL_ON_SOME_PATH_FROM_RETURN_VALUE" />
+    </Match>
+
     <Match> <!-- Returning a java.lang.Boolean is common with Streams/Lambdas -->
         <Bug pattern="NP_BOOLEAN_RETURN_NULL" />
     </Match>
+    <Match>
+        <Bug pattern="ST_WRITE_TO_STATIC_FROM_INSTANCE_METHOD" />
+    </Match>
+
+    <Match>
+        <Class name="io.pravega.sensor.collector.util.TransactionCoordinator" />
+        <Bug pattern="CT_CONSTRUCTOR_THROW" />
+    </Match>
+
+    <Match>
+        <Class name="io.pravega.sensor.collector.file.csvfile.CsvFileSequenceProcessor" />
+        <Bug pattern="UR_UNINIT_READ_CALLED_FROM_SUPER_CONSTRUCTOR" />
+    </Match>
+
+    <Match>
+        <Class name="io.pravega.sensor.collector.file.parquet.ParquetFileProcessor" />
+        <Bug pattern="UR_UNINIT_READ_CALLED_FROM_SUPER_CONSTRUCTOR" />
+    </Match>
+
+    <Match>
+        <Class name="io.pravega.sensor.collector.file.rawfile.RawFileProcessor" />
+        <Bug pattern="UR_UNINIT_READ_CALLED_FROM_SUPER_CONSTRUCTOR" />
+    </Match>
+
+    <Match>
+        <Class name="io.pravega.sensor.collector.util.TransactionCoordinatorTests" />
+        <Bug pattern="ODR_OPEN_DATABASE_RESOURCE" />
+    </Match>
+
+    <Match>
+        <Class name="io.pravega.sensor.collector.accelerometer.AccelerometerSamples" />
+        <Bug pattern="PA_PUBLIC_PRIMITIVE_ATTRIBUTE" />
+    </Match>
+
+    <Match>
+        <Class name="io.pravega.sensor.collector.network.NetworkSamples" />
+        <Bug pattern="PA_PUBLIC_PRIMITIVE_ATTRIBUTE" />
+    </Match>
+
     <Match> <!-- This is intended in these and only these classes -->
         <Or>
             <Bug pattern="EI_EXPOSE_REP" />

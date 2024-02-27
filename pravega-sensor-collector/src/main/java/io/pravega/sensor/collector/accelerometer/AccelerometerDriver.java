@@ -26,7 +26,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.stream.Collectors;
 
-public class AccelerometerDriver extends SimpleDeviceDriver<AccelerometerRawData, AccelerometerSamples> {
+public final class AccelerometerDriver extends SimpleDeviceDriver<AccelerometerRawData, AccelerometerSamples> {
     private static final Logger LOGGER = LoggerFactory.getLogger(AccelerometerDriver.class);
 
     private static final String CONFIG_DEVICE_FILE_KEY = "CONFIG_DEVICE_FILE";

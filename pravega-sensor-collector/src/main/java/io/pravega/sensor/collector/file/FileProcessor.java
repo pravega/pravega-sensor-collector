@@ -209,7 +209,7 @@ public abstract class FileProcessor {
 
         try (final InputStream inputStream = new FileInputStream(fileNameWithBeginOffset.fileName)) {
             final CountingInputStream countingInputStream = new CountingInputStream(inputStream);
-            countingInputStream.skip(fileNameWithBeginOffset.offset);
+            log.info("Offset skipped {}", countingInputStream.skip(fileNameWithBeginOffset.offset));
             final Pair<Long, Long> result = eventGenerator.generateEventsFromInputStream(countingInputStream, firstSequenceNumber,
                     e -> {
                         log.trace("processFile: event={}", e);
@@ -297,12 +297,4 @@ public abstract class FileProcessor {
         });
     }
 
-    /**
-     * Inject a failure before commit for testing.
-     */
-    protected void injectCommitFailure() {
-        if (Math.random() < 0.3) {
-            throw new RuntimeException("injectCommitFailure: Commit failure test exception");
-        }
-    }
 }
