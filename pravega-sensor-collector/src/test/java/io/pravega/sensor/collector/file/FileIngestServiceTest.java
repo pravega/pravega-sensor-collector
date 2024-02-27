@@ -9,21 +9,56 @@
  */
 package io.pravega.sensor.collector.file;
 
-import io.pravega.sensor.collector.DeviceDriver;
 import io.pravega.sensor.collector.DeviceDriverConfig;
 import io.pravega.sensor.collector.DeviceDriverManager;
-import io.pravega.sensor.collector.file.rawfile.RawFileIngestService;
+import io.pravega.sensor.collector.Parameters;
+import io.pravega.sensor.collector.util.TestUtils;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.mockito.Mock;
 
-import java.sql.SQLException;
+import java.time.Duration;
 import java.util.Map;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.ScheduledFuture;
 
-import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.Mockito.*;
-
+/*
+* Test class for FileIngestService
+*/
 public class FileIngestServiceTest {
+
+    private static final String PREFIX = Parameters.getEnvPrefix();
+    private static final String SEPARATOR = "_";
+    protected DeviceDriverConfig config;
+    static String filename = "./src/test/resources/RawFileIngestService.properties";
+    DeviceDriverConfig deviceDriverConfig;
+    Map<String, String> properties;
+
+    private DeviceDriverManager driverManager;
+
+    @BeforeEach
+    void setUp(){
+        properties = Parameters.getProperties(filename);
+        driverManager = new DeviceDriverManager(properties);
+        deviceDriverConfig = new DeviceDriverConfig("RAW1", "RawFileIngestService",
+                TestUtils.configFromProperties(PREFIX, SEPARATOR, properties), driverManager);
+    }
+
+    @Test
+    public void testFileIngestService(){
+        FileIngestService fileIngestService = new MockFileIngestService(deviceDriverConfig);
+        try {
+            fileIngestService.startAsync();
+            fileIngestService.awaitRunning(Duration.ofSeconds(10));
+        } catch (Exception e){
+            throw new RuntimeException(e);
+        }
+        Assertions.assertTrue(fileIngestService.isRunning());
+        Assertions.assertEquals(fileIngestService.getProperty("PERSISTENT_QUEUE_FILE"),
+                properties.get(PREFIX + "RAW1" + SEPARATOR + "PERSISTENT_QUEUE_FILE"));
+        try {
+            fileIngestService.stopAsync();
+        } catch (Exception e){
+            throw new RuntimeException(e);
+        }
+        Assertions.assertFalse(fileIngestService.isRunning());
+    }
 }
