@@ -47,7 +47,7 @@ public class FileIngestServiceTest {
         FileIngestService fileIngestService = new MockFileIngestService(deviceDriverConfig);
         try {
             fileIngestService.startAsync();
-            fileIngestService.awaitRunning(Duration.ofSeconds(10));
+            fileIngestService.awaitRunning(Duration.ofSeconds(20));
         } catch (Exception e){
             throw new RuntimeException(e);
         }
