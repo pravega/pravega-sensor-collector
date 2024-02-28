@@ -29,7 +29,7 @@ import java.util.concurrent.TimeUnit;
  *  Metric publisher that writes metrics retrieved from
  *  a metrics store to Pravega Stream.
  */
-@AutoService(MetricWriter.class)
+//@AutoService(MetricWriter.class)
 public class MetricStreamWriter extends AbstractService implements MetricWriter {
     private final Logger log = LoggerFactory.getLogger(MetricStreamWriter.class);
     private final ThreadFactory namedThreadFactory = new ThreadFactoryBuilder().setNameFormat(
