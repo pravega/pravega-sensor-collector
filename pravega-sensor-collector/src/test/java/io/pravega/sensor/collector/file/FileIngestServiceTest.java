@@ -12,13 +12,17 @@ package io.pravega.sensor.collector.file;
 import io.pravega.sensor.collector.DeviceDriverConfig;
 import io.pravega.sensor.collector.DeviceDriverManager;
 import io.pravega.sensor.collector.Parameters;
+import io.pravega.sensor.collector.metrics.MetricPublisher;
 import io.pravega.sensor.collector.util.TestUtils;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.mockito.Mock;
+import org.mockito.MockitoAnnotations;
 
 import java.time.Duration;
 import java.util.Map;
+
 
 /*
 * Test class for FileIngestService
