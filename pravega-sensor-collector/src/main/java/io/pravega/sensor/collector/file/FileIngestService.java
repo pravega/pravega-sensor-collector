@@ -13,6 +13,9 @@ import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import io.pravega.client.EventStreamClientFactory;
 import io.pravega.sensor.collector.DeviceDriver;
 import io.pravega.sensor.collector.DeviceDriverConfig;
+import io.pravega.sensor.collector.metrics.MetricNames;
+import io.pravega.sensor.collector.metrics.MetricPublisher;
+import io.pravega.sensor.collector.metrics.MetricsStore;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -21,6 +24,7 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 /**
  * Ingestion service with common implementation logic for all files.
@@ -48,8 +52,8 @@ public abstract class FileIngestService extends DeviceDriver {
     private static final int DEFAULT_SAMPLES_PER_EVENT_KEY = 100;
 
     private static final int DEFAULT_INTERVAL_MS_KEY = 10000;
-
     private final FileProcessor processor;
+    private final MetricPublisher metricPublisher;
     private final ScheduledExecutorService executor;
 
     private ScheduledFuture<?> watchFileTask;
@@ -78,6 +82,7 @@ public abstract class FileIngestService extends DeviceDriver {
         createStream(scopeName, getStreamName());
         final EventStreamClientFactory clientFactory = getEventStreamClientFactory(scopeName);
         processor = FileProcessor.create(fileSequenceConfig, clientFactory);
+        metricPublisher = getMetricPublisher(config);
         ThreadFactory namedThreadFactory = new ThreadFactoryBuilder().setNameFormat(
                 FileIngestService.class.getSimpleName() + "-" + config.getInstanceName() + "-%d").build();
         executor = Executors.newScheduledThreadPool(1, namedThreadFactory);
@@ -150,6 +155,7 @@ public abstract class FileIngestService extends DeviceDriver {
         try {
             processor.watchFiles();
         } catch (Exception e) {
+            MetricsStore.getMetric(MetricNames.PSC_EXCEPTIONS).incrementBy(e.getClass().getName());
             LOG.error("watchFiles: watch file error", e);
             // Continue on any errors. We will retry on the next iteration.
         }
@@ -160,6 +166,7 @@ public abstract class FileIngestService extends DeviceDriver {
         try {
             processor.processFiles();
         } catch (Exception e) {
+            MetricsStore.getMetric(MetricNames.PSC_EXCEPTIONS).incrementBy(e.getClass().getName());
             LOG.error("processFiles: Process file error", e);
             // Continue on any errors. We will retry on the next iteration.
         }
@@ -171,6 +178,7 @@ public abstract class FileIngestService extends DeviceDriver {
         try {
             processor.deleteCompletedFiles();
         } catch (Exception e) {
+            MetricsStore.getMetric(MetricNames.PSC_EXCEPTIONS).incrementBy(e.getClass().getName());
             LOG.error("deleteCompletedFiles: Delete file error", e);
             // Continue on any errors. We will retry on the next iteration.
         }
@@ -179,6 +187,8 @@ public abstract class FileIngestService extends DeviceDriver {
 
     @Override
     protected void doStart() {
+        metricPublisher.startAsync();
+        metricPublisher.awaitRunning();
         watchFileTask = executor.scheduleAtFixedRate(
                 this::watchFiles,
                 0,
@@ -211,6 +221,11 @@ public abstract class FileIngestService extends DeviceDriver {
         watchFileTask.cancel(false);
         processFileTask.cancel(false);
         deleteFileTask.cancel(false);
+        try {
+            metricPublisher.stopAsync().awaitTerminated(30, TimeUnit.SECONDS);
+        }  catch (TimeoutException e) {
+            LOG.warn("Timed out stopping MetricPublisher {}", e);
+        }
         LOG.info("doStop: Cancelled ingestion, process and delete file task");
         notifyStopped();
     }

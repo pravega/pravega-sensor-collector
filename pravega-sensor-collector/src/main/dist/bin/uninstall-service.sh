@@ -12,5 +12,6 @@ set -x
 ROOT_DIR=$(readlink -f $(dirname $0)/..)
 SERVICE_NAME=${SERVICE_NAME:-$(basename ${ROOT_DIR})}
 systemctl stop ${SERVICE_NAME}.service
-systemctl disable ${SERVICE_NAME}.service
+systemctl stop psc-watchdog.service
+systemctl disable psc-watchdog.service
 systemctl daemon-reload
