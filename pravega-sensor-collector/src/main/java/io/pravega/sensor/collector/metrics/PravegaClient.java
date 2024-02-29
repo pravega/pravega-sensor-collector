@@ -43,19 +43,20 @@ public class PravegaClient {
 
     private EventStreamWriter<String> initializeWriter() {
         log.info("Initializing writer with {} {} {}", this.scope, this.streamName, this.controllerURI.toString());
-        ClientConfig clientConfig = ClientConfig.builder().controllerURI(this.controllerURI).build();
-        StreamManager streamManager = StreamManager.create(clientConfig);
-        final boolean scopeIsNew = streamManager.createScope(scope);
-
-        StreamConfiguration streamConfig = StreamConfiguration.builder()
-                .scalingPolicy(ScalingPolicy.fixed(1))
-                .build();
-        final boolean streamIsNew = streamManager.createStream(scope, streamName, streamConfig);
-        EventStreamClientFactory clientFactory = EventStreamClientFactory.withScope(scope,
-                clientConfig);
-        EventStreamWriter<String> writer = clientFactory.createEventWriter(streamName,
-                     new UTF8StringSerializer(),
-                     EventWriterConfig.builder().build());
+        try (StreamManager streamManager = StreamManager.create(controllerURI)) {
+            final boolean scopeIsNew = streamManager.createScope(scope);
+            StreamConfiguration streamConfig = StreamConfiguration.builder()
+                    .scalingPolicy(ScalingPolicy.fixed(1))
+                    .build();
+            final boolean streamIsNew = streamManager.createStream(scope, streamName, streamConfig);
+        }
+        EventStreamWriter<String> writer;
+        try (EventStreamClientFactory clientFactory = EventStreamClientFactory.withScope(scope,
+                ClientConfig.builder().controllerURI(controllerURI).build())) {
+            writer = clientFactory.createEventWriter(streamName,
+                    new UTF8StringSerializer(),
+                    EventWriterConfig.builder().build());
+        }
         return writer;
     }
 

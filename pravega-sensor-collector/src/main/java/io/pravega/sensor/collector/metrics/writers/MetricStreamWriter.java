@@ -80,8 +80,14 @@ public class MetricStreamWriter extends AbstractService implements MetricWriter 
     @Override
     public void doStop() {
         log.info("Stopping MetricStreamWriter.");
-        executor.shutdown();
+        executor.shutdownNow();
+        try {
+            executor.awaitTermination(10, TimeUnit.SECONDS);
+        } catch (InterruptedException e) {
+            log.error("Error stopping MetricStreamWriter {}", e);
+        }
         this.client.close();
+        log.info("Stopped MetricStreamWriter.");
         notifyStopped();
     }
 }
