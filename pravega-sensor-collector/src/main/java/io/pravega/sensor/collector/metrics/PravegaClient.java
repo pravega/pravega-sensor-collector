@@ -8,6 +8,8 @@ import io.pravega.client.stream.EventWriterConfig;
 import io.pravega.client.stream.ScalingPolicy;
 import io.pravega.client.stream.StreamConfiguration;
 import io.pravega.client.stream.impl.UTF8StringSerializer;
+import io.pravega.sensor.collector.PravegaClientConfig;
+import io.pravega.sensor.collector.PravegaClientPool;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -41,7 +43,8 @@ public class PravegaClient {
 
     private EventStreamWriter<String> initializeWriter() {
         log.info("Initializing writer with {} {} {}", this.scope, this.streamName, this.controllerURI.toString());
-        StreamManager streamManager = StreamManager.create(controllerURI);
+        ClientConfig clientConfig = ClientConfig.builder().controllerURI(this.controllerURI).build();
+        StreamManager streamManager = StreamManager.create(clientConfig);
         final boolean scopeIsNew = streamManager.createScope(scope);
 
         StreamConfiguration streamConfig = StreamConfiguration.builder()
@@ -49,7 +52,7 @@ public class PravegaClient {
                 .build();
         final boolean streamIsNew = streamManager.createStream(scope, streamName, streamConfig);
         EventStreamClientFactory clientFactory = EventStreamClientFactory.withScope(scope,
-                ClientConfig.builder().controllerURI(controllerURI).build());
+                clientConfig);
         EventStreamWriter<String> writer = clientFactory.createEventWriter(streamName,
                      new UTF8StringSerializer(),
                      EventWriterConfig.builder().build());
