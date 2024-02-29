@@ -82,7 +82,7 @@ public abstract class FileIngestService extends DeviceDriver {
         createStream(scopeName, getStreamName());
         final EventStreamClientFactory clientFactory = getEventStreamClientFactory(scopeName);
         processor = FileProcessor.create(fileSequenceConfig, clientFactory);
-        metricPublisher = new MetricPublisher(config);
+        metricPublisher = getMetricPublisher(config);
         ThreadFactory namedThreadFactory = new ThreadFactoryBuilder().setNameFormat(
                 FileIngestService.class.getSimpleName() + "-" + config.getInstanceName() + "-%d").build();
         executor = Executors.newScheduledThreadPool(1, namedThreadFactory);
