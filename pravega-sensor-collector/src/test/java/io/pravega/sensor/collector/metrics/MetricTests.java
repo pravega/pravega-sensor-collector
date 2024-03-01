@@ -1,3 +1,12 @@
+/**
+ * Copyright (c) Dell Inc., or its subsidiaries. All Rights Reserved.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ */
 package io.pravega.sensor.collector.metrics;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -71,14 +80,14 @@ public class MetricTests {
         try {
             String json = MetricsStore.getMetricsAsJson();
             Assert.assertNotNull(json);
-            Assert.assertEquals(((Gauge)MetricsStore.getMetric(MetricNames.PSC_BYTES_PROCESSED_GAUGE)).getGauge(), new Long(0L));
-            Assert.assertEquals(((Gauge)MetricsStore.getMetric(MetricNames.PSC_FILES_DELETED_GAUGE)).getGauge(), new Long(0L));
-        } catch( JsonProcessingException jpe) {
+            Assert.assertEquals(((Gauge) MetricsStore.getMetric(MetricNames.PSC_BYTES_PROCESSED_GAUGE)).getGauge(), new Long(0L));
+            Assert.assertEquals(((Gauge) MetricsStore.getMetric(MetricNames.PSC_FILES_DELETED_GAUGE)).getGauge(), new Long(0L));
+        } catch (JsonProcessingException jpe) {
             Assert.fail("Error retrieving json from metricstore");
         }
     }
 
-    class TestMetricStreamWriter extends MetricStreamWriter {
+    static class TestMetricStreamWriter extends MetricStreamWriter {
         MetricConfig config;
         CompletableFuture<Void> notifier;
         TestMetricStreamWriter(MetricConfig config) {
@@ -89,6 +98,7 @@ public class MetricTests {
         void setNotifier(CompletableFuture<Void> cf) {
             this.notifier = cf;
         }
+
         @Override
         public PravegaClient initalizePravegaClient() {
             TestPravegaClient client = new TestPravegaClient(config.getMetricsScope(), config.getMetricStream());
@@ -97,11 +107,12 @@ public class MetricTests {
         }
     }
 
-    class TestPravegaClient extends PravegaClient {
+    static class TestPravegaClient extends PravegaClient {
         CompletableFuture<Void> notifier;
         TestPravegaClient(String scope, String stream) {
             super(scope, stream);
         }
+
         void setNotifier(CompletableFuture<Void> cf) {
             this.notifier = cf;
         }

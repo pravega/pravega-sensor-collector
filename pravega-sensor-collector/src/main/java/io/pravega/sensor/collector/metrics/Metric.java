@@ -20,7 +20,7 @@ public interface Metric<T> {
     /**
      * Implementors to update the internally maintained
      * value by adding the passed value.
-     * @param T value to add.
+     * @param t value to add.
      */
     void incrementBy(T t);
 
@@ -90,7 +90,7 @@ class Gauge implements Metric<Long> {
 class ExceptionMeter implements Metric<String> {
     private final StringBuilder exceptionClass = new StringBuilder();
     private final String metricType = "METER";
-    private final String SEPARATOR = ";";
+    private final String separator = ";";
 
     public String getExceptionClass() {
         return exceptionClass.toString();
@@ -102,7 +102,7 @@ class ExceptionMeter implements Metric<String> {
 
     public synchronized void incrementBy(String value) {
         Preconditions.checkArgument(value != null, "value needs to be non-null");
-        this.exceptionClass.append(value + SEPARATOR);
+        this.exceptionClass.append(value + separator);
     }
 
     @Override
