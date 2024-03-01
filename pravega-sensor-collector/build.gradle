@@ -46,11 +46,11 @@ dependencies {
 
     implementation "io.pravega:pravega-client:${pravegaVersion}",
             "io.pravega:pravega-common:${pravegaVersion}",
-            "commons-cli:commons-cli:${commonsCLIVersion}",
-            "io.pravega:pravega-standalone:${pravegaVersion}",
+            "commons-cli:commons-cli:${commonsCLIVersion}"
+
+    testImplementation "io.pravega:pravega-standalone:${pravegaVersion}",
             "io.pravega:pravega-test-integration:${pravegaVersion}"
-
-
+    
     if (includePravegaCredentials.toBoolean()) {
         implementation "io.pravega:pravega-keycloak-client:${pravegaCredentialsVersion}"
     }
@@ -63,6 +63,8 @@ dependencies {
     implementation "com.github.vladimir-bukhtoyarov:bucket4j-core:${bucket4jVersion}"
     implementation "org.eclipse.milo:sdk-client:${miloVersion}"
     implementation "com.google.code.gson:gson:${gsonVersion}"
+    implementation "com.google.auto.service:auto-service:${autoServiceVersion}"
+    annotationProcessor "com.google.auto.service:auto-service:${autoServiceVersion}"
 
     implementation "org.apache.parquet:parquet-avro:${parquetVersion}"
     implementation "org.apache.parquet:parquet-hadoop:${parquetVersion}"
@@ -118,6 +120,27 @@ tasks.register('runLeapAPIMockServer', JavaExec) {
     description = "Run the mock Leap server"
     classpath = sourceSets.test.runtimeClasspath
     main = "io.pravega.sensor.collector.leap.LeapAPIMock"
+}
+
+task createWatchdogApp(type: CreateStartScripts) {
+    mainClass = "io.pravega.sensor.collector.watchdog.PscWatchdogApp"
+    classpath = startScripts.classpath
+    outputDir = startScripts.outputDir
+    applicationName = 'psc-watchdog'
+    doLast {
+        // Modify startup script to source the configuration file (env.sh).
+        unixScript.text = unixScript.text
+                .replace(
+                        'DEFAULT_JVM_OPTS=""',
+                        'DEFAULT_JVM_OPTS=""\n\n# Source configuration file\n[ -f "${CONF_FILE}" ] && . "${CONF_FILE}"')
+    }
+//    defaultJvmOpts = ["-Xms1024m", "-Xmx2048m"]
+}
+
+applicationDistribution.into("bin") {
+    duplicatesStrategy= DuplicatesStrategy.EXCLUDE
+    from(createWatchdogApp)
+    fileMode = 0755
 }
 
 tasks.withType(com.github.spotbugs.snom.SpotBugsTask) {

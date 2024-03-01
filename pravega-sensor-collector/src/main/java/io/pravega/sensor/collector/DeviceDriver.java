@@ -15,6 +15,7 @@ import io.pravega.client.ClientConfig;
 import io.pravega.client.EventStreamClientFactory;
 import io.pravega.client.admin.StreamManager;
 import io.pravega.client.stream.StreamConfiguration;
+import io.pravega.sensor.collector.metrics.MetricPublisher;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -75,5 +76,10 @@ public abstract class DeviceDriver extends AbstractService implements AutoClosea
             final StreamConfiguration streamConfig = StreamConfiguration.builder().build();
             streamManager.createStream(scopeName, streamName, streamConfig);
         }
+    }
+
+    protected MetricPublisher getMetricPublisher(DeviceDriverConfig config) {
+        final MetricPublisher metricPublisher = new MetricPublisher(config);
+        return metricPublisher;
     }
 }

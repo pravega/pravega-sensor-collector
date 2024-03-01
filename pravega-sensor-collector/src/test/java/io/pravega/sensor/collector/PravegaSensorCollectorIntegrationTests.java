@@ -106,7 +106,7 @@ public class PravegaSensorCollectorIntegrationTests {
         Service startService = deviceDriverManager.startAsync();
         try {
             startService.awaitRunning(Duration.ofSeconds(30));
-            Thread.sleep(12000);
+            Thread.sleep(15000);
         } catch (InterruptedException | TimeoutException e) {
             throw new RuntimeException(e);
         }
@@ -134,37 +134,34 @@ public class PravegaSensorCollectorIntegrationTests {
     }
 
     private static void validateStreamData(URI controllerURI, String scope, String streamName, String content) {
-        StreamManager streamManager = StreamManager.create(controllerURI);
+        try (StreamManager streamManager = StreamManager.create(controllerURI)) {
 
-        final String readerGroup = UUID.randomUUID().toString().replace("-", "");
-        final ReaderGroupConfig readerGroupConfig = ReaderGroupConfig.builder()
-                .stream(Stream.of(scope, streamName))
-                .build();
-        try (ReaderGroupManager readerGroupManager = ReaderGroupManager.withScope(scope, controllerURI)) {
-            readerGroupManager.createReaderGroup(readerGroup, readerGroupConfig);
-        }
-
-        try (EventStreamClientFactory clientFactory = EventStreamClientFactory.withScope(scope,
-                ClientConfig.builder().controllerURI(controllerURI).build());
-             EventStreamReader<String> reader = clientFactory.createReader("reader",
-                     readerGroup,
-                     new UTF8StringSerializer(),
-                     ReaderConfig.builder().build())) {
-            System.out.format("Reading all the events from %s/%s%n", scope, streamName);
-            EventRead<String> eventRead = null;
-            try {
-                while ((eventRead = reader.readNextEvent(2000)).getEvent() != null) {
-                    String event = eventRead.getEvent();
-                    System.out.format("Read event: %s", event);
-                    Assertions.assertNotNull(event);
-                    Assertions.assertFalse(event.isEmpty());
-                    Assertions.assertEquals(content, event);
-                }
-            } catch (ReinitializationRequiredException e) {
-                //There are certain circumstances where the reader needs to be reinitialized
-                e.printStackTrace();
+            final String readerGroup = UUID.randomUUID().toString().replace("-", "");
+            final ReaderGroupConfig readerGroupConfig = ReaderGroupConfig.builder()
+                    .stream(Stream.of(scope, streamName))
+                    .build();
+            try (ReaderGroupManager readerGroupManager = ReaderGroupManager.withScope(scope, controllerURI)) {
+                readerGroupManager.createReaderGroup(readerGroup, readerGroupConfig);
             }
-            System.out.format("No more events from %s/%s%n", scope, streamName);
+
+            try (EventStreamClientFactory clientFactory = EventStreamClientFactory.withScope(scope,
+                    ClientConfig.builder().controllerURI(controllerURI).build());
+                 EventStreamReader<String> reader = clientFactory.createReader("reader",
+                         readerGroup,
+                         new UTF8StringSerializer(),
+                         ReaderConfig.builder().build())) {
+                EventRead<String> eventRead;
+                try {
+                    while ((eventRead = reader.readNextEvent(2000)).getEvent() != null) {
+                        String event = eventRead.getEvent();
+                        Assertions.assertNotNull(event);
+                        Assertions.assertFalse(event.isEmpty());
+                        Assertions.assertEquals(content, event);
+                    }
+                } catch (ReinitializationRequiredException e) {
+                    //There are certain circumstances where the reader needs to be reinitialized
+                }
+            }
         }
     }
 
