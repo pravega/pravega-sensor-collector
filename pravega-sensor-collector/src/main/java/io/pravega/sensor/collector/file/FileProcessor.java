@@ -1,4 +1,3 @@
-package io.pravega.sensor.collector.file;
 /**
  * Copyright (c) Dell Inc., or its subsidiaries. All Rights Reserved.
  *
@@ -8,6 +7,7 @@ package io.pravega.sensor.collector.file;
  *
  *     http://www.apache.org/licenses/LICENSE-2.0
  */
+package io.pravega.sensor.collector.file;
 
 import com.google.common.io.CountingInputStream;
 import io.pravega.client.EventStreamClientFactory;
@@ -109,9 +109,11 @@ public abstract class FileProcessor {
      * @return eventGenerator
      */
     public abstract EventGenerator getEventGenerator(FileConfig config);
+
     public void watchFiles() throws Exception {
         findAndRecordNewFiles();
     }
+
     public void processFiles() throws Exception {
         log.debug("processFiles: BEGIN");
         if (config.enableDeleteCompletedFiles) {
@@ -143,7 +145,9 @@ public abstract class FileProcessor {
     }
 
     /**
+     * Returns list of file name and file size in bytes.
      * @return list of file name and file size in bytes
+     * @throws IOException
      */
     protected List<FileNameWithOffset> getDirectoryListing() throws IOException {
         log.debug("getDirectoryListing: fileSpec={}", config.fileSpec);
@@ -155,6 +159,9 @@ public abstract class FileProcessor {
     }
 
     /**
+     * Returns sorted list of file name and file size in bytes.
+     * @param directoryListing
+     * @param completedFiles
      * @return sorted list of file name and file size in bytes
      */
     protected List<FileNameWithOffset> getNewFiles(List<FileNameWithOffset> directoryListing, List<FileNameWithOffset> completedFiles) {
@@ -171,7 +178,7 @@ public abstract class FileProcessor {
                     FileUtils.moveCompletedFile(dirFile, movedFilesDirectory);
                     log.warn("File: {} already marked as completed, moving now", dirFile.fileName);
                 } catch (IOException e) {
-                    log.error("File: {} already marked as completed, but failed to move, error:{}", dirFile.fileName,e.getMessage());
+                    log.error("File: {} already marked as completed, but failed to move, error:{}", dirFile.fileName, e.getMessage());
                 }
             }
         });
@@ -193,7 +200,7 @@ public abstract class FileProcessor {
          */
         if (config.exactlyOnce) {
             log.debug("processFile: Transaction status {} ", writer.getTransactionStatus());
-            if (writer.getTransactionStatus() == Transaction.Status.OPEN){
+            if (writer.getTransactionStatus() == Transaction.Status.OPEN) {
                 writer.abort();
             }
         } else {
@@ -219,8 +226,8 @@ public abstract class FileProcessor {
                         } catch (TxnFailedException ex) {
                             log.error("processFile: Write event to transaction failed with exception {} while processing file: {}, event: {}", ex, fileNameWithBeginOffset.fileName, e);
 
-                           /* TODO while writing event if we get Transaction failed exception then should we abort the trasaction and process again?
-                            This will occur only if Transaction state is not open*/
+                            // TODO while writing event if we get Transaction failed exception then should we abort the trasaction and process again?
+                            //  This will occur only if Transaction state is not open
 
                             throw new RuntimeException(ex);
                         }
@@ -273,7 +280,7 @@ public abstract class FileProcessor {
             Path filePath = completedFilesPath.resolve(completedFileName);
             log.debug("deleteCompletedFiles: Deleting File default name:{}, and it's completed file name:{}.", file.fileName, filePath);
             try {
-                /**
+                /*
                  * If file gets deleted from completed files directory, or it does not exist in default ingestion directory
                  * then only remove the record from DB.
                  */
@@ -282,7 +289,7 @@ public abstract class FileProcessor {
                     MetricsStore.getMetric(MetricNames.PSC_FILES_DELETED_GAUGE).incrementBy(1L);
                     log.debug("deleteCompletedFiles: Deleted File default name:{}, and it's completed file name:{}.", file.fileName, filePath);
                 } else {
-                    /**
+                    /*
                      * This situation occurs because at first attempt moving file to completed directory fails, but the file still exists in default ingestion directory.
                      * Moving file from default directory to completed directory will be taken care in next iteration, post which delete will be taken care.
                      */

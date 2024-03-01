@@ -19,6 +19,7 @@ import io.pravega.sensor.collector.simple.PersistentQueue;
 import io.pravega.sensor.collector.util.AutoRollback;
 
 /**
+ * DataCollectorService.
  */
 public class DataCollectorService<S> extends AbstractExecutionThreadService {
     private static final Logger LOGGER = LoggerFactory.getLogger(DataCollectorService.class);

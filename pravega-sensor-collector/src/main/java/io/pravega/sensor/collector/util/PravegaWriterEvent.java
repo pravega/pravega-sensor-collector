@@ -12,7 +12,7 @@ package io.pravega.sensor.collector.util;
 import com.google.common.base.Preconditions;
 
 /**
- * Event generated from file and its sequence number
+ * Event generated from file and its sequence number.
  */
 public class PravegaWriterEvent {
     public final String routingKey;

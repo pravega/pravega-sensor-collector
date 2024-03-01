@@ -17,7 +17,7 @@ import com.google.common.collect.ImmutableMap;
  * Simple Store holding metric data centrally.
  */
 public class MetricsStore {
-    private static ObjectMapper mapper = new ObjectMapper();
+    private static final ObjectMapper MAPPER = new ObjectMapper();
     
     private static final ImmutableMap<String, Metric> metricStore = ImmutableMap.<String, Metric>builder()
             .put(MetricNames.PSC_FILES_PROCESSED_GAUGE, new Gauge())
@@ -38,7 +38,7 @@ public class MetricsStore {
      * json string.
      */
     public static String getMetricsAsJson() throws JsonProcessingException {
-        return mapper.writerWithDefaultPrettyPrinter()
+        return MAPPER.writerWithDefaultPrettyPrinter()
                 .writeValueAsString(metricStore);
     }
 

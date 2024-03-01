@@ -46,6 +46,11 @@
     </Match>
 
     <Match>
+        <Class name="io.pravega.sensor.collector.metrics.MetricPublisher" />
+        <Bug pattern="CT_CONSTRUCTOR_THROW" />
+    </Match>
+
+    <Match>
         <Class name="io.pravega.sensor.collector.file.csvfile.CsvFileSequenceProcessor" />
         <Bug pattern="UR_UNINIT_READ_CALLED_FROM_SUPER_CONSTRUCTOR" />
     </Match>

@@ -20,7 +20,7 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 
 /**
- * Stores and updates last-read timestamp in the persistent state (SQLite database) *
+ * Stores and updates last-read timestamp in the persistent state (SQLite database).
  */
 public final class ReadingState {
     private static final Logger LOGGER = LoggerFactory.getLogger(ReadingState.class);

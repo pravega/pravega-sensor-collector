@@ -30,12 +30,15 @@ public class Parameters {
         final String fileName = getPropertiesFileName();
         return getProperties(fileName);
     }
+
     /**
      * Combines properties from:
      *    1. properties file (if specified)
      *    2. system environment
      *  Values in the system environment will override values in the properties file.
      *  It is intended that properties files only be used when developing in an IDE.
+     * @param fileName fileName to read.
+     * @throws RuntimeException if unable to load properties file.
      */
     public static Map<String, String> getProperties(final String fileName) {
         Map<String, String> map = new HashMap<>();

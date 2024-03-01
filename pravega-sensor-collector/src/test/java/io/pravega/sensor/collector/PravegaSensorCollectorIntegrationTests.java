@@ -1,3 +1,12 @@
+/**
+ * Copyright (c) Dell Inc., or its subsidiaries. All Rights Reserved.
+ * <p>
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ * <p>
+ * http://www.apache.org/licenses/LICENSE-2.0
+ */
 package io.pravega.sensor.collector;
 
 import com.google.common.util.concurrent.Service;
@@ -5,13 +14,25 @@ import io.pravega.client.ClientConfig;
 import io.pravega.client.EventStreamClientFactory;
 import io.pravega.client.admin.ReaderGroupManager;
 import io.pravega.client.admin.StreamManager;
-import io.pravega.client.stream.*;
+import io.pravega.client.stream.EventRead;
+import io.pravega.client.stream.EventStreamReader;
+import io.pravega.client.stream.ReaderConfig;
+import io.pravega.client.stream.ReaderGroupConfig;
+import io.pravega.client.stream.ReinitializationRequiredException;
+import io.pravega.client.stream.Stream;
 import io.pravega.client.stream.impl.UTF8StringSerializer;
 import io.pravega.sensor.collector.util.FileNameWithOffset;
 import io.pravega.sensor.collector.util.SQliteDBUtility;
 import io.pravega.sensor.collector.util.TransactionStateDB;
 import io.pravega.sensor.collector.util.TransactionStateSQLiteImpl;
 import io.pravega.test.integration.utils.SetupUtils;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.Timeout;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.net.URI;
@@ -28,19 +49,16 @@ import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
-import org.junit.jupiter.api.*;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 public class PravegaSensorCollectorIntegrationTests {
     private static final Logger log = LoggerFactory.getLogger(PravegaSensorCollectorIntegrationTests.class);
-    private final SetupUtils setupUtils = new SetupUtils();
-    static String fileName = "./src/test/resources/RawFileIngest-integration-test.properties";
+    private static final String FILE_NAME = "./src/test/resources/RawFileIngest-integration-test.properties";
     Map<String, String> properties = null;
+    private final SetupUtils setupUtils = new SetupUtils();
+
     @BeforeEach
     public void setup() {
         log.info("Setup");
-        properties = Parameters.getProperties(fileName);
+        properties = Parameters.getProperties(FILE_NAME);
         try {
             setupUtils.startAllServices();
 
@@ -79,10 +97,10 @@ public class PravegaSensorCollectorIntegrationTests {
         }
         URI controllerURI = setupUtils.getControllerUri();
         String scope = "test-psc-data-integration";
-        String streamName ="test-psc-data-integration-stream";
+        String streamName = "test-psc-data-integration-stream";
 
-        properties.put("PRAVEGA_SENSOR_COLLECTOR_RAW1_SCOPE",scope);
-        properties.put("PRAVEGA_SENSOR_COLLECTOR_RAW1_STREAM",streamName);
+        properties.put("PRAVEGA_SENSOR_COLLECTOR_RAW1_SCOPE", scope);
+        properties.put("PRAVEGA_SENSOR_COLLECTOR_RAW1_STREAM", streamName);
 
         final DeviceDriverManager deviceDriverManager = new DeviceDriverManager(properties);
         Service startService = deviceDriverManager.startAsync();

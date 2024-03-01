@@ -1,4 +1,3 @@
-
 /**
  * Copyright (c) Dell Inc., or its subsidiaries. All Rights Reserved.
  *
@@ -48,7 +47,7 @@ import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
 /**
- * Generate Event from Parquet file
+ * Generate Event from Parquet file.
  */
 public class ParquetEventGenerator implements EventGenerator {
     private static final Logger LOGGER = LoggerFactory.getLogger(ParquetEventGenerator.class);
@@ -88,7 +87,9 @@ public class ParquetEventGenerator implements EventGenerator {
      *
      * @param inputStream
      * @param firstSequenceNumber
+     * @param consumer
      * @return next sequence number, end offset
+     * @throws IOException
      */
     public Pair<Long, Long> generateEventsFromInputStream(CountingInputStream inputStream, long firstSequenceNumber, Consumer<PravegaWriterEvent> consumer) throws IOException {
         File tempFile = File.createTempFile("temp", ".parquet");
@@ -100,10 +101,10 @@ public class ParquetEventGenerator implements EventGenerator {
         long timestamp1 = System.nanoTime();
 
         Configuration conf = new Configuration();
-        MessageType schema = ParquetFileReader.readFooter(HadoopInputFile.fromPath(tempFilePath, conf),ParquetMetadataConverter.NO_FILTER).getFileMetaData().getSchema();
+        MessageType schema = ParquetFileReader.readFooter(HadoopInputFile.fromPath(tempFilePath, conf), ParquetMetadataConverter.NO_FILTER).getFileMetaData().getSchema();
         Schema avroSchema;
 
-        if(!parquetSchemas.containsKey(schema)){
+        if (!parquetSchemas.containsKey(schema)) {
             //Modifying field names in extracted schema (removing special characters) 
             List<Type> fields = schema.getFields().stream()
                                     .map(field -> new PrimitiveType(field.getRepetition(),  
@@ -121,8 +122,7 @@ public class ParquetEventGenerator implements EventGenerator {
             }
             
             parquetSchemas.put(schema, avroSchema);
-        }
-        else{
+        } else {
             LOGGER.debug("Retrieving cached schema");
             avroSchema = parquetSchemas.get(schema);
         }
@@ -144,8 +144,7 @@ public class ParquetEventGenerator implements EventGenerator {
             for (Schema.Field field : record.getSchema().getFields()) {
                 String key = field.name();
                 Object value = record.get(key);
-                dataMap.put(key,value);
-
+                dataMap.put(key, value);
             }
             eventBatch.add(dataMap);
             numRecordsInEvent++;

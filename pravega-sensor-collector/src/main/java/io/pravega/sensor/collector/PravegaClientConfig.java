@@ -17,10 +17,10 @@ import java.util.Map;
 import java.util.Objects;
 
 public class PravegaClientConfig {
-    private final URI controllerURI;
-    private final String scopeName;
 
     private static final String PRAVEGA_CONTROLLER_URI_KEY = "PRAVEGA_CONTROLLER_URI";
+    private final URI controllerURI;
+    private final String scopeName;
 
     public PravegaClientConfig(URI controllerURI, String scopeName) {
         this.controllerURI = Preconditions.checkNotNull(controllerURI, "controllerURI");
@@ -49,8 +49,12 @@ public class PravegaClientConfig {
 
     @Override
     public boolean equals(Object o) {
-        if (this == o) { return true; }
-        if (o == null || getClass() != o.getClass()) { return false; }
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
         PravegaClientConfig that = (PravegaClientConfig) o;
         return controllerURI.equals(that.controllerURI)
                 && scopeName.equals(that.scopeName);

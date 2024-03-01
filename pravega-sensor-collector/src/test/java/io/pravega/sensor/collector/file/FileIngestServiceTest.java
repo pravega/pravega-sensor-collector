@@ -26,30 +26,30 @@ import java.util.Map;
 */
 public class FileIngestServiceTest {
 
+    static final String FILE_NAME = "./src/test/resources/RawFileIngestService.properties";
     private static final String PREFIX = Parameters.getEnvPrefix();
     private static final String SEPARATOR = "_";
-    protected DeviceDriverConfig config;
-    static String filename = "./src/test/resources/RawFileIngestService.properties";
+    DeviceDriverConfig config;
     DeviceDriverConfig deviceDriverConfig;
     Map<String, String> properties;
 
     private DeviceDriverManager driverManager;
 
     @BeforeEach
-    void setUp(){
-        properties = Parameters.getProperties(filename);
+    void setUp() {
+        properties = Parameters.getProperties(FILE_NAME);
         driverManager = new DeviceDriverManager(properties);
         deviceDriverConfig = new DeviceDriverConfig("RAW1", "RawFileIngestService",
                 TestUtils.configFromProperties(PREFIX, SEPARATOR, properties), driverManager);
     }
 
     @Test
-    public void testFileIngestService(){
+    public void testFileIngestService() {
         FileIngestService fileIngestService = new MockFileIngestService(deviceDriverConfig);
         try {
             fileIngestService.startAsync();
             fileIngestService.awaitRunning(Duration.ofSeconds(10));
-        } catch (Exception e){
+        } catch (Exception e) {
             throw new RuntimeException(e);
         }
         Assertions.assertTrue(fileIngestService.isRunning());
@@ -57,7 +57,7 @@ public class FileIngestServiceTest {
                 properties.get(PREFIX + "RAW1" + SEPARATOR + "PERSISTENT_QUEUE_FILE"));
         try {
             fileIngestService.stopAsync();
-        } catch (Exception e){
+        } catch (Exception e) {
             throw new RuntimeException(e);
         }
         Assertions.assertFalse(fileIngestService.isRunning());

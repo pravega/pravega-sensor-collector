@@ -46,15 +46,19 @@ public interface EventWriter<T> extends AutoCloseable {
     void writeEvent(String routingKey, T event) throws TxnFailedException;
 
     /**
+     * Returns a transaction ID that can be passed to commit.
      * @return a transaction ID that can be passed to commit(UUID txnId), even in another process.
      *         The non-transactional implementation will always return Optional.empty().
+     * @throws TxnFailedException
      */
     Optional<UUID> flush() throws TxnFailedException;
 
     void commit() throws TxnFailedException;
 
     /**
+     * Commits the transaction and also notes an associated timestamp.
      * @param timestamp is the number of nanoseconds since 1970-01-01
+     * @throws TxnFailedException
      */
     void commit(long timestamp) throws TxnFailedException;
 
@@ -63,6 +67,7 @@ public interface EventWriter<T> extends AutoCloseable {
      * This method should only be used only when recovering from a failure.
      *
      * @param txnId a return value from flush(), even from another process.
+     * @throws TxnFailedException
      */
     void commit(UUID txnId) throws TxnFailedException;
 
@@ -74,6 +79,7 @@ public interface EventWriter<T> extends AutoCloseable {
 
     /**
      * This should called be prior to aborting any transactions to make sure it is not open.
+     * @param txnId
      */
     Transaction.Status getTransactionStatus(UUID txnId);
 

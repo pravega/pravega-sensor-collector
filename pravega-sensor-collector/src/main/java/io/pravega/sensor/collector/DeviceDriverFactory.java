@@ -18,6 +18,8 @@ public class DeviceDriverFactory {
 
     /**
      * Instantiate a concrete subclass of DeviceDriver based on key/value properties.
+     * @param config
+     * @throws RuntimeException
      */
     DeviceDriver create(DeviceDriverConfig config) {
         try {

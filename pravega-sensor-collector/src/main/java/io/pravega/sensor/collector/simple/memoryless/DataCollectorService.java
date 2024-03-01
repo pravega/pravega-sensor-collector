@@ -19,12 +19,12 @@ import java.util.List;
 
 public class DataCollectorService<R> extends AbstractExecutionThreadService {
 
+    private static final Logger LOGGER = LoggerFactory.getLogger(DataCollectorService.class);
+
     private final String instanceName;
     private final SimpleMemorylessDriver<R> driver;
     private final EventWriter<byte[]> writer;
     private final long readPeriodicityMs;
-
-    private static final Logger LOGGER = LoggerFactory.getLogger(DataCollectorService.class);
 
     public DataCollectorService(String instanceName, SimpleMemorylessDriver<R> driver, EventWriter<byte[]> writer, long readPeriodicityMs) {
         this.instanceName = instanceName;

@@ -91,6 +91,7 @@ public abstract class FileIngestService extends DeviceDriver {
     String getFileSpec() {
         return getProperty(FILE_SPEC_KEY);
     }
+
     String getFileExtension() {
         return getProperty(FILE_EXT, "");
     }
@@ -161,6 +162,7 @@ public abstract class FileIngestService extends DeviceDriver {
         }
         LOG.trace("watchFiles: END");
     }
+
     protected void processFiles() {
         LOG.trace("processFiles: BEGIN");
         try {
@@ -204,7 +206,6 @@ public abstract class FileIngestService extends DeviceDriver {
                 0,
                 1,
                 TimeUnit.MILLISECONDS);
-
 
         deleteFileTask = executor.scheduleAtFixedRate(
                 this::deleteCompletedFiles,

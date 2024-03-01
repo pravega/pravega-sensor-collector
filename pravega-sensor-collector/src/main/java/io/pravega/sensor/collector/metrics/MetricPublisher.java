@@ -37,6 +37,7 @@ public class MetricPublisher extends AbstractService {
     /**
      *  Uses the ServiceLoader to get Impl's of MetricWriter and initializes them
      *  via their constructor.
+     * @throws RuntimeException
      */
     private void initializeWriters() {
         ServiceLoader<MetricWriter> writers = ServiceLoader.load(MetricWriter.class);

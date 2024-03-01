@@ -58,15 +58,15 @@ public final class OpcUaClientDriver extends SimpleMemorylessDriver<OpcUaRawData
     private static final Logger LOGGER = LoggerFactory.getLogger(OpcUaClientDriver.class);
     private static final Gson JSON_PARSER = new Gson();
 
-    private static String ENDPOINT = "ENDPOINT";
-    private static String NS_INDEX = "NAMESPACE_INDEX";
-    private static String NODE_ID = "NODE_IDENTIFIER";
-    private static String NODE_FILTER = "NODE_FILTER_REGEX";
-    private static OpcUaClient opcUaClient;
-    private static Pattern nodeFilter;
-    private static List<NodeId> sensorList;
-    private static List<ReadValueId> readValueIds;
-    private static NamespaceTable ns;
+    private static final String ENDPOINT = "ENDPOINT";
+    private static final String NS_INDEX = "NAMESPACE_INDEX";
+    private static final String NODE_ID = "NODE_IDENTIFIER";
+    private static final String NODE_FILTER = "NODE_FILTER_REGEX";
+    private OpcUaClient opcUaClient;
+    private Pattern nodeFilter;
+    private List<NodeId> sensorList;
+    private List<ReadValueId> readValueIds;
+    private NamespaceTable ns;
 
     public OpcUaClientDriver(DeviceDriverConfig config) throws UaException, ExecutionException, InterruptedException {
         super(config);

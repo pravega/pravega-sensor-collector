@@ -27,9 +27,9 @@ import java.text.MessageFormat;
 public abstract class DeviceDriver extends AbstractService implements AutoCloseable {
     private static final Logger LOGGER = LoggerFactory.getLogger(DeviceDriver.class);
 
-    private final DeviceDriverConfig config;
-
     private static final String CREATE_SCOPE_KEY = "CREATE_SCOPE";
+
+    private final DeviceDriverConfig config;
 
     public DeviceDriver(DeviceDriverConfig config) {
         this.config = Preconditions.checkNotNull(config, "config");
