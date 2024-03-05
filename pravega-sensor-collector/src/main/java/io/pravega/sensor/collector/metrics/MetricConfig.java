@@ -23,7 +23,6 @@ public class MetricConfig {
     private static final Property<String> METRIC_FILE_WRITER_INTERVAL_SECONDS = Property.named("METRIC_FILE_WRITER_INTERVAL_SECONDS", "15", "");
     private static final Property<String> METRIC_STREAM_WRITER_INTERVAL_SECONDS = Property.named("METRIC_STREAM_WRITER_INTERVAL_SECONDS", "30", "");
     private static final Property<String> METRIC_STREAM_NAME = Property.named("METRIC_STREAM_NAME", "pscmetricsstream", "");
-    private static final Property<String> METRIC_SCOPE_NAME = Property.named("METRIC_SCOPE_NAME", "pscmetricsscope", "");
     private static final Property<String> METRIC_CONTROLLER_URI = Property.named("PRAVEGA_CONTROLLER_URI", "tcp://localhost:9090", "");
     private static final Property<String> METRIC_FILE_PATH = Property.named("METRIC_FILE_PATH", System.getProperty("java.io.tmpdir") + File.separator + "psc_metric.json", "");
 
