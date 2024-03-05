@@ -121,7 +121,7 @@ public class MetricConfig {
         metricConfig.setStreamWriterIntervalSeconds(Integer.parseInt(ddrConfig.getProperties().getOrDefault(METRIC_STREAM_WRITER_INTERVAL_SECONDS.getName(), METRIC_STREAM_WRITER_INTERVAL_SECONDS.getDefaultValue())));
         metricConfig.setMetricStream(ddrConfig.getProperties().getOrDefault(METRIC_STREAM_NAME.getName() + pscId, METRIC_STREAM_NAME.getDefaultValue() + pscId));
         metricConfig.setControllerURI(URI.create(ddrConfig.getProperties().getOrDefault(METRIC_CONTROLLER_URI.getName(), METRIC_CONTROLLER_URI.getDefaultValue())));
-        metricConfig.setMetricsScope(METRIC_SCOPE_NAME.getDefaultValue());
+        metricConfig.setMetricsScope(ddrConfig.getProperties().get("SCOPE"));
         metricConfig.setMetricFilePath(METRIC_FILE_PATH.getDefaultValue());
         return metricConfig;
     }
