@@ -10,8 +10,13 @@
 package io.pravega.sensor.collector.watchdog;
 
 import com.google.common.util.concurrent.AbstractService;
+import org.apache.commons.lang3.SystemUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
 
 
 /**
@@ -48,4 +53,28 @@ public class WatchDogService extends AbstractService {
         notifyStopped();
     }
 
+    public void checkPscServiceStatus() throws IOException {
+        Process psc = null;
+        log.info("Checking PSC service status {} ", this.config.getServiceName());
+        if (SystemUtils.IS_OS_LINUX) {
+            psc = Runtime.getRuntime().exec(new String[]{"sh", "-c", "systemctl status " + this.config.getServiceName()});
+        } else if ( SystemUtils.IS_OS_WINDOWS) {
+            psc = Runtime.getRuntime().exec(new String[]{"cmd.exe", "/c", this.config.getServiceName() + ".exe", "status"});
+        }
+        BufferedReader stdInput = new BufferedReader(new
+                InputStreamReader(psc.getInputStream()));
+
+        String s = null;
+        Boolean isAlive = true;
+        while ((s = stdInput.readLine()) != null) {
+            if(s.equalsIgnoreCase("NonExistent")){
+                isAlive = false;
+            }
+        }
+        log.debug("Process psc {}, and isAlive value is {} ", psc, isAlive);
+        if(!isAlive) {
+            log.error("PSC service is not running");
+            throw new RuntimeException("PSC service is not running. Please start psc before starting watchdog monitor.");
+        }
+    }
 }

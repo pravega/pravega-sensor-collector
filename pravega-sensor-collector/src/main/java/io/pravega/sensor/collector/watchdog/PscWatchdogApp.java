@@ -28,6 +28,7 @@ public class PscWatchdogApp {
             WatchDogConfig config = new WatchDogConfig(properties);
             log.debug("Properties: {}", properties);
             final WatchDogService service = new WatchDogService(config);
+            service.checkPscServiceStatus();
             service.startAsync();
             service.awaitTerminated();
         } catch (Exception e) {
