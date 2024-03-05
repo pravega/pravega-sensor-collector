@@ -57,12 +57,11 @@ public class PravegaClient {
                     .build();
             final boolean streamIsNew = streamManager.createStream(scope, streamName, streamConfig);
         }
-        try (EventStreamClientFactory clientFactory = EventStreamClientFactory.withScope(scope,
-                clientConfig)) {
-            EventStreamWriter<String> writer = clientFactory.createEventWriter(streamName,
-                    new UTF8StringSerializer(),
-                    EventWriterConfig.builder().build());
-        }
+        EventStreamClientFactory clientFactory = EventStreamClientFactory.withScope(scope,
+                clientConfig);
+        EventStreamWriter<String> writer = clientFactory.createEventWriter(streamName,
+                new UTF8StringSerializer(),
+                EventWriterConfig.builder().build());
         return writer;
     }
 
