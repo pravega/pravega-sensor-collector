@@ -13,7 +13,7 @@ public class WatchdogServiceTests {
 
     @Test
     public void testWatchDogServiceStart() {
-        WatchDogConfig config = new WatchDogConfig(ImmutableMap.<String, String>builder().build());
+        WatchDogConfig config = new WatchDogConfig(ImmutableMap.<String, String>builder().put("PSC_SERVICE_NAME", "test").build());
         WatchDogService service = new WatchDogService(config);
         service.startAsync();
         Assert.assertTrue(service.isRunning());
@@ -23,7 +23,7 @@ public class WatchdogServiceTests {
 
     @Test
     public void testWatchdogMonitorStart() {
-        WatchDogConfig config = new WatchDogConfig(ImmutableMap.<String, String>builder().build());
+        WatchDogConfig config = new WatchDogConfig(ImmutableMap.<String, String>builder().put("PSC_SERVICE_NAME", "test").build());
         PSCWatchdogMonitor monitor = new PSCWatchdogMonitor(config);
         monitor.startAsync();
         Assert.assertTrue(monitor.isRunning());
@@ -33,7 +33,7 @@ public class WatchdogServiceTests {
 
     @Test
     public void testWatchdogRestartPSC() {
-        WatchDogConfig config = new WatchDogConfig(ImmutableMap.<String, String>builder().build());
+        WatchDogConfig config = new WatchDogConfig(ImmutableMap.<String, String>builder().put("PSC_SERVICE_NAME", "test").build());
         PSCWatchdogMonitor monitor = new PSCWatchdogMonitor(config);
         monitor.onUpdateMissed();
         monitor.onUpdateMissed();
@@ -45,7 +45,7 @@ public class WatchdogServiceTests {
 
     @Test
     public void testWatchdogResetCounterOnUpdates() {
-        WatchDogConfig config = new WatchDogConfig(ImmutableMap.<String, String>builder().build());
+        WatchDogConfig config = new WatchDogConfig(ImmutableMap.<String, String>builder().put("PSC_SERVICE_NAME", "test").build());
         PSCWatchdogMonitor monitor = new PSCWatchdogMonitor(config);
         monitor.onUpdateMissed();
         monitor.onUpdateMissed();

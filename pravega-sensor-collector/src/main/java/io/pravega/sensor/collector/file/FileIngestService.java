@@ -52,6 +52,8 @@ public abstract class FileIngestService extends DeviceDriver {
     private static final int DEFAULT_SAMPLES_PER_EVENT_KEY = 100;
 
     private static final int DEFAULT_INTERVAL_MS_KEY = 10000;
+
+    private static final String PSC_ID = "PSC_ID";
     private final FileProcessor processor;
     private final MetricPublisher metricPublisher;
     private final ScheduledExecutorService executor;
@@ -75,7 +77,8 @@ public abstract class FileIngestService extends DeviceDriver {
                 getTransactionTimeoutMinutes(),
                 getMinTimeInMillisToUpdateFile(),
                 config.getClassName(),
-                getLargeEventEnable());
+                getLargeEventEnable(),
+                getPscId());
         LOG.info("File Ingest Config: {}", fileSequenceConfig);
         final String scopeName = getScopeName();
         LOG.info("Scope: {}", scopeName);
@@ -86,6 +89,10 @@ public abstract class FileIngestService extends DeviceDriver {
         ThreadFactory namedThreadFactory = new ThreadFactoryBuilder().setNameFormat(
                 FileIngestService.class.getSimpleName() + "-" + config.getInstanceName() + "-%d").build();
         executor = Executors.newScheduledThreadPool(1, namedThreadFactory);
+    }
+
+    private String getPscId() {
+        return getProperty(PSC_ID);
     }
 
     String getFileSpec() {

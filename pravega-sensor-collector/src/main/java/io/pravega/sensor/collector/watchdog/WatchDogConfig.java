@@ -12,6 +12,7 @@ package io.pravega.sensor.collector.watchdog;
 import io.pravega.common.util.Property;
 
 import java.io.File;
+import java.text.MessageFormat;
 import java.util.Map;
 
 public class WatchDogConfig {
@@ -32,7 +33,7 @@ public class WatchDogConfig {
     private final String serviceName;
 
     public WatchDogConfig(Map<String, String> properties) {
-        this.serviceName = properties.getOrDefault(PSC_SERVICE_NAME.toString(), PSC_SERVICE_NAME.getDefaultValue());
+        this.serviceName = getProperty(properties, PSC_SERVICE_NAME.toString());
         this.watchDogWatchIntervalSeconds = Integer.parseInt(properties.getOrDefault(PSC_WATCHDOG_WATCH_INTERVAL_SECONDS.toString(), PSC_WATCHDOG_WATCH_INTERVAL_SECONDS.getDefaultValue()));
         this.watchdogFileMonitorPath = properties.getOrDefault(PSC_WATCHDOG_FILE_MONITOR_PATH.toString(), PSC_WATCHDOG_FILE_MONITOR_PATH.getDefaultValue());
         this.restartTriggerPath = properties.getOrDefault(PSC_WATCHDOG_RESTART_TRIGGER_PATH.toString(), PSC_WATCHDOG_RESTART_TRIGGER_PATH.getDefaultValue());
@@ -77,6 +78,22 @@ public class WatchDogConfig {
      */
     public String getRestartTriggerPath() {
         return restartTriggerPath;
+    }
+
+
+    /**
+     * Retrieves the value of a property from the given map of properties.
+     *
+     * @param  properties  the map of properties to retrieve the value from
+     * @param  key         the key of the property to retrieve
+     * @return             the value of the property
+     */
+    public String getProperty(Map<String, String> properties, String key) {
+        final String value = properties.get(key);
+        if (value == null || value.isEmpty()) {
+            throw new IllegalArgumentException(MessageFormat.format("Missing required parameter {0}", key));
+        }
+        return value;
     }
 
 }
