@@ -97,3 +97,22 @@ jobs:
       - name: Upload to Codecov
         uses: codecov/codecov-action@v1
 
+  snapshot:
+    name: Publish snapshot packages
+    needs: [ build_and_test_complete ]
+    # Only run this on PUSH (no pull requests) and only on the master branch and release branches.
+    if: ${{ github.event_name == 'push' && (github.ref == 'refs/heads/master' || startsWith(github.ref, 'refs/heads/r0.') || startsWith(github.ref, 'refs/heads/r1.')) }}
+    runs-on: ubuntu-20.04
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-java@v2
+        with:
+          distribution: 'temurin'
+          java-version: '11'
+      - name: Assemble
+        run: ./gradlew assemble --parallel ${{env.GRADLE_OPTS}}
+      - name: Publish to GitHub Packages
+        run: ./gradlew publish -PpublishUrl=https://maven.pkg.github.com/${{github.repository}} -PpublishUsername=${{github.actor}} -PpublishPassword=${{secrets.GITHUB_TOKEN}} ${{env.GRADLE_OPTS}}
