@@ -74,7 +74,7 @@ public class WatchDogService extends AbstractService {
         log.debug("Process psc {}, and isAlive value is {} ", psc, isAlive);
         if(!isAlive) {
             log.error("PSC service is not running");
-            throw new RuntimeException("PSC service is not running. Please start psc before starting watchdog monitor.");
+            throw new RuntimeException("PSC service is not running. Please start psc service before starting watchdog service.");
         }
     }
 }
