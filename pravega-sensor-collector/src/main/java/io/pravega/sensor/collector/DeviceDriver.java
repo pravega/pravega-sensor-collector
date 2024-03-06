@@ -39,7 +39,7 @@ public abstract class DeviceDriver extends AbstractService implements AutoClosea
     public String getProperty(String key) {
         final String value = config.getProperties().get(key);
         if (value == null || value.isEmpty()) {
-            throw new IllegalArgumentException(MessageFormat.format("Missing required parameter {0}", key));
+            throw new IllegalArgumentException(MessageFormat.format("PSC Service Error: Missing required parameter {0} in config", key));
         }
         return value;
     }

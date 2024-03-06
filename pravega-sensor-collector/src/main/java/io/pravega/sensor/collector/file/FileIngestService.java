@@ -99,7 +99,7 @@ public abstract class FileIngestService extends DeviceDriver {
         return getProperty(FILE_SPEC_KEY);
     }
     String getFileExtension() {
-        return getProperty(FILE_EXT, "");
+        return getProperty(FILE_EXT);
     }
 
     boolean getDeleteCompletedFiles() {
