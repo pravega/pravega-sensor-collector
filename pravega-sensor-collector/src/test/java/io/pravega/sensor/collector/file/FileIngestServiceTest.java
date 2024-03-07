@@ -13,7 +13,6 @@ import io.pravega.sensor.collector.DeviceDriverConfig;
 import io.pravega.sensor.collector.DeviceDriverManager;
 import io.pravega.sensor.collector.Parameters;
 import io.pravega.sensor.collector.util.TestUtils;
-import org.apache.hadoop.yarn.client.api.impl.FileSystemTimelineWriter;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;

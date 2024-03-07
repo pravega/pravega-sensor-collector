@@ -30,7 +30,7 @@ public class MockFileIngestService extends FileIngestService {
     }
 
     @Override
-    protected MetricPublisher getMetricPublisher(DeviceDriverConfig config){
+    protected MetricPublisher getMetricPublisher(DeviceDriverConfig config) {
         MetricPublisher metricPublisher = new TestMetricPublisher(config);
         return metricPublisher;
     }

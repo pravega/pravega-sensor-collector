@@ -81,7 +81,7 @@ public class FileProcessorTests {
         String stateDatabaseFileName = ":memory:";
         config = new FileConfig("./psc.db", "/opt/pravega-sensor-collector/Files/A", "parquet", "key12",
                 "stream1", "{}", 10, true,
-                true,20.0, 5000, "RawFileIngestService", true, "pscId");
+                true, 20.0, 5000, "RawFileIngestService", true, "pscId");
     }
 
     @Test
@@ -225,7 +225,7 @@ public class FileProcessorTests {
     public void testCreateRawFileProcessorWithNullStateDatabaseFilenameInConfig() {
         FileConfig newConfig = new FileConfig(null, "/opt/pravega-sensor-collector/Files/A", "parquet", "key12",
                 "stream1", "{}", 10, false,
-                true,20.0, 5000, "RawFileIngestService", true, "pscId");
+                true, 20.0, 5000, "RawFileIngestService", true, "pscId");
         Exception exception = Assert.assertThrows(NullPointerException.class, () -> new RawFileProcessor(newConfig, state, transactionalEventWriter, transactionCoordinator, "test"));
         Assert.assertTrue("config.stateDatabaseFileName".equals(exception.getMessage()));
     }
