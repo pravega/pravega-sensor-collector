@@ -33,11 +33,13 @@ public class FileConfig {
 
     public final boolean enableLargeEvent;
 
+    public final String pscId;
+
 
     public FileConfig(String stateDatabaseFileName, String fileSpec, String fileExtension, String routingKey,
                       String streamName, String eventTemplateStr, int maxRecordsPerEvent, boolean enableDeleteCompletedFiles,
                       boolean exactlyOnce, double transactionTimeoutMinutes, long minTimeInMillisToUpdateFile, String fileType,
-                      boolean enableLargeEvent) {
+                      boolean enableLargeEvent, String pscId) {
         this.stateDatabaseFileName = stateDatabaseFileName;
         this.fileSpec = fileSpec;
         this.fileExtension = fileExtension;
@@ -51,6 +53,7 @@ public class FileConfig {
         this.minTimeInMillisToUpdateFile = minTimeInMillisToUpdateFile;
         this.fileType = fileType;
         this.enableLargeEvent = enableLargeEvent;
+        this.pscId = pscId;
     }
 
     @Override
@@ -69,6 +72,7 @@ public class FileConfig {
                 ", transactionTimeoutMinutes=" + transactionTimeoutMinutes +
                 ", minTimeInMillisToUpdateFile=" + minTimeInMillisToUpdateFile +
                 ", enableLargeEvent=" + enableLargeEvent +
+                ", pscId=" + pscId +
                 '}';
     }
 }

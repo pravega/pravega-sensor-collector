@@ -13,10 +13,14 @@ import io.pravega.sensor.collector.DeviceDriverConfig;
 import io.pravega.sensor.collector.DeviceDriverManager;
 import io.pravega.sensor.collector.Parameters;
 import io.pravega.sensor.collector.util.TestUtils;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.time.Duration;
 import java.util.Map;
 
@@ -36,11 +40,22 @@ public class FileIngestServiceTest {
     private DeviceDriverManager driverManager;
 
     @BeforeEach
-    void setUp() {
+    void setUp() throws IOException {
         properties = Parameters.getProperties(FILE_NAME);
+        Files.deleteIfExists(Paths.get(properties.get("PRAVEGA_SENSOR_COLLECTOR_RAW1_DATABASE_FILE")));
         driverManager = new DeviceDriverManager(properties);
         deviceDriverConfig = new DeviceDriverConfig("RAW1", "RawFileIngestService",
                 TestUtils.configFromProperties(PREFIX, SEPARATOR, properties), driverManager);
+    }
+
+    @AfterEach
+    public void tearDown() {
+        try {
+            Files.deleteIfExists(Paths.get(properties.get("PRAVEGA_SENSOR_COLLECTOR_RAW1_DATABASE_FILE")));
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+        properties = null;
     }
 
     @Test

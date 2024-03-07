@@ -38,6 +38,7 @@ public class MetricsStore {
      * json string.
      */
     public static String getMetricsAsJson() throws JsonProcessingException {
+
         return MAPPER.writerWithDefaultPrettyPrinter()
                 .writeValueAsString(metricStore);
     }

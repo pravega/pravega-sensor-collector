@@ -52,6 +52,7 @@ public class PravegaClient {
         log.info("Initializing writer with {} {} {}", this.scope, this.streamName, this.controllerURI.toString());
         ClientConfig clientConfig = ClientConfig.builder().controllerURI(this.controllerURI).build();
         try (StreamManager streamManager = StreamManager.create(clientConfig)) {
+
             StreamConfiguration streamConfig = StreamConfiguration.builder()
                     .scalingPolicy(ScalingPolicy.fixed(1))
                     .build();
