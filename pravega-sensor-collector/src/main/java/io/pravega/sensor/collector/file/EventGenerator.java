@@ -17,17 +17,20 @@ import java.io.IOException;
 import java.util.function.Consumer;
 
 /**
- *The EventGenerator is responsible for generating events depending on file type
+ *The EventGenerator is responsible for generating events depending on file type.
  */
 public interface EventGenerator {
 
-   /*
-    * Generate events from Input stream.
-    * Depending on file type event generation logic defers
-    * @param inputStream
-    * @param firstSequenceNumber
-    * @return next sequence number, end offset
-    * */
+    /**
+     * Generate events from Input stream.
+     * Depending on file type event generation logic defers
+     *
+     * @param inputStream
+     * @param firstSequenceNumber
+     * @param consumer
+     * @return next sequence number, end offset
+     * @throws IOException
+     */
     Pair<Long, Long> generateEventsFromInputStream(CountingInputStream inputStream, long firstSequenceNumber, Consumer<PravegaWriterEvent> consumer) throws IOException;
 
 }

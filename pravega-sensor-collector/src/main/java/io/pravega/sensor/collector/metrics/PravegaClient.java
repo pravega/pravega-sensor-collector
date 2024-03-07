@@ -1,3 +1,12 @@
+/**
+ * Copyright (c) Dell Inc., or its subsidiaries. All Rights Reserved.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ */
 package io.pravega.sensor.collector.metrics;
 
 import io.pravega.client.ClientConfig;
@@ -8,8 +17,6 @@ import io.pravega.client.stream.EventWriterConfig;
 import io.pravega.client.stream.ScalingPolicy;
 import io.pravega.client.stream.StreamConfiguration;
 import io.pravega.client.stream.impl.UTF8StringSerializer;
-import io.pravega.sensor.collector.PravegaClientConfig;
-import io.pravega.sensor.collector.PravegaClientPool;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -43,20 +50,19 @@ public class PravegaClient {
 
     private EventStreamWriter<String> initializeWriter() {
         log.info("Initializing writer with {} {} {}", this.scope, this.streamName, this.controllerURI.toString());
-        try (StreamManager streamManager = StreamManager.create(controllerURI)) {
-            final boolean scopeIsNew = streamManager.createScope(scope);
+        ClientConfig clientConfig = ClientConfig.builder().controllerURI(this.controllerURI).build();
+        try (StreamManager streamManager = StreamManager.create(clientConfig)) {
+
             StreamConfiguration streamConfig = StreamConfiguration.builder()
                     .scalingPolicy(ScalingPolicy.fixed(1))
                     .build();
             final boolean streamIsNew = streamManager.createStream(scope, streamName, streamConfig);
         }
-        EventStreamWriter<String> writer;
-        try (EventStreamClientFactory clientFactory = EventStreamClientFactory.withScope(scope,
-                ClientConfig.builder().controllerURI(controllerURI).build())) {
-            writer = clientFactory.createEventWriter(streamName,
-                    new UTF8StringSerializer(),
-                    EventWriterConfig.builder().build());
-        }
+        EventStreamClientFactory clientFactory = EventStreamClientFactory.withScope(scope,
+                clientConfig);
+        EventStreamWriter<String> writer = clientFactory.createEventWriter(streamName,
+                new UTF8StringSerializer(),
+                EventWriterConfig.builder().build());
         return writer;
     }
 

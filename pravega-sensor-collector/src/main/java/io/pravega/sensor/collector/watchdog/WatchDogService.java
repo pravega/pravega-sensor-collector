@@ -18,7 +18,6 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 
-
 /**
  * Watchdog service for Pravega Sensor Collector(PSC).
  * Watchdog service looks for liveness of Pravega Sensor Collector and attempts
@@ -64,15 +63,15 @@ public class WatchDogService extends AbstractService {
         BufferedReader stdInput = new BufferedReader(new
                 InputStreamReader(psc.getInputStream()));
 
-        String s = null;
+        String s;
         Boolean isAlive = true;
         while ((s = stdInput.readLine()) != null) {
-            if(s.equalsIgnoreCase("NonExistent")){
+            if (s.equalsIgnoreCase("NonExistent")) {
                 isAlive = false;
             }
         }
         log.debug("Process psc {}, and isAlive value is {} ", psc, isAlive);
-        if(!isAlive) {
+        if (!isAlive) {
             log.error("PSC service is not running");
             throw new RuntimeException("PSC service is not running. Please start psc service before starting watchdog service.");
         }

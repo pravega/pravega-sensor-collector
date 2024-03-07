@@ -83,6 +83,7 @@ public class TransactionCoordinator {
      * This is intended to run as part of a larger transaction.
      * The SQL transaction is not committed.
      * @param txnId the Pravega transaction ID
+     * @throws RuntimeException
      */
     public void addTransactionToCommit(Optional<UUID> txnId) {
         try {
@@ -99,7 +100,9 @@ public class TransactionCoordinator {
     }
 
     /**
+     * Deletes record from TransactionsToCommit table by transaction ID.
      * @param txnId the Pravega transaction ID
+     * @throws RuntimeException
      */
     public void deleteTransactionToCommit(Optional<UUID> txnId) {
         try {
@@ -121,6 +124,7 @@ public class TransactionCoordinator {
      * Get the list of Pravega transactions that have been flushed and are ready to commit.
      * Under normal circumstances, this should return 0 or 1 transactions.
      * @return List of Pravega transaction IDs
+     * @throws RuntimeException
      */
     protected List<UUID> getTransactionsToCommit() {
         try {
@@ -143,7 +147,7 @@ public class TransactionCoordinator {
             LOGGER.info("performRecovery: No transactions to be recovered");
         } else {
             LOGGER.info("Transaction recovery needed on {} transactions", transactionsToCommit.size());
-            transactionsToCommit.forEach((txnId) -> {
+            transactionsToCommit.forEach(txnId -> {
                 LOGGER.info("Committing transaction {} from a previous process", txnId);
                 try {
                     writer.commit(txnId);

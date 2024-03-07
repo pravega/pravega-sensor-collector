@@ -31,7 +31,7 @@ public class CsvFileSequenceProcessor extends FileProcessor {
     }
 
     /**
-     * Event generator for CSV file
+     * Event generator for CSV file.
      * @param config configurations parameters
      * @return eventGenerator
      */

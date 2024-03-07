@@ -28,13 +28,15 @@ import java.util.concurrent.LinkedBlockingQueue;
  * This is an abstract class that uses a memory queue and a SQLite persistent queue, and writes to a single Pravega stream.
  */
 public abstract class SimpleDeviceDriver<R, S extends Samples> extends DeviceDriver {
+
+    protected static final String SAMPLES_PER_EVENT_KEY = "SAMPLES_PER_EVENT";
+
     private static final Logger LOGGER = LoggerFactory.getLogger(SimpleDeviceDriver.class);
 
     private static final String MEMORY_QUEUE_CAPACITY_ELEMENTS_KEY = "MEMORY_QUEUE_CAPACITY_ELEMENTS";
 
     private static final String PERSISTENT_QUEUE_FILE_KEY = "PERSISTENT_QUEUE_FILE";
     private static final String PERSISTENT_QUEUE_CAPACITY_EVENTS_KEY = "PERSISTENT_QUEUE_CAPACITY_EVENTS";
-    protected static final String SAMPLES_PER_EVENT_KEY = "SAMPLES_PER_EVENT";
 
     private static final String SCOPE_KEY = "SCOPE";
     private static final String STREAM_KEY = "STREAM";
@@ -145,6 +147,10 @@ public abstract class SimpleDeviceDriver<R, S extends Samples> extends DeviceDri
         return getProperty(ROUTING_KEY_KEY, "");
     }
 
+    public String getRoutingKey(S samples) {
+        return routingKey;
+    }
+
     int getMaxEventsPerWriteBatch() {
         return Integer.parseInt(getProperty(MAX_EVENTS_PER_WRITE_BATCH_KEY, Integer.toString(100)));
     }
@@ -210,11 +216,14 @@ public abstract class SimpleDeviceDriver<R, S extends Samples> extends DeviceDri
 
     /**
      * Reads raw data (byte arrays) from a sensor.
+     * @throws Exception
      */
     abstract public R readRawData() throws Exception;
 
     /**
      * Decode raw data (byte arrays) and append to Samples.
+     * @param samples
+     * @param rawSensorData
      */
     abstract public void decodeRawDataToSamples(S samples, R rawSensorData);
 
@@ -225,17 +234,16 @@ public abstract class SimpleDeviceDriver<R, S extends Samples> extends DeviceDri
 
     /**
      * Serialize Samples to a byte array. This will be written to Pravega as an event.
+     * @param samples
+     * @throws Exception
      */
     abstract public byte[] serializeSamples(S samples) throws Exception;
-
-    public String getRoutingKey(S samples) {
-        return routingKey;
-    }
 
     /**
      * Get the timestamp that will be sent to Pravega with {@link io.pravega.client.stream.EventStreamWriter#noteTime}.
      * Generally, this should be the number of nanoseconds since 1970-01-01.
      * All future events should have a timestamp greater or equal to this value.
+     * @param samples
      */
     public long getTimestamp(S samples) {
         return samples.getMaxTimestampNanos();

@@ -70,7 +70,7 @@ public final class NetworkDriver extends SimpleDeviceDriver<NetworkRawData, Netw
             blockingStrategy = UninterruptibleBlockingStrategy.PARKING;
         }
 
-        IntStream.range(0, statisticNames.size()).forEach((i) -> {
+        IntStream.range(0, statisticNames.size()).forEach(i -> {
             final String statisticName = statisticNames.get(i);
             statisticNameToIndex.put(statisticName, i);
             String fileName = getStatisticFileName(interfaceName, statisticName);
@@ -108,7 +108,7 @@ public final class NetworkDriver extends SimpleDeviceDriver<NetworkRawData, Netw
     public NetworkRawData readRawData() throws Exception {
         bucket.asScheduler().consumeUninterruptibly(1, blockingStrategy);
         final long timestampNanos = System.currentTimeMillis() * 1000 * 1000;
-        final List<Long> statisticValues = networkStatisticFiles.stream().map((s) -> {
+        final List<Long> statisticValues = networkStatisticFiles.stream().map(s -> {
             try {
                 s.randomAccessFile.seek(0);
                 return Long.parseLong(s.randomAccessFile.readLine());

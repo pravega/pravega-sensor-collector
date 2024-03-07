@@ -80,20 +80,19 @@ public class WatchDogConfig {
         return restartTriggerPath;
     }
 
-
     /**
      * Retrieves the value of a property from the given map of properties.
      *
      * @param  properties  the map of properties to retrieve the value from
      * @param  key         the key of the property to retrieve
      * @return             the value of the property
+     * @throws IllegalArgumentException throw IllegalArgumentException if there is missing required parameter.
      */
     public String getProperty(Map<String, String> properties, String key) {
         final String value = properties.get(key);
         if (value == null || value.isEmpty()) {
-            throw new IllegalArgumentException(MessageFormat.format("Missing required parameter {0}", key));
+            throw new IllegalArgumentException(MessageFormat.format("PSC Watchdog Service: Missing required parameter {0} in config", key));
         }
         return value;
     }
-
 }

@@ -89,6 +89,7 @@ public class LeapDriver extends StatefulSensorDeviceDriver<String> {
     }
 
     /**
+     * Polls events.
      * @param state A string containing a timestamp which is the maximum timestamp of any reading
      *              ever returned by the Leap server.
      */

@@ -28,7 +28,7 @@ public class CsvFileSequenceProcessorTests extends FileProcessorTests {
      */
     @Test
     public void generateEventForCSVFileTests() throws Exception {
-        FileProcessor fileProcessor = new CsvFileSequenceProcessor(config, state, transactionalEventWriter,transactionCoordinator, "test");
+        FileProcessor fileProcessor = new CsvFileSequenceProcessor(config, state, transactionalEventWriter, transactionCoordinator, "test");
         fileProcessor.processNewFiles();
         Mockito.verify(state, Mockito.times(1)).getNextPendingFileRecord();
     }
