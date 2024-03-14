@@ -12,9 +12,8 @@ package io.pravega.sensor.collector.writetonfs;
 import io.pravega.sensor.collector.writetonfs.EventGenerator;
 import io.pravega.sensor.collector.writetonfs.FileConfig;
 import io.pravega.sensor.collector.writetonfs.FileProcessor;
-import io.pravega.sensor.collector.util.EventWriter;
-import io.pravega.sensor.collector.util.TransactionCoordinator;
-import io.pravega.sensor.collector.util.TransactionStateDB;
+import io.pravega.sensor.collector.writetonfs.TransactionCoordinator;
+import io.pravega.sensor.collector.writetonfs.TransactionStateDB;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -23,8 +22,8 @@ public class RawFileMoveProcessor extends FileProcessor {
     private final FileConfig config;
     private final String writerId;
 
-    public RawFileMoveProcessor(FileConfig config, TransactionStateDB state, EventWriter<byte[]> writer, TransactionCoordinator transactionCoordinator, String writerId) {
-        super(config, state, writer, transactionCoordinator);
+    public RawFileMoveProcessor(FileConfig config, TransactionStateDB state, TransactionCoordinator transactionCoordinator, String writerId) {
+        super(config, state, transactionCoordinator);
         this.config = config;
         this.writerId = writerId;
     }

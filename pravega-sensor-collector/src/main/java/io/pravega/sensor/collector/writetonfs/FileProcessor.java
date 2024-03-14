@@ -10,19 +10,10 @@
 package io.pravega.sensor.collector.writetonfs;
 
 import com.google.common.io.CountingInputStream;
-import io.pravega.client.EventStreamClientFactory;
-import io.pravega.client.stream.EventWriterConfig;
-import io.pravega.client.stream.Transaction;
-import io.pravega.client.stream.TxnFailedException;
-import io.pravega.client.stream.impl.ByteArraySerializer;
-import io.pravega.sensor.collector.util.EventWriter;
 import io.pravega.sensor.collector.util.FileNameWithOffset;
 import io.pravega.sensor.collector.util.FileUtils;
 import io.pravega.sensor.collector.util.PersistentId;
 import io.pravega.sensor.collector.util.SQliteDBUtility;
-import io.pravega.sensor.collector.util.TransactionCoordinator;
-import io.pravega.sensor.collector.util.TransactionStateDB;
-import io.pravega.sensor.collector.util.TransactionStateSQLiteImpl;
 import org.apache.commons.lang3.tuple.Pair;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -53,16 +44,15 @@ public abstract class FileProcessor {
 
     private final FileConfig config;
     private final TransactionStateDB state;
-    private final EventWriter<byte[]> writer;
+    // private final EventWriter<byte[]> writer;
     private final TransactionCoordinator transactionCoordinator;
     private final EventGenerator eventGenerator;
     private final Path movedFilesDirectory;
     private final Path nfsPath;
 
-    public FileProcessor(FileConfig config, TransactionStateDB state, EventWriter<byte[]> writer, TransactionCoordinator transactionCoordinator) {
+    public FileProcessor(FileConfig config, TransactionStateDB state, TransactionCoordinator transactionCoordinator) {
         this.config = config;
         this.state = state;
-        this.writer = writer;
         this.transactionCoordinator = transactionCoordinator;
         this.eventGenerator = getEventGenerator(config);
         this.movedFilesDirectory = Paths.get(config.stateDatabaseFileName).getParent();
@@ -70,29 +60,28 @@ public abstract class FileProcessor {
     }
 
     public static FileProcessor create(
-            FileConfig config, EventStreamClientFactory clientFactory) {
+            FileConfig config) {
 
         final Connection connection = SQliteDBUtility.createDatabase(config.stateDatabaseFileName);
 
         final String writerId = new PersistentId(connection).getPersistentId().toString();
         log.info("Writer ID: {}", writerId);
 
-        final EventWriter<byte[]> writer = EventWriter.create(
-                clientFactory,
-                writerId,
-                config.streamName,
-                new ByteArraySerializer(),
-                EventWriterConfig.builder()
-                        .enableConnectionPooling(true)
-                        .transactionTimeoutTime((long) (config.transactionTimeoutMinutes * 60.0 * 1000.0))
-                        .build(),
-                config.exactlyOnce);
+        // final EventWriter<byte[]> writer = EventWriter.create(
+        //         clientFactory,
+        //         writerId,
+        //         new ByteArraySerializer(),
+        //         EventWriterConfig.builder()
+        //                 .enableConnectionPooling(true)
+        //                 .transactionTimeoutTime((long) (config.transactionTimeoutMinutes * 60.0 * 1000.0))
+        //                 .build(),
+        //         config.exactlyOnce);
 
-        final TransactionCoordinator transactionCoordinator = new TransactionCoordinator(connection, writer);
-        transactionCoordinator.performRecovery();
+        final TransactionCoordinator transactionCoordinator = new TransactionCoordinator(connection);
+        // transactionCoordinator.performRecovery();
 
         final TransactionStateDB state = new TransactionStateSQLiteImpl(connection, transactionCoordinator);
-        return FileProcessorFactory.createFileSequenceProcessor(config, state, writer, transactionCoordinator, writerId);
+        return FileProcessorFactory.createFileSequenceProcessor(config, state, transactionCoordinator, writerId);
 
     }
 
@@ -186,16 +175,16 @@ public abstract class FileProcessor {
         AtomicLong numOfBytes = new AtomicLong(0);
         long timestamp = System.nanoTime();
         
-        // In case a previous iteration encountered an error, we need to ensure that
-        // previous flushed transactions are committed and any unflushed transactions as aborted.
-        transactionCoordinator.performRecovery();
-        /* Check if transactions can be aborted.
-         * Will fail with {@link TxnFailedException} if the transaction has already been committed or aborted.
-         */
-        log.debug("processFile: Transaction status {} ", writer.getTransactionStatus());
-        if (writer.getTransactionStatus() == Transaction.Status.OPEN) {
-            writer.abort();
-        }
+        // // In case a previous iteration encountered an error, we need to ensure that
+        // // previous flushed transactions are committed and any unflushed transactions as aborted.
+        // transactionCoordinator.performRecovery();
+        // /* Check if transactions can be aborted.
+        //  * Will fail with {@link TxnFailedException} if the transaction has already been committed or aborted.
+        //  */
+        // log.debug("processFile: Transaction status {} ", writer.getTransactionStatus());
+        // if (writer.getTransactionStatus() == Transaction.Status.OPEN) {
+        //     writer.abort();
+        // }
 
         File pendingFile = new File(fileNameWithBeginOffset.fileName);
         if (!pendingFile.exists()) {
@@ -214,11 +203,10 @@ public abstract class FileProcessor {
                         try {
                             
                             // MOVE FILE TO NFS STORAGE 
-                             FileUtils.movetoNFS(fileNameWithBeginOffset, nfsPath);
-
+                            FileUtils.movetoNFS(fileNameWithBeginOffset, nfsPath);
                             numOfBytes.addAndGet(e.bytes.length);
                         } catch ( IOException ex) {
-                            log.error("processFile: Write event to transaction failed with exception {} while processing file: {}, event: {}", ex, fileNameWithBeginOffset.fileName, e);
+                            log.error("processFile: Write event to transaction failed with exception {} while processing file: {}", ex, fileNameWithBeginOffset.fileName);
 
                             /* TODO while writing event if we get Transaction failed exception then should we abort the trasaction and process again?
                                This will occur only if Transaction state is not open */
@@ -226,27 +214,31 @@ public abstract class FileProcessor {
                             throw new RuntimeException(ex);
                         }
                     });
-            final Optional<UUID> txnId = writer.flush();
+            
+            //Using a random UUID for txnId
+            final Optional<UUID> txnId = Optional.of(UUID.randomUUID());
             final long nextSequenceNumber = result.getLeft();
             final long endOffset = result.getRight();
 
-            // injectCommitFailure();
-            try {
-                // commit fails only if Transaction is not in open state.
-                log.info("processFile: Commit transaction for Id: {}; file: {}", txnId.orElse(null), fileNameWithBeginOffset.fileName);
-                writer.commit();
-            } catch (TxnFailedException ex) {
-                log.error("processFile: Commit transaction for id: {}, file : {}, failed with exception: {}", txnId, fileNameWithBeginOffset.fileName, ex);
-                throw new RuntimeException(ex);
-            }
+            // // injectCommitFailure();
+            // try {
+            //     // commit fails only if Transaction is not in open state.
+            //     log.info("processFile: Commit transaction for Id: {}; file: {}", txnId.orElse(null), fileNameWithBeginOffset.fileName);
+            //     writer.commit();
+            // } catch (TxnFailedException ex) {
+            //     log.error("processFile: Commit transaction for id: {}, file : {}, failed with exception: {}", txnId, fileNameWithBeginOffset.fileName, ex);
+            //     throw new RuntimeException(ex);
+            // }
+
             log.debug("processFile: Adding completed file: {}",  fileNameWithBeginOffset.fileName);
             state.addCompletedFileRecord(fileNameWithBeginOffset.fileName, fileNameWithBeginOffset.offset, endOffset, nextSequenceNumber, txnId);
+            
             // Add to completed file list only if commit is successfull else it will be taken care as part of recovery
             if (txnId.isPresent()) {
-                Transaction.Status status = writer.getTransactionStatus(txnId.get());
-                if (status == Transaction.Status.COMMITTED || status == Transaction.Status.ABORTED) {
+                // Transaction.Status status = writer.getTransactionStatus(txnId.get());
+                // if (status == Transaction.Status.COMMITTED || status == Transaction.Status.ABORTED) {
                     state.deleteTransactionToCommit(txnId);
-                }
+                // }
             }
 
             double elapsedSec = (System.nanoTime() - timestamp) / 1_000_000_000.0;

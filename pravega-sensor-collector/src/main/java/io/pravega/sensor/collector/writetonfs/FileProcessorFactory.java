@@ -10,9 +10,8 @@
 package io.pravega.sensor.collector.writetonfs;
 
 import io.pravega.sensor.collector.writetonfs.RawFileMoveProcessor;
-import io.pravega.sensor.collector.util.EventWriter;
-import io.pravega.sensor.collector.util.TransactionCoordinator;
-import io.pravega.sensor.collector.util.TransactionStateDB;
+import io.pravega.sensor.collector.writetonfs.TransactionCoordinator;
+import io.pravega.sensor.collector.writetonfs.TransactionStateDB;
 
 /*
  * The FileProcessorFactory class is responsible for creating instances of file processors based on the type of the input file.
@@ -21,7 +20,6 @@ import io.pravega.sensor.collector.util.TransactionStateDB;
 public class FileProcessorFactory {
 
     public static FileProcessor createFileSequenceProcessor(final FileConfig config, TransactionStateDB state,
-                                                                    EventWriter<byte[]> writer,
                                                                     TransactionCoordinator transactionCoordinator,
                                                                     String writerId) {
 
@@ -29,7 +27,7 @@ public class FileProcessorFactory {
 
             switch (className) {
                 case "RawFileMoveService":
-                    return new RawFileMoveProcessor(config, state, writer, transactionCoordinator, writerId);
+                    return new RawFileMoveProcessor(config, state, transactionCoordinator, writerId);
 
                 default :
                     throw new RuntimeException("Unsupported className: " + className);

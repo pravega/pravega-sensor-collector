@@ -173,6 +173,7 @@ public class FileUtils {
      */
     static void moveFile(Path sourcePath, Path targetPath) throws IOException {
         Files.createDirectories(targetPath.getParent());
+        LOGGER.info("Obtaining a lock on file before moving");
         //Obtain a lock on file before moving
         try (FileChannel channel = FileChannel.open(sourcePath, StandardOpenOption.WRITE)) {
             try (FileLock lock = channel.tryLock()) {
@@ -186,16 +187,20 @@ public class FileUtils {
                 }
             }
         } catch (Exception e) {
-            LOGGER.warn("Unable to move failed file {}", e.getMessage());
-            LOGGER.warn("Failed file will be moved on the next iteration.");
+            LOGGER.warn("Unable to movefile {}", e.getMessage());
+            LOGGER.warn("File will be moved on the next iteration.");
             // We can continue on this error. Moving will be retried on the next iteration.
         }
     }
 
     public static void movetoNFS(FileNameWithOffset fileEntry, Path nfsPath) throws IOException {
         Path sourcePath = Paths.get(fileEntry.fileName);
-        moveFile(sourcePath, nfsPath);
+        LOGGER.info("source path= {}", sourcePath);
+        LOGGER.info("target path= {}", nfsPath);
+        LOGGER.info("Method: movetoNFS");
+        // Files.createDirectories(nfsPath);
+        Files.move(sourcePath, nfsPath, StandardCopyOption.REPLACE_EXISTING);
         // move file to same target path, dont create new file name
-        // create directories in structure
+        // create directories in target from source structure
     }    
 }

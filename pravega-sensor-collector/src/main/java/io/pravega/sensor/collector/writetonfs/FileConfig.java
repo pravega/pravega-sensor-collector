@@ -18,7 +18,6 @@ public class FileConfig {
     public final String fileExtension;
     public final String nfsMountPath;
     public final String routingKey;
-    public final String streamName;
     public final String eventTemplateStr;
     public final String fileType;
     /**
@@ -32,13 +31,12 @@ public class FileConfig {
 
     public final long minTimeInMillisToUpdateFile;
 
-    public FileConfig(String stateDatabaseFileName, String fileSpec, String fileExtension, String nfsMountPath,String routingKey, String streamName, String eventTemplateStr, int maxRecordsPerEvent, boolean enableDeleteCompletedFiles, boolean exactlyOnce, double transactionTimeoutMinutes, long minTimeInMillisToUpdateFile, String fileType) {
+    public FileConfig(String stateDatabaseFileName, String fileSpec, String fileExtension, String nfsMountPath,String routingKey, String eventTemplateStr, int maxRecordsPerEvent, boolean enableDeleteCompletedFiles, boolean exactlyOnce, double transactionTimeoutMinutes, long minTimeInMillisToUpdateFile, String fileType) {
         this.stateDatabaseFileName = stateDatabaseFileName;
         this.fileSpec = fileSpec;
         this.fileExtension = fileExtension;
         this.nfsMountPath = nfsMountPath;
         this.routingKey = routingKey;
-        this.streamName = streamName;
         this.eventTemplateStr = eventTemplateStr;
         this.maxRecordsPerEvent = maxRecordsPerEvent;
         this.enableDeleteCompletedFiles = enableDeleteCompletedFiles;
@@ -57,7 +55,6 @@ public class FileConfig {
                 + ", nfsMountPath='" + nfsMountPath + '\''
                 + ", fileType='" + fileType + '\''
                 + ", routingKey='" + routingKey + '\''
-                + ", streamName='" + streamName + '\''
                 + ", eventTemplateStr='" + eventTemplateStr + '\''
                 + ", maxRecordsPerEvent=" + maxRecordsPerEvent
                 + ", enableDeleteCompletedFiles=" + enableDeleteCompletedFiles

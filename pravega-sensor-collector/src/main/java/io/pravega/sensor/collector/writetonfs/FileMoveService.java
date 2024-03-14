@@ -10,7 +10,6 @@
 package io.pravega.sensor.collector.writetonfs;
 
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
-import io.pravega.client.EventStreamClientFactory;
 import io.pravega.sensor.collector.DeviceDriver;
 import io.pravega.sensor.collector.DeviceDriverConfig;
 import org.slf4j.Logger;
@@ -37,8 +36,6 @@ public abstract class FileMoveService extends DeviceDriver {
     private static final String SAMPLES_PER_EVENT_KEY = "SAMPLES_PER_EVENT";
     private static final String INTERVAL_MS_KEY = "INTERVAL_MS";
 
-    private static final String SCOPE_KEY = "SCOPE";
-    private static final String STREAM_KEY = "STREAM";
     private static final String ROUTING_KEY_KEY = "ROUTING_KEY";
     private static final String EXACTLY_ONCE_KEY = "EXACTLY_ONCE";
     private static final String TRANSACTION_TIMEOUT_MINUTES_KEY = "TRANSACTION_TIMEOUT_MINUTES";
@@ -62,7 +59,6 @@ public abstract class FileMoveService extends DeviceDriver {
                 getFileExtension(),
                 getNFSMountPath(),
                 getRoutingKey(),
-                getStreamName(),
                 getEventTemplate(),
                 getSamplesPerEvent(),
                 getDeleteCompletedFiles(),
@@ -71,11 +67,11 @@ public abstract class FileMoveService extends DeviceDriver {
                 getMinTimeInMillisToUpdateFile(),
                 config.getClassName());
         LOG.info("File Ingest Config: {}", fileSequenceConfig);
-        final String scopeName = getScopeName();
-        LOG.info("Scope: {}", scopeName);
-        createStream(scopeName, getStreamName());
-        final EventStreamClientFactory clientFactory = getEventStreamClientFactory(scopeName);
-        processor = FileProcessor.create(fileSequenceConfig, clientFactory);
+        // final String scopeName = getScopeName();
+        // LOG.info("Scope: {}", scopeName);
+        // createStream(scopeName, getStreamName());
+        // final EventStreamClientFactory clientFactory = getEventStreamClientFactory(scopeName);
+        processor = FileProcessor.create(fileSequenceConfig);
         ThreadFactory namedThreadFactory = new ThreadFactoryBuilder().setNameFormat(
                 FileMoveService.class.getSimpleName() + "-" + config.getInstanceName() + "-%d").build();
         executor = Executors.newScheduledThreadPool(1, namedThreadFactory);
@@ -111,14 +107,6 @@ public abstract class FileMoveService extends DeviceDriver {
 
     long getIntervalMs() {
         return Long.parseLong(getProperty(INTERVAL_MS_KEY, Long.toString(DEFAULT_INTERVAL_MS_KEY)));
-    }
-
-    String getScopeName() {
-        return getProperty(SCOPE_KEY);
-    }
-
-    String getStreamName() {
-        return getProperty(STREAM_KEY);
     }
 
     protected String getRoutingKey() {
