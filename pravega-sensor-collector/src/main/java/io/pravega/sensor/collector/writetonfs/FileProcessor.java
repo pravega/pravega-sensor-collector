@@ -212,12 +212,12 @@ public abstract class FileProcessor {
                     e -> {
                         log.trace("processFile: event={}", e);
                         try {
-                             writer.writeEvent(e.routingKey, e.bytes);
+                            
                             // MOVE FILE TO NFS STORAGE 
                              FileUtils.movetoNFS(fileNameWithBeginOffset, nfsPath);
 
                             numOfBytes.addAndGet(e.bytes.length);
-                        } catch (TxnFailedException | IOException ex) {
+                        } catch ( IOException ex) {
                             log.error("processFile: Write event to transaction failed with exception {} while processing file: {}, event: {}", ex, fileNameWithBeginOffset.fileName, e);
 
                             /* TODO while writing event if we get Transaction failed exception then should we abort the trasaction and process again?
