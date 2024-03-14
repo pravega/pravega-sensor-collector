@@ -32,6 +32,7 @@ public class FileUtils {
     static final String SEPARATOR = ",";
     public static final String FAILED_FILES = "Failed_Files";
     public static final String COMPLETED_FILES = "Completed_Files";
+    // public static final String NFS_MOUNT_PATH ; //get the mounted directory path from env var
 
     /**
      * Get directory list.
@@ -168,7 +169,7 @@ public class FileUtils {
     }
 
     /*
-    Move failed files to different directory
+    Move files to different directory
      */
     static void moveFile(Path sourcePath, Path targetPath) throws IOException {
         Files.createDirectories(targetPath.getParent());
@@ -189,5 +190,12 @@ public class FileUtils {
             LOGGER.warn("Failed file will be moved on the next iteration.");
             // We can continue on this error. Moving will be retried on the next iteration.
         }
+    }
+
+    public static void movetoNFS(FileNameWithOffset fileEntry, Path nfsPath) throws IOException {
+        Path sourcePath = Paths.get(fileEntry.fileName);
+        moveFile(sourcePath, nfsPath);
+        // move file to same target path, dont create new file name
+        // create directories in structure
     }    
 }
