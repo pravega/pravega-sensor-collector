@@ -196,19 +196,25 @@ public class FileUtils {
         Path sourcePath = Paths.get(fileEntry.fileName);
         LOGGER.debug("source path= {}", sourcePath);
         LOGGER.debug("target path= {}", nfsPath);
-        Path tempFile = Files.createTempFile("temp", ".parquet");
-        Files.copy(sourcePath, tempFile,StandardCopyOption.REPLACE_EXISTING);
 
         Path userFileSpecPath = Paths.get(userFileSpec);
         Path relativePath = userFileSpecPath.relativize(sourcePath);
 
-        String newTarget = nfsPath + File.separator + userFileSpecPath.getName(userFileSpecPath.getNameCount()-1) + File.separator + relativePath;
-        Path targetFile = Paths.get(newTarget);
+        String newTarget = nfsPath + File.separator + userFileSpecPath.getName(userFileSpecPath.getNameCount()-1) + File.separator + relativePath;        
+        Path targetFile = Paths.get(newTarget);        
         LOGGER.info("Target path = {}", targetFile);
-        Files.createDirectories(targetFile.getParent());    //creates the directories in targetFile
-        Files.move(tempFile, targetFile, StandardCopyOption.REPLACE_EXISTING);
 
-        // move file to same target path, dont create new file name
-        // create directories in target from source structure
+        File f = new File(targetFile.getParent().toString().replace('\\', '/'));
+        if(!f.exists()) {
+            if(!f.mkdirs()){          //creates the directories in targetFile
+                LOGGER.error("Unable to create directories in target path");
+                throw new IOException("Unable to create directories");
+            }
+        }        
+
+        Path tempFile = Paths.get(newTarget + ".temp");
+        Files.copy(sourcePath, tempFile, StandardCopyOption.REPLACE_EXISTING);
+        Files.move(tempFile, targetFile, StandardCopyOption.REPLACE_EXISTING);
+        
     }    
 }
