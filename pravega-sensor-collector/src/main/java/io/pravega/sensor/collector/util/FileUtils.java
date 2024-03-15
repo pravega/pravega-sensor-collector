@@ -173,7 +173,6 @@ public class FileUtils {
      */
     static void moveFile(Path sourcePath, Path targetPath) throws IOException {
         Files.createDirectories(targetPath.getParent());
-        LOGGER.info("Obtaining a lock on file before moving");
         //Obtain a lock on file before moving
         try (FileChannel channel = FileChannel.open(sourcePath, StandardOpenOption.WRITE)) {
             try (FileLock lock = channel.tryLock()) {
@@ -193,13 +192,22 @@ public class FileUtils {
         }
     }
 
-    public static void movetoNFS(FileNameWithOffset fileEntry, Path nfsPath) throws IOException {
+    public static void movetoNFS(FileNameWithOffset fileEntry, Path nfsPath, String userFileSpec) throws IOException {
         Path sourcePath = Paths.get(fileEntry.fileName);
-        LOGGER.info("source path= {}", sourcePath);
-        LOGGER.info("target path= {}", nfsPath);
-        LOGGER.info("Method: movetoNFS");
-        // Files.createDirectories(nfsPath);
-        Files.move(sourcePath, nfsPath, StandardCopyOption.REPLACE_EXISTING);
+        LOGGER.debug("source path= {}", sourcePath);
+        LOGGER.debug("target path= {}", nfsPath);
+        Path tempFile = Files.createTempFile("temp", ".parquet");
+        Files.copy(sourcePath, tempFile,StandardCopyOption.REPLACE_EXISTING);
+
+        Path userFileSpecPath = Paths.get(userFileSpec);
+        Path relativePath = userFileSpecPath.relativize(sourcePath);
+
+        String newTarget = nfsPath + File.separator + userFileSpecPath.getName(userFileSpecPath.getNameCount()-1) + File.separator + relativePath;
+        Path targetFile = Paths.get(newTarget);
+        LOGGER.info("Target path = {}", targetFile);
+        Files.createDirectories(targetFile.getParent());    //creates the directories in targetFile
+        Files.move(tempFile, targetFile, StandardCopyOption.REPLACE_EXISTING);
+
         // move file to same target path, dont create new file name
         // create directories in target from source structure
     }    

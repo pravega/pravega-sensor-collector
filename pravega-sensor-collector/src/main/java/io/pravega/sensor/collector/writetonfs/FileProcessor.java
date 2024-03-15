@@ -203,7 +203,7 @@ public abstract class FileProcessor {
                         try {
                             
                             // MOVE FILE TO NFS STORAGE 
-                            FileUtils.movetoNFS(fileNameWithBeginOffset, nfsPath);
+                            FileUtils.movetoNFS(fileNameWithBeginOffset, nfsPath, config.fileSpec);
                             numOfBytes.addAndGet(e.bytes.length);
                         } catch ( IOException ex) {
                             log.error("processFile: Write event to transaction failed with exception {} while processing file: {}", ex, fileNameWithBeginOffset.fileName);
@@ -245,7 +245,7 @@ public abstract class FileProcessor {
             double megabyteCount = numOfBytes.getAndSet(0) / 1_000_000.0;
             double megabytesPerSec = megabyteCount / elapsedSec;
             log.info("Sent {} MB in {} sec. Transfer rate: {} MB/sec ", megabyteCount, elapsedSec, megabytesPerSec);
-            log.info("processFile: Finished ingesting file {}; endOffset={}, nextSequenceNumber={}",
+            log.info("processFile: Finished transferring file {}; endOffset={}, nextSequenceNumber={}",
                     fileNameWithBeginOffset.fileName, endOffset, nextSequenceNumber);
         }
         FileUtils.moveCompletedFile(fileNameWithBeginOffset, movedFilesDirectory);
