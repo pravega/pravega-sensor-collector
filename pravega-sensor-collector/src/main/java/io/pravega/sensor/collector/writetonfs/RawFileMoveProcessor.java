@@ -9,11 +9,11 @@
  */
 package io.pravega.sensor.collector.writetonfs;
 
-import io.pravega.sensor.collector.writetonfs.EventGenerator;
+import io.pravega.sensor.collector.file.EventGenerator;
 import io.pravega.sensor.collector.writetonfs.FileConfig;
 import io.pravega.sensor.collector.writetonfs.FileProcessor;
-import io.pravega.sensor.collector.writetonfs.TransactionCoordinator;
-import io.pravega.sensor.collector.writetonfs.TransactionStateDB;
+import io.pravega.sensor.collector.util.TransactionCoordinator;
+import io.pravega.sensor.collector.util.TransactionStateDB;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

@@ -67,6 +67,16 @@ public class TransactionCoordinator {
     public TransactionCoordinator(Connection connection, EventWriter<byte[]> writer) {
         this.connection = connection;
         this.writer = writer;
+        initializeDatabase();
+    }
+
+    public TransactionCoordinator(Connection connection) {
+        this.connection = connection;
+        this.writer = null;
+        initializeDatabase();
+    }
+
+    private void initializeDatabase() {
         try {
             try (final Statement statement = connection.createStatement()) {
                 statement.execute(

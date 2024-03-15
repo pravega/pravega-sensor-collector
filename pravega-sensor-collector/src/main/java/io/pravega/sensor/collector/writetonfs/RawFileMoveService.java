@@ -15,7 +15,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * Ingestion service for raw file data.  
+ * File transfer service for raw file data.  
  */
 public class RawFileMoveService extends FileMoveService {
     private static final Logger LOGGER = LoggerFactory.getLogger(RawFileMoveService.class);

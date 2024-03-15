@@ -10,10 +10,16 @@
 package io.pravega.sensor.collector.writetonfs;
 
 import com.google.common.io.CountingInputStream;
+
+import io.pravega.sensor.collector.file.EventGenerator;
 import io.pravega.sensor.collector.util.FileNameWithOffset;
 import io.pravega.sensor.collector.util.FileUtils;
 import io.pravega.sensor.collector.util.PersistentId;
 import io.pravega.sensor.collector.util.SQliteDBUtility;
+import io.pravega.sensor.collector.util.TransactionCoordinator;
+import io.pravega.sensor.collector.util.TransactionStateDB;
+import io.pravega.sensor.collector.util.TransactionStateSQLiteImpl;
+
 import org.apache.commons.lang3.tuple.Pair;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -36,8 +42,8 @@ import java.util.Optional;
 import java.util.concurrent.atomic.AtomicLong;
 
 /**
- * Get list of files obtained from config. Process each file for ingestion.
- * Keep track of new files and delete ingested files if "DELETE_COMPLETED_FILES"=true.
+ * Get list of files obtained from config. Process each file for transfer.
+ * Keep track of new files and delete transferred files if "DELETE_COMPLETED_FILES"=true.
  */
 public abstract class FileProcessor {
     private static final Logger log = LoggerFactory.getLogger(FileProcessor.class);
@@ -157,7 +163,7 @@ public abstract class FileProcessor {
     }
 
     void processFile(FileNameWithOffset fileNameWithBeginOffset, long firstSequenceNumber) throws Exception {
-        log.info("processFile: Ingesting file {}; beginOffset={}, firstSequenceNumber={}",
+        log.info("processFile: Processing file {}; beginOffset={}, firstSequenceNumber={}",
                 fileNameWithBeginOffset.fileName, fileNameWithBeginOffset.offset, firstSequenceNumber);
 
         AtomicLong numOfBytes = new AtomicLong(0);
@@ -208,7 +214,7 @@ public abstract class FileProcessor {
                     fileNameWithBeginOffset.fileName, endOffset, nextSequenceNumber);
         }
         FileUtils.moveCompletedFile(fileNameWithBeginOffset, movedFilesDirectory);
-        // Delete file right after ingesting
+        // Delete file right after transferring
         if (config.enableDeleteCompletedFiles) {
             deleteCompletedFiles();
         }
@@ -223,18 +229,18 @@ public abstract class FileProcessor {
             Path filePath = completedFilesPath.resolve(completedFileName);
             log.debug("deleteCompletedFiles: Deleting File default name:{}, and it's completed file name:{}.", file.fileName, filePath);
             try {
-                /* If file gets deleted from completed files directory, or it does not exist in default ingestion directory
+                /* If file gets deleted from completed files directory, or it does not exist in default source directory
                  * then only remove the record from DB. */
                 if (Files.deleteIfExists(filePath) || Files.notExists(Paths.get(file.fileName))) {
                     state.deleteCompletedFileRecord(file.fileName);
                     log.debug("deleteCompletedFiles: Deleted File default name:{}, and it's completed file name:{}.", file.fileName, filePath);
                 } else {
-                    /* This situation occurs because at first attempt moving file to completed directory fails, but the file still exists in default ingestion directory.
+                    /* This situation occurs because at first attempt moving file to completed directory fails, but the file still exists in default source directory.
                      * Moving file from default directory to completed directory will be taken care in next iteration, post which delete will be taken care. */
-                    log.warn("deleteCompletedFiles: File {} doesn't exists in completed directory but still exist in default ingestion directory.", filePath);
+                    log.warn("deleteCompletedFiles: File {} doesn't exists in completed directory but still exist in default source directory.", filePath);
                 }
             } catch (Exception e) {
-                log.warn("Unable to delete ingested file default name:{}, and it's completed file name:{}, error: {}.", file.fileName, filePath, e.getMessage());
+                log.warn("Unable to delete transferred file default name:{}, and it's completed file name:{}, error: {}.", file.fileName, filePath, e.getMessage());
                 log.warn("Deletion will be retried on the next iteration.");
                 // We can continue on this error. Deletion will be retried on the next iteration.
             }

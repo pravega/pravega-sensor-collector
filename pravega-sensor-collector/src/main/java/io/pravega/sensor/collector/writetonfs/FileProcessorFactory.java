@@ -10,8 +10,8 @@
 package io.pravega.sensor.collector.writetonfs;
 
 import io.pravega.sensor.collector.writetonfs.RawFileMoveProcessor;
-import io.pravega.sensor.collector.writetonfs.TransactionCoordinator;
-import io.pravega.sensor.collector.writetonfs.TransactionStateDB;
+import io.pravega.sensor.collector.util.TransactionCoordinator;
+import io.pravega.sensor.collector.util.TransactionStateDB;
 
 /*
  * The FileProcessorFactory class is responsible for creating instances of file processors based on the type of the input file.

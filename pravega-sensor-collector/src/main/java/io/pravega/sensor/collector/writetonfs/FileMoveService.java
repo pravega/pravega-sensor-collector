@@ -22,7 +22,7 @@ import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
 
 /**
- * Ingestion service with common implementation logic for all files.
+ * File transfer service with common implementation logic for all files.
  */
 public abstract class FileMoveService extends DeviceDriver {
     private static final Logger LOG = LoggerFactory.getLogger(FileMoveService.class);
@@ -66,11 +66,7 @@ public abstract class FileMoveService extends DeviceDriver {
                 getTransactionTimeoutMinutes(),
                 getMinTimeInMillisToUpdateFile(),
                 config.getClassName());
-        LOG.info("File Ingest Config: {}", fileSequenceConfig);
-        // final String scopeName = getScopeName();
-        // LOG.info("Scope: {}", scopeName);
-        // createStream(scopeName, getStreamName());
-        // final EventStreamClientFactory clientFactory = getEventStreamClientFactory(scopeName);
+        LOG.info("File Transfer Config: {}", fileSequenceConfig);
         processor = FileProcessor.create(fileSequenceConfig);
         ThreadFactory namedThreadFactory = new ThreadFactoryBuilder().setNameFormat(
                 FileMoveService.class.getSimpleName() + "-" + config.getInstanceName() + "-%d").build();
@@ -172,7 +168,7 @@ public abstract class FileMoveService extends DeviceDriver {
 
     @Override
     protected void doStop() {
-        LOG.info("doStop: Cancelling ingestion task and process file task");
+        LOG.info("doStop: Cancelling transfer task and process file task");
         watchFiletask.cancel(false);
         processFileTask.cancel(false);
     }

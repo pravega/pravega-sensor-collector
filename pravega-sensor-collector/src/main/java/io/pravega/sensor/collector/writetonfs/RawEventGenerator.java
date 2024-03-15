@@ -12,6 +12,8 @@ package io.pravega.sensor.collector.writetonfs;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.io.CountingInputStream;
+
+import io.pravega.sensor.collector.file.EventGenerator;
 import io.pravega.sensor.collector.util.PravegaWriterEvent;
 
 import org.apache.commons.compress.utils.IOUtils;
