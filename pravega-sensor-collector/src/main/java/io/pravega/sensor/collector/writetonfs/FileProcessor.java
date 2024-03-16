@@ -246,13 +246,5 @@ public abstract class FileProcessor {
             }
         });
     }
-
-    /**
-     * Inject a failure before commit for testing.
-     */
-    protected void injectCommitFailure() {
-        if (Math.random() < 0.3) {
-            throw new RuntimeException("injectCommitFailure: Commit failure test exception");
-        }
-    }
+    
 }

@@ -32,7 +32,6 @@ public class FileUtils {
     static final String SEPARATOR = ",";
     public static final String FAILED_FILES = "Failed_Files";
     public static final String COMPLETED_FILES = "Completed_Files";
-    // public static final String NFS_MOUNT_PATH ; //get the mounted directory path from env var
 
     /**
      * Get directory list.
@@ -186,7 +185,7 @@ public class FileUtils {
                 }
             }
         } catch (Exception e) {
-            LOGGER.warn("Unable to movefile {}", e.getMessage());
+            LOGGER.warn("Unable to move file {}", e.getMessage());
             LOGGER.warn("File will be moved on the next iteration.");
             // We can continue on this error. Moving will be retried on the next iteration.
         }
