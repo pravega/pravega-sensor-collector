@@ -168,7 +168,7 @@ public class FileUtils {
     }
 
     /*
-    Move failed files to different directory
+    Move files to different directory
      */
     static void moveFile(Path sourcePath, Path targetPath) throws IOException {
         Files.createDirectories(targetPath.getParent());
@@ -185,9 +185,35 @@ public class FileUtils {
                 }
             }
         } catch (Exception e) {
-            LOGGER.warn("Unable to move failed file {}", e.getMessage());
-            LOGGER.warn("Failed file will be moved on the next iteration.");
+            LOGGER.warn("Unable to move file {}", e.getMessage());
+            LOGGER.warn("File will be moved on the next iteration.");
             // We can continue on this error. Moving will be retried on the next iteration.
         }
+    }
+
+    public static void movetoNFS(FileNameWithOffset fileEntry, Path nfsPath, String userFileSpec) throws IOException {
+        Path sourcePath = Paths.get(fileEntry.fileName);
+        LOGGER.debug("source path= {}", sourcePath);
+        LOGGER.debug("target path= {}", nfsPath);
+
+        Path userFileSpecPath = Paths.get(userFileSpec);
+        Path relativePath = userFileSpecPath.relativize(sourcePath);
+
+        String newTarget = nfsPath + File.separator + userFileSpecPath.getName(userFileSpecPath.getNameCount()-1) + File.separator + relativePath;        
+        Path targetFile = Paths.get(newTarget);        
+        LOGGER.info("Target path = {}", targetFile);
+
+        File f = new File(targetFile.getParent().toString().replace('\\', '/'));
+        if(!f.exists()) {
+            if(!f.mkdirs()){          //creates the directories in targetFile
+                LOGGER.error("Unable to create directories in target path");
+                throw new IOException("Unable to create directories");
+            }
+        }        
+
+        Path tempFile = Paths.get(newTarget + ".temp");
+        Files.copy(sourcePath, tempFile, StandardCopyOption.REPLACE_EXISTING);
+        Files.move(tempFile, targetFile, StandardCopyOption.REPLACE_EXISTING);
+        
     }    
 }
